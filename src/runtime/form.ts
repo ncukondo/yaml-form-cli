@@ -367,6 +367,17 @@ export function initForm(doc: Document): void {
 				?.focus?.({ preventScroll: true });
 			return;
 		}
-		void performSubmit(doc, readFormData(doc), collectAnswers(doc));
+		// Mailto "success" only means the mail client opened; the user may still
+		// cancel the mail, so those drafts survive until pruned or discarded.
+		const clearDraft = form.actions.some((a) => a.type === "mailto")
+			? undefined
+			: () => draft?.clear();
+		void performSubmit(
+			doc,
+			readFormData(doc),
+			collectAnswers(doc),
+			undefined,
+			clearDraft,
+		);
 	});
 }

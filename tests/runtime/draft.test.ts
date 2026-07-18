@@ -345,6 +345,79 @@ items:
 	});
 });
 
+function submitForm(doc: Document) {
+	const form = doc.querySelector("form#yaml-form") as HTMLFormElement;
+	const EventCtor = (doc.defaultView as unknown as { Event: typeof Event })
+		.Event;
+	form.dispatchEvent(
+		new EventCtor("submit", { bubbles: true, cancelable: true }),
+	);
+}
+
+const flushMicrotasks = () =>
+	new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+describe("submit clears the draft", () => {
+	const withActions = (actions: string) => `
+title: T
+id: submit-form
+${actions}
+items:
+  - { title: Name, id: name }
+`;
+
+	async function editedDom(source: string) {
+		const loaded = await loadDom(source);
+		setText(loaded.document, "name", "Jane");
+		firePagehide(loaded.window); // persist immediately
+		const key = draftKey(parseOk(source), "");
+		expect(loaded.window.localStorage.getItem(key)).not.toBeNull();
+		return { ...loaded, key };
+	}
+
+	test("log action success removes the draft", async () => {
+		const source = withActions("actions:\n  - type: log");
+		const { window, document, key } = await editedDom(source);
+		submitForm(document);
+		await flushMicrotasks();
+		expect(window.localStorage.getItem(key)).toBeNull();
+	});
+
+	test("post action success removes the draft", async () => {
+		const source = withActions(
+			'actions:\n  - type: post\n    url: "https://example.com/api"',
+		);
+		const { window, document, key } = await editedDom(source);
+		(window as unknown as { fetch: unknown }).fetch = () =>
+			Promise.resolve({ ok: true, status: 200 });
+		submitForm(document);
+		await flushMicrotasks();
+		expect(window.localStorage.getItem(key)).toBeNull();
+	});
+
+	test("post action failure keeps the draft", async () => {
+		const source = withActions(
+			'actions:\n  - type: post\n    url: "https://example.com/api"',
+		);
+		const { window, document, key } = await editedDom(source);
+		(window as unknown as { fetch: unknown }).fetch = () =>
+			Promise.reject(new Error("network down"));
+		submitForm(document);
+		await flushMicrotasks();
+		expect(window.localStorage.getItem(key)).not.toBeNull();
+	});
+
+	test("mailto success keeps the draft", async () => {
+		const source = withActions(
+			'actions:\n  - type: mailto\n    to: "a@example.com"',
+		);
+		const { window, document, key } = await editedDom(source);
+		submitForm(document);
+		await flushMicrotasks();
+		expect(window.localStorage.getItem(key)).not.toBeNull();
+	});
+});
+
 describe("storage failure", () => {
 	test("throwing storage disables autosave silently", async () => {
 		const { window, document } = await loadDom(basicYaml, {

@@ -168,6 +168,8 @@ export async function performSubmit(
 	form: Form,
 	answers: SubmitAnswers,
 	envOverride?: Partial<ActionEnv>,
+	/** Called once when all actions succeed (initForm clears the draft here). */
+	onSuccess?: () => void,
 ): Promise<void> {
 	if (pendingDocs.has(doc)) return;
 	pendingDocs.add(doc);
@@ -180,6 +182,7 @@ export async function performSubmit(
 			generator: readGenerator(doc),
 		});
 		const result = await runActions(form.actions, payload, form, env);
+		if (result.ok) onSuccess?.();
 		applySubmitState(
 			doc,
 			form,
