@@ -222,6 +222,76 @@ describe("rubric DOM structure", () => {
 	});
 });
 
+describe("table a11y", () => {
+	test("choice_table cell inputs are named '{row}: {choice}'", () => {
+		const radio = document.querySelector(
+			'[name="choice_table_sample.sub_question1"][value="scale1"]',
+		);
+		expect(radio?.getAttribute("aria-label")).toBe("sub_question1: scale1");
+	});
+
+	test("rubric cell inputs reference their descriptor via aria-describedby", () => {
+		const radio = document.querySelector(
+			'[name="presentation_rubric.clarity"][value="1"]',
+		);
+		const descriptorId = radio?.getAttribute("aria-describedby") ?? "";
+		expect(descriptorId).not.toBe("");
+		const descriptor = document.getElementById(descriptorId);
+		expect(descriptor?.classList.contains("cell-descriptor")).toBe(true);
+		expect(descriptor?.textContent).toBe("Hard to follow; main point unclear");
+	});
+
+	test("each rubric cell points at its own column's descriptor", () => {
+		const radio = document.querySelector(
+			'[name="presentation_rubric.evidence"][value="3"]',
+		);
+		const descriptorId = radio?.getAttribute("aria-describedby") ?? "";
+		expect(document.getElementById(descriptorId)?.textContent).toBe(
+			"All claims well supported and cited",
+		);
+	});
+
+	test("choice_table cells (no descriptors) carry no aria-describedby", () => {
+		const radio = document.querySelector(
+			'[name="choice_table_sample.sub_question1"][value="scale1"]',
+		);
+		expect(radio?.hasAttribute("aria-describedby")).toBe(false);
+	});
+
+	test("table markup carries explicit ARIA roles for the stacked layout", () => {
+		const table = document.querySelector(
+			'[data-item-id="presentation_rubric"] table',
+		);
+		expect(table?.getAttribute("role")).toBe("table");
+		expect(table?.querySelector("thead")?.getAttribute("role")).toBe(
+			"rowgroup",
+		);
+		expect(table?.querySelector("tbody")?.getAttribute("role")).toBe(
+			"rowgroup",
+		);
+		for (const tr of Array.from(table?.querySelectorAll("tr") ?? [])) {
+			expect(tr.getAttribute("role")).toBe("row");
+		}
+		for (const th of Array.from(table?.querySelectorAll("thead th") ?? [])) {
+			expect(th.getAttribute("role")).toBe("columnheader");
+		}
+		const rowHeaders = table?.querySelectorAll("tbody th[scope=row]") ?? [];
+		for (const th of Array.from(rowHeaders)) {
+			expect(th.getAttribute("role")).toBe("rowheader");
+		}
+		for (const td of Array.from(table?.querySelectorAll("tbody td") ?? [])) {
+			expect(td.getAttribute("role")).toBe("cell");
+		}
+	});
+
+	test("comment rows carry row/cell roles too", async () => {
+		const doc = await loadDom(commentedRubricYaml);
+		const commentRow = doc.querySelector("tr.table-comment-row");
+		expect(commentRow?.getAttribute("role")).toBe("row");
+		expect(commentRow?.querySelector("td")?.getAttribute("role")).toBe("cell");
+	});
+});
+
 describe("table answer collection", () => {
 	test("choice_table answers are a per-row object keyed by row key", () => {
 		checkCell(document, "choice_table_sample.sub_question1", "scale3");
