@@ -1,3 +1,4 @@
+import type { Messages } from "../messages.ts";
 import type {
 	ChoiceItem,
 	ConstantItem,
@@ -42,7 +43,7 @@ function renderChoice(item: ChoiceItem): string {
 	return `<div class="choice-options" role="group" aria-labelledby="${escapeAttr(labelId(item.id))}"${ariaAttrs(item)}>\n${options}\n</div>`;
 }
 
-function renderControl(item: FormItem): string {
+function renderControl(item: FormItem, messages: Messages): string {
 	switch (item.type) {
 		case "constant":
 			return renderConstant(item);
@@ -53,9 +54,9 @@ function renderControl(item: FormItem): string {
 		case "choice":
 			return renderChoice(item);
 		case "choice_table":
-			return renderChoiceTable(item);
+			return renderChoiceTable(item, messages);
 		case "rubric":
-			return renderRubric(item);
+			return renderRubric(item, messages);
 	}
 }
 
@@ -71,7 +72,7 @@ function renderTitle(item: FormItem): string {
 	return `<span class="item-title" id="${id}">${content}</span>`;
 }
 
-export function renderItem(item: FormItem): string {
+export function renderItem(item: FormItem, messages: Messages): string {
 	const title = renderTitle(item);
 	const description = item.description
 		? `<p class="item-description" id="${escapeAttr(descriptionId(item.id))}">${renderText(item.description)}</p>`
@@ -82,7 +83,7 @@ export function renderItem(item: FormItem): string {
 			: `<p class="item-error" id="${escapeAttr(errorId(item.id))}" data-error-for="${escapeAttr(item.id)}" role="alert" hidden></p>`;
 	return `<section class="form-item" data-item-id="${escapeAttr(item.id)}" data-item-type="${item.type}">
 ${title}
-${description}${renderControl(item)}
+${description}${renderControl(item, messages)}
 ${error}
 </section>`;
 }

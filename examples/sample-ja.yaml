@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=../schema/yaml-form.schema.json
+# 日本語フォームの例。lang: ja を指定すると <html lang="ja"> が出力され、
+# 送信ボタン・必須エラー・送信中/成功/失敗メッセージなどの固定 UI 文字列が
+# すべて日本語の組み込み訳になります。個別の文字列は messages で上書きできます。
+
+title: "研修振り返りアンケート"
+lang: ja
+description: |
+  本日の研修についてお聞かせください。
+  回答は今後の改善のために利用します。
+
+actions:
+  - type: log # テスト用: ペイロードをブラウザのコンソールに出力します。
+
+post_submit:
+  message: "ご回答ありがとうございました。"
+
+# 組み込みの日本語訳を個別に上書きする例(省略可):
+# messages:
+#   required: "「{title}」を入力してください。"
+#   submit: "回答を送信"
+
+items:
+  - type: "short_text"
+    id: "name"
+    title: "氏名"
+    required: true
+
+  - type: "choice"
+    id: "satisfaction"
+    title: "総合満足度"
+    required: true
+    choices:
+      - { title: "満足", value: "4" }
+      - { title: "やや満足", value: "3" }
+      - { title: "やや不満", value: "2" }
+      - { title: "不満", value: "1" }
+
+  - type: "rubric"
+    id: "self_assessment"
+    title: "自己評価"
+    required: true
+    comment_per_row: true # 各行の下に「コメント — {行タイトル}」の自由記述欄が付きます。
+    choices:
+      - { title: "初学者", value: "1" }
+      - { title: "一人前", value: "2" }
+      - { title: "熟達者", value: "3" }
+    items:
+      - id: "knowledge"
+        title: "知識の理解"
+        descriptors:
+          - "基本用語の理解があいまい"
+          - "基本を理解し説明できる"
+          - "応用場面でも的確に説明できる"
+      - id: "practice"
+        title: "実践への応用"
+        descriptors:
+          - "支援があれば実践できる"
+          - "一人で実践できる"
+          - "他者を指導しながら実践できる"
+
+  - type: "choice"
+    id: "has_comment"
+    title: "その他ご意見はありますか?"
+    choices: ["はい", "いいえ"]
+
+  - type: "long_text"
+    id: "comment"
+    title: "ご意見・ご要望"
+    visible_when: 'has_comment = "はい"'
