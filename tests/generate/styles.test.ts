@@ -119,6 +119,42 @@ describe("choice_table scroll affordance", () => {
 	});
 });
 
+describe("mobile wide-table branch (decision 0012)", () => {
+	function mobileBlocks(css: string): string[] {
+		const blocks = css.match(/@media \(max-width: 640px\)\s*\{[\s\S]*?\n\}/g);
+		if (!blocks || blocks.length === 0)
+			throw new Error("mobile media blocks not found");
+		return blocks;
+	}
+
+	test("stacking rules are scoped to non-wide wrappers", () => {
+		const blocks = mobileBlocks(baseStyles);
+		expect(blocks.join("\n")).toContain(".table-scroll:not(.table-wide)");
+		// every selector line touching the table must carry the :not() guard,
+		// so wide tables keep the desktop scroll layout below 640px
+		for (const block of blocks) {
+			const selectors = block.match(/^\s*[^@\s/][^{}]*(?=,|\s*\{)/gm) ?? [];
+			for (const selector of selectors) {
+				if (
+					!/\.choice-table|\.table-scroll|\.table-cell-label|\.cell-/.test(
+						selector,
+					)
+				)
+					continue;
+				expect(selector).toContain(".table-scroll:not(.table-wide)");
+			}
+		}
+	});
+
+	test("row-card error treatment is also scoped to non-wide wrappers", () => {
+		const errorBlock = mobileBlocks(baseStyles).find((block) =>
+			block.includes('aria-invalid="true"'),
+		);
+		expect(errorBlock).toBeDefined();
+		expect(errorBlock).toContain(".table-scroll:not(.table-wide)");
+	});
+});
+
 describe("radio/checkbox controls", () => {
 	test("controls take the theme accent and a ~1.1rem size", () => {
 		const rule = baseStyles.match(
