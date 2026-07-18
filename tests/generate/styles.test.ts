@@ -254,6 +254,31 @@ describe("submit button focus and pressed states", () => {
 	});
 });
 
+describe("nested table scroll threshold", () => {
+	test("the scroll container itself no longer caps height", () => {
+		// an unconditional max-height traps wheel scrolling on short tables
+		const rule = baseStyles.match(/\.table-scroll \{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).not.toContain("max-height");
+		expect(rule).toContain("overflow: auto;");
+	});
+
+	test("only renderer-marked tall tables get the 75vh scroll region", () => {
+		// desktop-only: the stacked mobile layout always flows with the page
+		const block = baseStyles.match(
+			/@media \(min-width: 641px\)\s*\{\s*\.table-scroll\.table-scroll-tall\s*\{[^}]*\}\s*\}/,
+		)?.[0];
+		expect(block).toBeDefined();
+		expect(block).toContain("max-height: 75vh;");
+	});
+
+	test("print resets the tall variant too", () => {
+		const print = baseStyles.match(/@media print\s*\{[\s\S]*?\n\}/)?.[0];
+		expect(print).toBeDefined();
+		expect(print).toContain(".table-scroll.table-scroll-tall");
+	});
+});
+
 describe("invalid state styling", () => {
 	test("invalid text inputs and textareas take the error border", () => {
 		const rule = baseStyles.match(

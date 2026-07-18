@@ -67,6 +67,13 @@ ${cells}
 	return `${rowHtml}\n${commentHtml}`;
 }
 
+/**
+ * Rendered tbody rows above which the container is marked tall and styles.ts
+ * gives it its own scroll region (max-height). Short tables stay unmarked so
+ * they flow with the page instead of trapping wheel scrolling.
+ */
+const TALL_TABLE_ROW_THRESHOLD = 10;
+
 export function renderTable(item: TableItem, options: TableOptions): string {
 	const headCells = item.choices
 		.map(
@@ -77,9 +84,14 @@ export function renderTable(item: TableItem, options: TableOptions): string {
 	const bodyRows = item.items
 		.map((row, rowIndex) => renderRow(item, row, rowIndex, options))
 		.join("\n");
+	const renderedRows = item.items.length * (options.commentPerRow ? 2 : 1);
+	const scrollClass =
+		renderedRows > TALL_TABLE_ROW_THRESHOLD
+			? "table-scroll table-scroll-tall"
+			: "table-scroll";
 	// Explicit ARIA roles mirror the implicit table semantics: the stacked
 	// mobile layout (display: block in styles.ts) would otherwise strip them.
-	return `<div class="table-scroll">
+	return `<div class="${scrollClass}">
 <table class="choice-table" role="table" data-table-for="${escapeAttr(item.id)}" aria-labelledby="${escapeAttr(labelId(item.id))}">
 <thead role="rowgroup">
 <tr role="row"><th role="columnheader" class="table-corner"></th>${headCells}</tr>

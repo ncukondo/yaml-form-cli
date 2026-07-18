@@ -120,7 +120,6 @@ button[type="submit"]:disabled {
 /* choice_table / rubric: scrolling table with sticky header + row labels */
 .table-scroll {
 	overflow: auto;
-	max-height: 75vh;
 	border: 1px solid var(--border);
 	border-radius: 0.375rem;
 }
@@ -302,11 +301,23 @@ textarea[aria-invalid="true"]:focus {
 	}
 }
 
+/* Nested scroll region only for tall tables — the renderer marks containers
+   with more than 10 rendered rows (choice-table.ts); an unconditional
+   max-height would trap wheel scrolling on short tables. Desktop widths
+   only: the stacked mobile layout always flows with the page. Kept above
+   the print block so the print reset wins on equal specificity. */
+@media (min-width: 641px) {
+	.table-scroll.table-scroll-tall {
+		max-height: 75vh;
+	}
+}
+
 /* Print: tables must paginate instead of scrolling, sticky cells must flow
    with the page, and screen-only chrome (submit button, scroll cues) is
    meaningless on paper. */
 @media print {
-	.table-scroll {
+	.table-scroll,
+	.table-scroll.table-scroll-tall {
 		max-height: none;
 		overflow: visible;
 	}

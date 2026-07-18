@@ -422,3 +422,57 @@ describe("table required validation", () => {
 		);
 	});
 });
+
+describe("tall-table scroll threshold marker", () => {
+	function choiceTableYaml(rows: number): string {
+		const items = Array.from({ length: rows }, (_, i) => `      - row_${i}`);
+		return [
+			"title: T",
+			"items:",
+			"  - type: choice_table",
+			"    id: t",
+			"    title: Table",
+			'    choices: ["a", "b"]',
+			"    items:",
+			...items,
+		].join("\n");
+	}
+
+	function commentedRubricYaml(rows: number): string {
+		const items = Array.from(
+			{ length: rows },
+			(_, i) => `      - { id: c${i}, title: C${i}, descriptors: ["x", "y"] }`,
+		);
+		return [
+			"title: T",
+			"items:",
+			"  - type: rubric",
+			"    id: r",
+			"    title: Rubric",
+			"    comment_per_row: true",
+			"    choices:",
+			'      - { title: "A", value: "1" }',
+			'      - { title: "B", value: "2" }',
+			"    items:",
+			...items,
+		].join("\n");
+	}
+
+	test("a short table scrolls with the page: no tall marker", async () => {
+		const doc = await loadDom(choiceTableYaml(10));
+		const scroll = doc.querySelector(".table-scroll");
+		expect(scroll).not.toBeNull();
+		expect(scroll?.classList.contains("table-scroll-tall")).toBe(false);
+	});
+
+	test("a table above the row threshold is marked tall", async () => {
+		const doc = await loadDom(choiceTableYaml(11));
+		expect(doc.querySelector(".table-scroll.table-scroll-tall")).not.toBeNull();
+	});
+
+	test("per-row comment rows count toward the threshold", async () => {
+		// 6 criteria x (row + comment row) = 12 rendered rows
+		const doc = await loadDom(commentedRubricYaml(6));
+		expect(doc.querySelector(".table-scroll.table-scroll-tall")).not.toBeNull();
+	});
+});
