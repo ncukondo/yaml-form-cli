@@ -10,7 +10,7 @@ title: "Test Form" # title of form
 # successful submit clears the draft. Set id (and bump version on changes)
 # when autosave matters. Consider false for shared/kiosk devices.
 description: |
-  Desctiption of form
+  Description of form
   You can use multiple line text
   URLs are auto linked -> https://sample.com/
 # description of form. This is optional.
@@ -98,7 +98,8 @@ items:
       - "option1"
       - "option2"
       - "option3"
-      - { title: "option4", value: "value4" } # You can specify the value of the choice item.
+      - title: "option4"
+        value: "value4"  # You can specify the value of the choice item.
 
   - type: "choice_table"
     id: "choice_table_sample"
