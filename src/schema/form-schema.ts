@@ -141,6 +141,8 @@ const messagesSchema = z.strictObject({
 	submit_failed: messageOverride,
 	submit_success: messageOverride,
 	comment: messageOverride,
+	noscript_warning: messageOverride,
+	clear_selection: messageOverride,
 } satisfies Record<MessageKey, typeof messageOverride>);
 
 export const formSchema = z

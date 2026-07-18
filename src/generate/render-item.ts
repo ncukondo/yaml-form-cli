@@ -35,10 +35,7 @@ function renderLongText(item: LongTextItem): string {
 	return `<textarea name="${escapeAttr(item.id)}" id="${escapeAttr(inputId(item.id))}"${ariaAttrs(item)}></textarea>`;
 }
 
-// Constant so task 0015 can route it through its message table once landed.
-export const CLEAR_SELECTION_LABEL = "Clear selection";
-
-function renderChoice(item: ChoiceItem): string {
+function renderChoice(item: ChoiceItem, messages: Messages): string {
 	const kind = item.multiple ? "checkbox" : "radio";
 	const options = item.choices
 		.map(
@@ -52,7 +49,7 @@ function renderChoice(item: ChoiceItem): string {
 	const clear =
 		item.required || item.multiple
 			? ""
-			: `\n<button type="button" class="choice-clear">${escapeHtml(CLEAR_SELECTION_LABEL)}</button>`;
+			: `\n<button type="button" class="choice-clear">${escapeHtml(messages.clear_selection)}</button>`;
 	return `<div class="choice-options" role="group" aria-labelledby="${escapeAttr(labelId(item.id))}"${ariaAttrs(item)}>\n${options}${clear}\n</div>`;
 }
 
@@ -65,7 +62,7 @@ function renderControl(item: FormItem, messages: Messages): string {
 		case "long_text":
 			return renderLongText(item);
 		case "choice":
-			return renderChoice(item);
+			return renderChoice(item, messages);
 		case "choice_table":
 			return renderChoiceTable(item, messages);
 		case "rubric":

@@ -12,6 +12,8 @@ export const MESSAGE_KEYS = [
 	"submit_failed",
 	"submit_success",
 	"comment",
+	"noscript_warning",
+	"clear_selection",
 ] as const;
 
 export type MessageKey = (typeof MESSAGE_KEYS)[number];
@@ -28,6 +30,9 @@ export const BUILTIN_MESSAGES: Record<"en" | "ja", Messages> = {
 		submit_failed: "Submission failed. Please try again.",
 		submit_success: "Your response has been submitted.",
 		comment: "Comment — {row}",
+		noscript_warning:
+			"This form requires JavaScript. Enable JavaScript and reload the page to fill it in.",
+		clear_selection: "Clear selection",
 	},
 	ja: {
 		required: "「{title}」は必須です。",
@@ -38,6 +43,9 @@ export const BUILTIN_MESSAGES: Record<"en" | "ja", Messages> = {
 		submit_failed: "送信に失敗しました。もう一度お試しください。",
 		submit_success: "回答を送信しました。",
 		comment: "コメント — {row}",
+		noscript_warning:
+			"このフォームの入力には JavaScript が必要です。JavaScript を有効にしてページを再読み込みしてください。",
+		clear_selection: "選択を解除",
 	},
 };
 

@@ -79,6 +79,58 @@ describe("built-in ja bundle", () => {
 	});
 });
 
+const optionalChoiceYaml = `
+items:
+  - type: choice
+    id: pick
+    title: 選択
+    choices: [a, b]
+`;
+
+function noscriptOf(html: string): string {
+	// DOM parsers treat noscript content as text, so assert on the raw HTML.
+	return html.match(/<noscript>.*?<\/noscript>/s)?.[0] ?? "";
+}
+
+describe("noscript warning and clear-selection label", () => {
+	test("lang: ja localizes the noscript warning", async () => {
+		const { html } = await loadDom(`title: T\nlang: ja\n${optionalChoiceYaml}`);
+		const noscript = noscriptOf(html);
+		expect(noscript).toContain("JavaScript を有効に");
+		expect(noscript).not.toContain("requires JavaScript");
+	});
+
+	test("lang: ja localizes the clear-selection button", async () => {
+		const { document } = await loadDom(
+			`title: T\nlang: ja\n${optionalChoiceYaml}`,
+		);
+		expect(document.querySelector("button.choice-clear")?.textContent).toBe(
+			"選択を解除",
+		);
+	});
+
+	test("messages.noscript_warning override wins over the bundle", async () => {
+		const { html } = await loadDom(`
+title: T
+lang: ja
+messages:
+  noscript_warning: JS を有効にしてください
+${optionalChoiceYaml}`);
+		expect(noscriptOf(html)).toContain("JS を有効にしてください");
+	});
+
+	test("messages.clear_selection override wins over the bundle", async () => {
+		const { document } = await loadDom(`
+title: T
+messages:
+  clear_selection: やり直す
+${optionalChoiceYaml}`);
+		expect(document.querySelector("button.choice-clear")?.textContent).toBe(
+			"やり直す",
+		);
+	});
+});
+
 describe("message overrides", () => {
 	test("override the submit label on top of the bundle", async () => {
 		const { document } = await loadDom(`
