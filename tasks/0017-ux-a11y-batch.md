@@ -1,6 +1,6 @@
 # Task 0017: UX/a11y batch — reduced-motion, live error clearing, input types, radio deselect, touch targets, noscript
 
-Status: todo
+Status: done
 Depends on: 0012 (error lifecycle), 0016 (spacing/tokens)
 Parallel: no — touches `form.ts`, `render-item.ts`, `styles.ts`, schema
 
@@ -56,11 +56,11 @@ Refactor: keep sub-items as separate commits.
 
 ## Acceptance criteria
 
-- [ ] All seven sub-items implemented with tests
-- [ ] Decision recorded for the schema additions (`input_type`,
-      `autocomplete`)
-- [ ] Docs/examples updated for the new schema fields
-- [ ] `bun test` and `bun run typecheck` pass
+- [x] All seven sub-items implemented with tests
+- [x] Decision recorded for the schema additions (`input_type`,
+      `autocomplete`) — [decision 0011](../decisions/0011-input-types.md)
+- [x] Docs/examples updated for the new schema fields
+- [x] `bun test` and `bun run typecheck` pass
 
 ## Verification
 
