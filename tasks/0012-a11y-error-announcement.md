@@ -1,6 +1,6 @@
 # Task 0012: a11y — validation error announcement, focus, and invalid styling
 
-Status: todo
+Status: done
 Depends on: 0011, 0016
 Parallel: no — touches `src/runtime/form.ts`, `render-item.ts`, `styles.ts`
 
@@ -54,10 +54,10 @@ input itself (WCAG 3.3.1).
 
 ## Acceptance criteria
 
-- [ ] Errors are announced (role=alert) and first invalid field is focused
-- [ ] Invalid inputs/rows are visibly outlined with `--error`
-- [ ] State fully clears once the field passes validation
-- [ ] `bun test` and `bun run typecheck` pass
+- [x] Errors are announced (role=alert) and first invalid field is focused
+- [x] Invalid inputs/rows are visibly outlined with `--error`
+- [x] State fully clears once the field passes validation
+- [x] `bun test` and `bun run typecheck` pass
 
 ## Verification
 
