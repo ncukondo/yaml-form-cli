@@ -34,12 +34,12 @@ Rules:
 | [0012 a11y: error announcement & invalid styling](archive/0012-a11y-error-announcement.md) (#4 #12) | 0011, 0016 | — | done |
 | [0013 Submit flow a11y & double-submit guard](archive/0013-submit-flow-a11y-ux.md) (#5 #9) | 0010 | B | done |
 | [0014 Table cell a11y & mobile semantics](archive/0014-table-cell-a11y.md) (#6) | 0010 | B | done |
-| [0015 i18n: lang & messages](0015-i18n-lang-and-messages.md) (#7) | 0012, 0013, 0014 | — | todo |
+| [0015 i18n: lang & messages](archive/0015-i18n-lang-and-messages.md) (#7) | 0012, 0013, 0014 | — | done |
 | [0016 Theme contrast fixes](archive/0016-theme-contrast.md) (#8 #11 #13) | 0010 | B | done |
-| [0017 UX/a11y batch](0017-ux-a11y-batch.md) (#10) | 0012, 0016 | — | todo |
+| [0017 UX/a11y batch](archive/0017-ux-a11y-batch.md) (#10) | 0012, 0016 | — | done |
 | [0018 Table scroll affordance](archive/0018-table-scroll-affordance.md) (#14) | 0016 | — | done |
-| [0019 Mobile wide-table layout](0019-mobile-wide-tables.md) (#15) | 0014, 0018 | — | todo |
-| [0020 UI polish batch](0020-ui-polish-batch.md) (#16) | 0013, 0016, 0018 | — | todo |
+| [0019 Mobile wide-table layout](archive/0019-mobile-wide-tables.md) (#15) | 0014, 0018 | — | done |
+| [0020 UI polish batch](archive/0020-ui-polish-batch.md) (#16) | 0013, 0016, 0018 | — | done |
 
 Group A tasks touch disjoint areas (runtime modules / generator modules /
 CLI entry) and can proceed in parallel worktrees once 0003 lands.
