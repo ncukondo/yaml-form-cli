@@ -79,7 +79,8 @@ textarea { min-height: 6rem; resize: vertical; }
 	display: flex;
 	align-items: baseline;
 	gap: 0.5rem;
-	padding: 0.15rem 0;
+	/* row height ≥ 24px (WCAG 2.5.8) even at line-height 1 */
+	padding: 0.25rem 0;
 	cursor: pointer;
 }
 input[type="radio"], input[type="checkbox"] {
