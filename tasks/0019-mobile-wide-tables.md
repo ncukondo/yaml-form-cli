@@ -1,6 +1,6 @@
 # Task 0019: Mobile layout for many-column choice_tables
 
-Status: todo
+Status: done
 Depends on: 0014 (mobile semantics), 0018 (table styles)
 Parallel: no — shares `src/generate/styles.ts` / table renderers
 
@@ -48,11 +48,11 @@ mobile without becoming an 80-item vertical radio list.
 
 ## Acceptance criteria
 
-- [ ] Decision recorded
-- [ ] 10×8 table is usable on a 375px viewport without an 80-row list
-- [ ] Few-column tables (rubric) unchanged
-- [ ] Payload shape identical to desktop for the same answers
-- [ ] `bun test` and `bun run typecheck` pass
+- [x] Decision recorded (`decisions/0012-mobile-wide-tables.md`)
+- [x] 10×8 table is usable on a 375px viewport without an 80-row list
+- [x] Few-column tables (rubric) unchanged
+- [x] Payload shape identical to desktop for the same answers
+- [x] `bun test` and `bun run typecheck` pass
 
 ## Verification
 
