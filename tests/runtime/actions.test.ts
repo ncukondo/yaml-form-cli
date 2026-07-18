@@ -398,6 +398,7 @@ describe("submit flow in the generated page", () => {
 	test("shows the success screen with post_submit.message and logs the payload", async () => {
 		const { document, window } = await loadDom(`
 title: T
+description: "How to fill in this form"
 actions:
   - type: log
 post_submit:
@@ -417,6 +418,11 @@ items:
 		const success = document.querySelector("#yaml-form-success");
 		expect(success?.hasAttribute("hidden")).toBe(false);
 		expect(success?.textContent).toBe("Custom thanks");
+		// Success screen keeps the form title but hides the description
+		expect(document.querySelector("h1")?.textContent).toBe("T");
+		expect(
+			document.querySelector(".form-description")?.hasAttribute("hidden"),
+		).toBe(true);
 		const payload = logSpy.mock.calls[0]?.[0] as unknown as SubmitPayload;
 		expect(payload.payload_version).toBe(1);
 		expect(payload.generator).toMatch(/^yaml-form\/\d+\.\d+\.\d+$/);

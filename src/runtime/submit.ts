@@ -89,6 +89,8 @@ function defaultEnv(doc: Document): ActionEnv {
 
 function showSuccess(doc: Document, form: Form): void {
 	doc.querySelector("form#yaml-form")?.setAttribute("hidden", "");
+	// Keep the form title as context; the fill-in instructions are done with.
+	doc.querySelector(".form-description")?.setAttribute("hidden", "");
 	const successEl = doc.querySelector("#yaml-form-success");
 	if (!successEl) return;
 	successEl.textContent = form.post_submit?.message ?? DEFAULT_SUCCESS_MESSAGE;

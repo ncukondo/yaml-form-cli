@@ -195,7 +195,8 @@ actions:
 Result handling:
 
 - On success of all actions: the form is replaced by a success screen showing
-  `post_submit.message` (default message if unset).
+  the form title and `post_submit.message` (default message if unset); the
+  form description is hidden.
 - On failure: the form stays (input preserved) with a submission-failure
   message; the user can retry. Actions run sequentially and stop at the first
   failure; retrying runs all actions again, so endpoints should tolerate
