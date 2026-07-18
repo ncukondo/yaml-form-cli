@@ -5,7 +5,8 @@ HTML file**: no external resources, all CSS/JS inlined, works offline and via
 `file://`. The generated page renders the form, validates input, evaluates
 conditional visibility, and executes submit actions entirely client-side.
 
-The canonical example is [`examples/sample.yaml`](../examples/sample.yaml).
+The canonical example is [`examples/sample.yaml`](../examples/sample.yaml);
+a Japanese form is at [`examples/sample-ja.yaml`](../examples/sample-ja.yaml).
 
 ## CLI
 
@@ -43,6 +44,8 @@ the top of your YAML:
 | `title`       | string             | yes      | Form title |
 | `id`          | string             | no       | Form identifier, echoed into the submit payload as `form.id` |
 | `version`     | string             | no       | Form definition version, echoed as `form.version` |
+| `lang`        | string             | no       | BCP 47 language tag (default `en`); sets `<html lang>` and selects the built-in UI strings (see [Language and UI strings](#language-and-ui-strings-lang-messages)) |
+| `messages`    | object             | no       | Per-string overrides of the built-in UI strings |
 | `description` | string             | no       | Multi-line supported; URLs are auto-linked |
 | `actions`     | action[] \| action | no       | Actions executed on submit (see [Actions](#actions)). A single mapping is treated as a one-element array |
 | `post_submit` | object             | no       | `message`: text displayed on the success screen |
@@ -166,6 +169,41 @@ Notes:
   keys; a typo or stale reference (e.g. after toggling `comment_per_row`)
   fails generation instead of silently hiding items.
 
+### Language and UI strings (`lang`, `messages`)
+
+`lang` (default `"en"`) is emitted verbatim as `<html lang="…">` and selects
+the built-in translation of every fixed UI string. Built-in bundles: `en`,
+`ja` (a region subtag like `ja-JP` selects the `ja` bundle). An unknown tag
+still sets `<html lang>` but falls back to the English strings — override
+them via `messages`.
+
+`messages` overrides individual strings on top of the selected bundle.
+Unknown keys are a generation error. `{name}` placeholders are interpolated;
+unknown placeholders are left as-is.
+
+| Key               | Placeholders       | English default (`en`) |
+| ----------------- | ------------------ | ---------------------- |
+| `required`        | `{title}` = item title | `"{title}" is required.` |
+| `required_row`    | `{row}` = row title, `{title}` | `"{row}" in "{title}" is required.` |
+| `required_legend` | `{mark}` = the `*` required mark | `{mark} indicates required` |
+| `submit`          | —                  | `Submit` |
+| `submitting`      | —                  | `Submitting…` |
+| `submit_failed`   | —                  | `Submission failed. Please try again.` |
+| `submit_success`  | —                  | `Your response has been submitted.` |
+| `comment`         | `{row}` = row title | `Comment — {row}` |
+
+```yaml
+lang: ja
+messages:
+  required: "「{title}」を入力してください。"
+  submit: "回答を送信"
+```
+
+`post_submit.message`, when set, takes precedence over
+`messages.submit_success`. See
+[`examples/sample-ja.yaml`](../examples/sample-ja.yaml) for a complete
+Japanese form.
+
 ### Actions
 
 `actions` is an array of action objects executed in order after client-side
@@ -241,6 +279,9 @@ Presentation Rubric:
 - Valid standalone HTML5 document; all assets inlined; no network access
   needed at generation time or in the browser (except a `post` action's own
   request).
+- `<html lang="…">` declares the form's language (`lang`, default `en`); all
+  fixed UI strings follow it (see
+  [Language and UI strings](#language-and-ui-strings-lang-messages)).
 - Reasonable default styling; readable on mobile.
 - `choice_table` / `rubric` tables: the header row (scale) and the row-label
   column (questions/criteria) stay fixed while the table scrolls; on screens
