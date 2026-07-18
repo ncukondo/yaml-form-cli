@@ -7,6 +7,7 @@ export type FormErrorCode =
 	| "descriptor_count_mismatch"
 	| "rubric_multiple_not_allowed"
 	| "unknown_item_type"
+	| "hidden_visible_when_conflict"
 	| "unknown_rule_key"
 	| "rule_syntax_error";
 

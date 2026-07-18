@@ -23,6 +23,12 @@ describe("JSON Schema emission", () => {
 		expect(schema.required).toEqual(expect.arrayContaining(["title", "items"]));
 	});
 
+	test("constant items expose from_url and hidden", () => {
+		const rendered = renderJsonSchema();
+		expect(rendered).toContain('"from_url"');
+		expect(rendered).toContain('"hidden"');
+	});
+
 	test("checked-in schema/yaml-form.schema.json is up to date", async () => {
 		const file = Bun.file(
 			new URL("../../schema/yaml-form.schema.json", import.meta.url).pathname,

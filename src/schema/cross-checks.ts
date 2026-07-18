@@ -40,6 +40,18 @@ export function crossChecks(raw: unknown): FormError[] {
 		}
 
 		if (
+			item.type === "constant" &&
+			item.hidden === true &&
+			typeof item.visible_when === "string"
+		) {
+			errors.push({
+				code: "hidden_visible_when_conflict",
+				path: formatPath(["items", i, "visible_when"]),
+				message: `Constant "${String(item.id ?? "")}" combines hidden: true with visible_when — a display rule on an item that is never rendered is a contradiction; remove one of the two`,
+			});
+		}
+
+		if (
 			(item.type === "choice_table" || item.type === "rubric") &&
 			Array.isArray(item.items)
 		) {

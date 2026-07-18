@@ -64,6 +64,10 @@ const constantItemSchema = z.strictObject({
 	type: z.literal("constant"),
 	...commonItemFields,
 	value: z.string(),
+	// Decision 0013: opt-in URL override and static hiding, constant only.
+	// `value` stays required as the fallback when the parameter is absent.
+	from_url: z.boolean().default(false),
+	hidden: z.boolean().default(false),
 });
 
 // Text-like single-line input types only (decision 0011): they keep the
