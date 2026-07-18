@@ -7,6 +7,7 @@
 	"scripts": {
 		"test": "bun test",
 		"typecheck": "bun x tsc --noEmit",
+		"build:schema": "bun scripts/build-schema.ts",
 		"lint": "bun x biome check .",
 		"format": "bun x biome format --write .",
 		"check": "bun run typecheck && bun run lint && bun test"
@@ -15,5 +16,9 @@
 		"@biomejs/biome": "^2.5.4",
 		"@types/bun": "latest",
 		"typescript": "^5.8.0"
+	},
+	"dependencies": {
+		"yaml": "^2.9.0",
+		"zod": "^4.4.3"
 	}
 }

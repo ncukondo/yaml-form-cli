@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../schema/yaml-form.schema.json
 # This is a sample YAML definition for the form.
 # Texts after # are comments and are ignored.
 
