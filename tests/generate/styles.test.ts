@@ -194,6 +194,24 @@ describe("print styles", () => {
 	});
 });
 
+describe(":has() fallback for the mobile comment-row merge", () => {
+	test("non-supporting browsers render the comment as its own card", () => {
+		// the merged look relies on tr.table-row:has(+ tr.table-comment-row);
+		// without :has() the row keeps its bottom border and radius, so the
+		// fallback must give the trailing comment row a complete card of its own
+		const block = baseStyles.match(
+			/@supports not selector\(:has\(\*\)\)\s*\{[\s\S]*?\n\}/,
+		)?.[0];
+		expect(block).toBeDefined();
+		expect(block).toContain("@media (max-width: 640px)");
+		const rule = block?.match(/tr\.table-comment-row\s*\{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("border-top: 1px solid var(--border);");
+		expect(rule).toContain("border-radius: 0.375rem;");
+		expect(rule).toContain("margin-top: 0;");
+	});
+});
+
 describe("invalid state styling", () => {
 	test("invalid text inputs and textareas take the error border", () => {
 		const rule = baseStyles.match(

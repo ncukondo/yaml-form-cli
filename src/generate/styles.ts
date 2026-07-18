@@ -322,6 +322,21 @@ textarea[aria-invalid="true"]:focus {
 	button[type="submit"] { display: none; }
 }
 
+/* Fallback for the mobile comment-row merge, which relies on
+   tr.table-row:has(+ tr.table-comment-row) (stacked-layout block above).
+   Browsers without :has() leave the row card its bottom border and full
+   radius, so tucking the comment underneath would clash; render the comment
+   as a complete card of its own right below the row instead. */
+@supports not selector(:has(*)) {
+	@media (max-width: 640px) {
+		.choice-table tr.table-comment-row {
+			border-top: 1px solid var(--border);
+			border-radius: 0.375rem;
+			margin-top: 0;
+		}
+	}
+}
+
 /* Constant items are read-only content, not disabled inputs: an info box.
    Overrides the muted color set in the base rule above. */
 .constant-value {
