@@ -162,6 +162,25 @@ items:
 	});
 });
 
+describe("error slot announcement attributes", () => {
+	test("item error slot is an alert with a stable id", () => {
+		const slot = document.querySelector('[data-error-for="id_sample"]');
+		expect(slot?.getAttribute("role")).toBe("alert");
+		expect(slot?.id).toBe("error-id_sample");
+	});
+
+	test("every item-level error slot carries role=alert and error-<id>", () => {
+		const slots = Array.from(
+			document.querySelectorAll(".form-item > [data-error-for]"),
+		);
+		expect(slots.length).toBeGreaterThan(0);
+		for (const slot of slots) {
+			expect(slot.getAttribute("role")).toBe("alert");
+			expect(slot.id).toBe(`error-${slot.getAttribute("data-error-for")}`);
+		}
+	});
+});
+
 describe("required legend", () => {
 	test("form shows a required legend when any item is required", () => {
 		const legend = document.querySelector("form#yaml-form .required-legend");

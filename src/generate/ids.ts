@@ -11,3 +11,8 @@ export function labelId(itemId: string): string {
 export function descriptionId(itemId: string): string {
 	return `desc-${itemId}`;
 }
+
+/** key is an item id, or `<item id>.<row key>` for table-row error slots. */
+export function errorId(key: string): string {
+	return `error-${key}`;
+}
