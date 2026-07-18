@@ -1,6 +1,6 @@
 # Task 0023: Draft autosave to localStorage
 
-Status: todo
+Status: done
 Depends on: 0022
 Parallel: no — extends 0022's runtime modules and the page skeleton
 
@@ -82,16 +82,16 @@ feature off.
 
 ## Acceptance criteria
 
-- [ ] Edit → close → reopen same URL restores answers, with a visible,
+- [x] Edit → close → reopen same URL restores answers, with a visible,
       screen-reader-announced notice and a working discard button
-- [ ] Opening a different distribution URL (different recognized params)
+- [x] Opening a different distribution URL (different recognized params)
       starts pristine
-- [ ] Successful `post`/`log` submit clears the draft; `mailto` submit and
+- [x] Successful `post`/`log` submit clears the draft; `mailto` submit and
       failed submits keep it
-- [ ] Untouched forms write nothing; `autosave: false` disables everything
-- [ ] Corrupt or stale drafts never break rendering
-- [ ] `bun run check` passes
-- [ ] `docs/reference.md` documents autosave incl. the shared-device warning
+- [x] Untouched forms write nothing; `autosave: false` disables everything
+- [x] Corrupt or stale drafts never break rendering
+- [x] `bun run check` passes
+- [x] `docs/reference.md` documents autosave incl. the shared-device warning
       and the `form.id` recommendation; example/README updated
 
 ## Verification
