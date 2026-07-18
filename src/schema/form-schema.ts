@@ -160,6 +160,8 @@ export const formSchema = z
 			)
 			.default("en"),
 		messages: messagesSchema.optional(),
+		// Decision 0014: draft autosave to localStorage, on unless opted out.
+		autosave: z.boolean().default(true),
 		id: z.string().min(1).optional(),
 		version: z.string().min(1).optional(),
 		description: z.string().optional(),

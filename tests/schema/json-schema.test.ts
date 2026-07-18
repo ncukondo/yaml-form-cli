@@ -23,6 +23,12 @@ describe("JSON Schema emission", () => {
 		expect(schema.required).toEqual(expect.arrayContaining(["title", "items"]));
 	});
 
+	test("top level exposes autosave", () => {
+		const schema = emitJsonSchema() as Record<string, unknown>;
+		const properties = schema.properties as Record<string, unknown>;
+		expect(Object.keys(properties)).toContain("autosave");
+	});
+
 	test("constant items expose from_url and hidden", () => {
 		const rendered = renderJsonSchema();
 		expect(rendered).toContain('"from_url"');
