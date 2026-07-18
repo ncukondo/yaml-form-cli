@@ -1,6 +1,6 @@
 # Task 0016: Theme contrast fixes — borders, dark Submit button, control accent/size
 
-Status: todo
+Status: done
 Depends on: 0010
 Parallel: yes — group B (owns `src/generate/styles.ts` theme tokens)
 
@@ -49,10 +49,10 @@ a usable size.
 
 ## Acceptance criteria
 
-- [ ] Input/button borders ≥ 3:1 against their backgrounds in both themes
-- [ ] Dark-mode Submit button text ≥ 4.5:1, including hover state
-- [ ] Radios/checkboxes use the theme accent and are ~1.1rem
-- [ ] `bun test` and `bun run typecheck` pass
+- [x] Input/button borders ≥ 3:1 against their backgrounds in both themes
+- [x] Dark-mode Submit button text ≥ 4.5:1, including hover state
+- [x] Radios/checkboxes use the theme accent and are ~1.1rem
+- [x] `bun test` and `bun run typecheck` pass
 
 ## Verification
 
