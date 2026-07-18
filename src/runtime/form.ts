@@ -2,6 +2,11 @@
 // Imports from src/schema must stay type-only so the bundle carries no
 // server-side dependencies.
 import type { Form, FormItem } from "../schema/form-schema.ts";
+import {
+	applyVisibility,
+	createVisibilityEvaluator,
+	type RawAnswers,
+} from "./visibility.ts";
 
 export type Answers = Record<string, string | string[]>;
 
@@ -60,9 +65,27 @@ function isAnswered(value: string | string[] | undefined): boolean {
 	return value.trim() !== "";
 }
 
-// Visibility (visible_when) is task 0004; until then every item is visible.
-function isItemVisible(_doc: Document, _item: FormItem): boolean {
-	return true;
+// Answers of every item as rules see them, regardless of visibility; the
+// visibility pass itself excludes hidden items' answers.
+function readRawAnswers(doc: Document, form: Form): RawAnswers {
+	const raw: RawAnswers = {};
+	for (const item of form.items) {
+		if (item.type === "constant") {
+			raw[item.id] = item.value;
+			continue;
+		}
+		const value = readItemValue(doc, item);
+		if (value !== undefined) raw[item.id] = value;
+	}
+	return raw;
+}
+
+// Reflects the hidden attribute maintained by the visibility pass (initForm
+// and change events); items without a rule are always visible.
+function isItemVisible(doc: Document, item: FormItem): boolean {
+	if (item.visible_when === undefined) return true;
+	const el = doc.querySelector(`[data-item-id="${attrEscape(item.id)}"]`);
+	return el ? !el.hasAttribute("hidden") : true;
 }
 
 export function validateRequired(doc: Document): RequiredFailure[] {
@@ -131,6 +154,12 @@ function showErrors(doc: Document, failures: RequiredFailure[]): void {
 export function initForm(doc: Document): void {
 	const formEl = doc.querySelector("form#yaml-form");
 	if (!formEl) return;
+	const form = readFormData(doc);
+	const visibility = createVisibilityEvaluator(form);
+	const refreshVisibility = () =>
+		applyVisibility(doc, visibility.compute(readRawAnswers(doc, form)));
+	formEl.addEventListener("change", refreshVisibility);
+	refreshVisibility();
 	formEl.addEventListener("submit", (event) => {
 		event.preventDefault();
 		const failures = validateRequired(doc);
