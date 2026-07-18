@@ -302,6 +302,26 @@ textarea[aria-invalid="true"]:focus {
 	}
 }
 
+/* Print: tables must paginate instead of scrolling, sticky cells must flow
+   with the page, and screen-only chrome (submit button, scroll cues) is
+   meaningless on paper. */
+@media print {
+	.table-scroll {
+		max-height: none;
+		overflow: visible;
+	}
+	.table-scroll[data-scroll-end] {
+		-webkit-mask-image: none;
+		mask-image: none;
+	}
+	.table-scroll[data-scroll-start] .table-corner,
+	.table-scroll[data-scroll-start] .row-label { box-shadow: none; }
+	.choice-table thead th,
+	.choice-table .table-corner,
+	.choice-table .row-label { position: static; }
+	button[type="submit"] { display: none; }
+}
+
 /* Constant items are read-only content, not disabled inputs: an info box.
    Overrides the muted color set in the base rule above. */
 .constant-value {

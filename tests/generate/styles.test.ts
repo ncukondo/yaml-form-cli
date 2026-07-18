@@ -148,6 +148,52 @@ describe("constant item styling", () => {
 	});
 });
 
+describe("print styles", () => {
+	function printBlock(css: string): string {
+		const match = css.match(/@media print\s*\{[\s\S]*?\n\}/);
+		if (!match) throw new Error("@media print block not found");
+		return match[0];
+	}
+
+	test("tables paginate: scroll container loses max-height and overflow", () => {
+		const block = printBlock(baseStyles);
+		const rule = block.match(/\.table-scroll[^[{,]*\{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("max-height: none;");
+		expect(rule).toContain("overflow: visible;");
+	});
+
+	test("scroll cues (fade mask, sticky shadows) are dropped on paper", () => {
+		const block = printBlock(baseStyles);
+		const mask = block.match(
+			/\.table-scroll\[data-scroll-end\]\s*\{[^}]*\}/,
+		)?.[0];
+		expect(mask).toBeDefined();
+		expect(mask).toContain("mask-image: none;");
+		const shadow = block.match(
+			/\.table-scroll\[data-scroll-start\][^{]*\{[^}]*\}/,
+		)?.[0];
+		expect(shadow).toBeDefined();
+		expect(shadow).toContain("box-shadow: none;");
+	});
+
+	test("sticky header and row labels flow with the page", () => {
+		const block = printBlock(baseStyles);
+		const rule = block.match(/[^{}]*thead th[^{]*\{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("position: static;");
+		expect(rule).toContain(".row-label");
+		expect(rule).toContain(".table-corner");
+	});
+
+	test("interactive-only chrome is hidden", () => {
+		const block = printBlock(baseStyles);
+		const rule = block.match(/button\[type="submit"\][^{]*\{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("display: none;");
+	});
+});
+
 describe("invalid state styling", () => {
 	test("invalid text inputs and textareas take the error border", () => {
 		const rule = baseStyles.match(
