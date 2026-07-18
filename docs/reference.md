@@ -18,13 +18,14 @@ Options:
   --version             Show version
 
 Subcommands:
-  yaml-form upgrade     Self-upgrade to the latest released version
-                        (binary installs; npm installs upgrade via the
-                        package manager)
+  yaml-form upgrade [--dry-run]
+                        Self-upgrade a binary install to the latest release
+                        (npm installs: upgrade via your package manager)
 ```
 
-Installation: `bunx yaml-form` / `npx yaml-form`, or download a single-file
-executable from GitHub Releases.
+Installation: `bunx @ncukondo/yaml-form` / `npx @ncukondo/yaml-form`, or
+download a single-file executable from
+[GitHub Releases](https://github.com/ncukondo/yaml-form-cli/releases).
 
 ## YAML format
 
@@ -89,9 +90,10 @@ the top of your YAML:
   - `multiple` is not allowed.
   - `comment_per_row` (default `false`): adds a free-text box under each row.
     When `true`, each row's answer is submitted as
-    `{ "value": <selected value>, "comment": <text> }` (comment omitted when
-    empty) instead of the bare value, referenced from rules as
-    `<rubric_id>.<row_id>.value` / `<rubric_id>.<row_id>.comment`.
+    `{ "value": <selected value>, "comment": <text> }` instead of the bare
+    value, referenced from rules as `<rubric_id>.<row_id>.value` /
+    `<rubric_id>.<row_id>.comment`. `value` and `comment` are each omitted
+    when unset/empty; a row with neither is omitted entirely.
   - There is no built-in N/A: model it as a regular column, e.g.
     `{ title: "N/A", value: "NA" }`, giving it a descriptor in each row.
   - No score is computed; the selected values are submitted per row.

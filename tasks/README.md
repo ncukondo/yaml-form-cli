@@ -28,8 +28,8 @@ Rules:
 | [0006 Submit actions runtime](archive/0006-actions-runtime.md) | 0003 | A | done |
 | [0007 Rule-key validation](archive/0007-rule-key-validation.md) | 0002 | A | done |
 | [0008 CLI](archive/0008-cli.md) | 0003 | A | done |
-| [0009 Distribution & upgrade](0009-distribution.md) | 0008 | — | todo |
-| [0010 Release docs verification](0010-release-docs.md) | 0009 | — | todo |
+| [0009 Distribution & upgrade](archive/0009-distribution.md) | 0008 | — | done |
+| [0010 Release docs verification](archive/0010-release-docs.md) | 0009 | — | done |
 
 Group A tasks touch disjoint areas (runtime modules / generator modules /
 CLI entry) and can proceed in parallel worktrees once 0003 lands.

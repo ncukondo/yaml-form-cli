@@ -111,7 +111,7 @@ describe("basic item rendering", () => {
 		expect(values).toContain("value4");
 	});
 
-	test("choice_table and rubric render placeholders for now", () => {
+	test("choice_table and rubric render containers with their ids", () => {
 		expect(
 			document.querySelector('[data-item-id="choice_table_sample"]'),
 		).not.toBeNull();

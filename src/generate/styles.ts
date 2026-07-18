@@ -83,13 +83,6 @@ textarea { min-height: 6rem; resize: vertical; }
 	font-size: 0.9rem;
 	margin: 0.35rem 0 0;
 }
-.placeholder {
-	color: var(--muted);
-	font-style: italic;
-	border: 1px dashed var(--border);
-	border-radius: 0.375rem;
-	padding: 0.75rem;
-}
 button[type="submit"] {
 	font: inherit;
 	font-weight: 600;

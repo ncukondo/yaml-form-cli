@@ -243,6 +243,8 @@ export function initForm(doc: Document): void {
 	const refreshVisibility = () =>
 		applyVisibility(doc, visibility.compute(readRawAnswers(doc, form)));
 	formEl.addEventListener("change", refreshVisibility);
+	// text fields fire "input" per keystroke; "change" only on commit
+	formEl.addEventListener("input", refreshVisibility);
 	refreshVisibility();
 	formEl.addEventListener("submit", (event) => {
 		event.preventDefault();

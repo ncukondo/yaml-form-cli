@@ -179,6 +179,22 @@ items:
 		expect(isHidden(doc, "dep")).toBe(false);
 	});
 
+	test("text input re-evaluates per keystroke (input event), not only on change", async () => {
+		const doc = await loadDom(`
+title: T
+items:
+  - { type: short_text, id: code, title: Code }
+  - { type: short_text, id: dep, title: Dep, visible_when: 'code = "42"' }
+`);
+		const input = doc.querySelector<HTMLInputElement>('[name="code"]');
+		if (!input) throw new Error("no input");
+		input.value = "42";
+		const EventCtor = (doc.defaultView as unknown as { Event: typeof Event })
+			.Event;
+		input.dispatchEvent(new EventCtor("input", { bubbles: true }));
+		expect(isHidden(doc, "dep")).toBe(false);
+	});
+
 	test("chained visibility in the DOM", async () => {
 		const doc = await loadDom(`
 title: T
