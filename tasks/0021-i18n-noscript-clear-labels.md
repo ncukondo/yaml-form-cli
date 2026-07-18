@@ -1,6 +1,6 @@
 # Task 0021: i18n — route noscript warning & clear-selection label through messages
 
-Status: todo
+Status: done
 Depends on: 0015, 0017
 Parallel: yes — sole task in flight
 
@@ -50,11 +50,11 @@ the 0015 message table, so `lang: ja` forms show no English anywhere.
 
 ## Acceptance criteria
 
-- [ ] `lang: ja` form contains no English text in noscript warning or
+- [x] `lang: ja` form contains no English text in noscript warning or
       clear-selection button
-- [ ] Both strings overridable via `messages:`
-- [ ] JSON Schema + docs updated
-- [ ] `bun run check` passes
+- [x] Both strings overridable via `messages:`
+- [x] JSON Schema + docs updated
+- [x] `bun run check` passes
 
 ## Verification
 
