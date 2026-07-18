@@ -328,9 +328,7 @@ export function initForm(doc: Document): void {
 	// "Clear selection" on optional single-choice items: unticking radios is
 	// impossible for the user, so the generator emits a .choice-clear button.
 	formEl.addEventListener("click", (event) => {
-		const button = (event.target as Element | null)?.closest?.(
-			".choice-clear",
-		);
+		const button = (event.target as Element | null)?.closest?.(".choice-clear");
 		const itemId = button
 			?.closest("[data-item-id]")
 			?.getAttribute("data-item-id");

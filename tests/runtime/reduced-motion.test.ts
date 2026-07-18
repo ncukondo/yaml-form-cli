@@ -44,7 +44,7 @@ function submitForm(doc: Document) {
 
 function spyScroll(doc: Document) {
 	const item = doc.querySelector('[data-item-id="name"]') as HTMLElement;
-	const spy = mock(() => {});
+	const spy = mock((_options?: { behavior: string; block: string }) => {});
 	(item as unknown as { scrollIntoView: unknown }).scrollIntoView = spy;
 	return spy;
 }

@@ -183,9 +183,9 @@ describe("live error clearing on edit", () => {
 
 		expect(group?.hasAttribute("aria-invalid")).toBe(false);
 		expect(group?.hasAttribute("aria-describedby")).toBe(false);
-		expect(
-			document.querySelector("#error-pick")?.hasAttribute("hidden"),
-		).toBe(true);
+		expect(document.querySelector("#error-pick")?.hasAttribute("hidden")).toBe(
+			true,
+		);
 	});
 
 	test("answering a failed table row clears that row's error only", async () => {
