@@ -1,6 +1,6 @@
 # Task 0011: a11y — field labels, group names, required semantics
 
-Status: todo
+Status: done
 Depends on: 0010
 Parallel: yes — group B (owns `src/generate/render-item.ts` markup)
 Issues: #1, #2, #3
@@ -52,12 +52,13 @@ technology (plus a visible legend).
 
 ## Acceptance criteria
 
-- [ ] Clicking a text item's title focuses its input
-- [ ] Choice groups and tables announce the item title as their name
-- [ ] Required state exposed via `aria-required` and a visible legend
-- [ ] Existing runtime tests still pass (ids/names unchanged)
-- [ ] `bun test` and `bun run typecheck` pass
-- [ ] `docs/` output examples updated if they show generated markup
+- [x] Clicking a text item's title focuses its input
+- [x] Choice groups and tables announce the item title as their name
+- [x] Required state exposed via `aria-required` and a visible legend
+- [x] Existing runtime tests still pass (ids/names unchanged)
+- [x] `bun test` and `bun run typecheck` pass
+- [x] `docs/` output examples updated if they show generated markup
+      (n/a — `docs/reference.md` contains no generated-markup examples)
 
 ## Verification
 

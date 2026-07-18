@@ -16,6 +16,9 @@ export async function generateHtml(form: Form): Promise<string> {
 		? `<p class="form-description">${renderText(form.description)}</p>`
 		: "";
 	const items = form.items.map(renderItem).join("\n");
+	const requiredLegend = form.items.some((item) => item.required)
+		? `<p class="required-legend"><span class="required-mark">*</span> indicates required</p>\n`
+		: "";
 	return `<!doctype html>
 <html>
 <head>
@@ -31,7 +34,7 @@ export async function generateHtml(form: Form): Promise<string> {
 ${description}
 </header>
 <form id="yaml-form" novalidate>
-${items}
+${requiredLegend}${items}
 <button type="submit">Submit</button>
 <p class="form-error" id="yaml-form-error" hidden></p>
 </form>
