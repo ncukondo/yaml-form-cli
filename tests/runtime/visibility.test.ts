@@ -148,6 +148,37 @@ items:
 		expect(isHidden(doc, "dep")).toBe(false);
 	});
 
+	test("rubric answer toggles a dotted-key dependent item", async () => {
+		const doc = await loadDom(sampleYaml);
+		expect(isHidden(doc, "clarity_feedback")).toBe(true);
+		// visible_when: 'presentation_rubric.clarity in ["1","2"]'
+		selectChoice(doc, "presentation_rubric.clarity", "1");
+		expect(isHidden(doc, "clarity_feedback")).toBe(false);
+		selectChoice(doc, "presentation_rubric.clarity", "2");
+		expect(isHidden(doc, "clarity_feedback")).toBe(false);
+		selectChoice(doc, "presentation_rubric.clarity", "3");
+		expect(isHidden(doc, "clarity_feedback")).toBe(true);
+	});
+
+	test("choice_table answer feeds dotted-key rules", async () => {
+		const doc = await loadDom(`
+title: T
+items:
+  - type: choice_table
+    id: ct
+    title: CT
+    choices: [s1, s2]
+    items: [q1, q2]
+  - type: short_text
+    id: dep
+    title: Dep
+    visible_when: 'ct.q1 = "s2"'
+`);
+		expect(isHidden(doc, "dep")).toBe(true);
+		selectChoice(doc, "ct.q1", "s2");
+		expect(isHidden(doc, "dep")).toBe(false);
+	});
+
 	test("chained visibility in the DOM", async () => {
 		const doc = await loadDom(`
 title: T

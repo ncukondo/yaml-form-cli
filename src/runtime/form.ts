@@ -138,6 +138,10 @@ function readRawAnswers(doc: Document, form: Form): RawAnswers {
 			raw[item.id] = item.value;
 			continue;
 		}
+		if (item.type === "choice_table" || item.type === "rubric") {
+			raw[item.id] = readTableValue(doc, item) as RawAnswers[string];
+			continue;
+		}
 		const value = readItemValue(doc, item);
 		if (value !== undefined) raw[item.id] = value;
 	}
