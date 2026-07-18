@@ -15,10 +15,25 @@ npx @ncukondo/yaml-form form.yaml -o form.html
 
 - **No install** — `bunx @ncukondo/yaml-form` / `npx @ncukondo/yaml-form`
 - **Global** — `npm install -g @ncukondo/yaml-form` (upgrade via npm)
-- **Single-file binary** — download for your platform from
-  [GitHub Releases](https://github.com/ncukondo/yaml-form-cli/releases)
-  (linux/macOS x64 & arm64, windows x64). Upgrade later with
-  `yaml-form upgrade`.
+- **Single-file binary** (linux/macOS x64 & arm64, windows x64; no runtime
+  needed; upgrade later with `yaml-form upgrade`):
+
+  ```sh
+  # Linux / macOS
+  curl -fsSL https://raw.githubusercontent.com/ncukondo/yaml-form-cli/main/install.sh | bash
+  ```
+
+  ```powershell
+  # Windows (PowerShell)
+  irm https://raw.githubusercontent.com/ncukondo/yaml-form-cli/main/install.ps1 | iex
+  ```
+
+  The installer downloads the binary for your platform from
+  [GitHub Releases](https://github.com/ncukondo/yaml-form-cli/releases),
+  verifies its SHA-256 checksum, and adds it to your PATH. Set
+  `YAML_FORM_VERSION=v0.x.x` to pin a version or `YAML_FORM_INSTALL_DIR`
+  to change the destination (default: `~/.local/bin`, Windows:
+  `%LOCALAPPDATA%\yaml-form`).
 
 ## Usage
 
