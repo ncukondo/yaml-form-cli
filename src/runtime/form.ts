@@ -325,6 +325,19 @@ export function initForm(doc: Document): void {
 	formEl.addEventListener("change", onEdit);
 	// text fields fire "input" per keystroke; "change" only on commit
 	formEl.addEventListener("input", onEdit);
+	// "Clear selection" on optional single-choice items: unticking radios is
+	// impossible for the user, so the generator emits a .choice-clear button.
+	formEl.addEventListener("click", (event) => {
+		const button = (event.target as Element | null)?.closest?.(
+			".choice-clear",
+		);
+		const itemId = button
+			?.closest("[data-item-id]")
+			?.getAttribute("data-item-id");
+		if (!itemId) return;
+		for (const input of inputsByName(doc, itemId)) input.checked = false;
+		refreshVisibility();
+	});
 	refreshVisibility();
 	formEl.addEventListener("submit", (event) => {
 		event.preventDefault();

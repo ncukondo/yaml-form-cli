@@ -34,6 +34,9 @@ function renderLongText(item: LongTextItem): string {
 	return `<textarea name="${escapeAttr(item.id)}" id="${escapeAttr(inputId(item.id))}"${ariaAttrs(item)}></textarea>`;
 }
 
+// Constant so task 0015 can route it through its message table once landed.
+export const CLEAR_SELECTION_LABEL = "Clear selection";
+
 function renderChoice(item: ChoiceItem): string {
 	const kind = item.multiple ? "checkbox" : "radio";
 	const options = item.choices
@@ -42,7 +45,14 @@ function renderChoice(item: ChoiceItem): string {
 				`<label class="choice-option"><input type="${kind}" name="${escapeAttr(item.id)}" value="${escapeAttr(choice.value)}"><span>${escapeHtml(choice.title)}</span></label>`,
 		)
 		.join("\n");
-	return `<div class="choice-options" role="group" aria-labelledby="${escapeAttr(labelId(item.id))}"${ariaAttrs(item)}>\n${options}\n</div>`;
+	// Radios cannot be unticked by the user; optional single-choice items get
+	// a clear control so they can end unselected (checkboxes already can, and
+	// required items must not end unselected).
+	const clear =
+		item.required || item.multiple
+			? ""
+			: `\n<button type="button" class="choice-clear">${escapeHtml(CLEAR_SELECTION_LABEL)}</button>`;
+	return `<div class="choice-options" role="group" aria-labelledby="${escapeAttr(labelId(item.id))}"${ariaAttrs(item)}>\n${options}${clear}\n</div>`;
 }
 
 function renderControl(item: FormItem): string {
