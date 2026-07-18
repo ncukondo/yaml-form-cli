@@ -23,6 +23,8 @@ export interface SubmitPayload {
 
 export const DEFAULT_SUCCESS_MESSAGE = "Your response has been submitted.";
 export const SUBMIT_FAILURE_MESSAGE = "Submission failed. Please try again.";
+// Named constant so task 0015 can localize it.
+export const SUBMITTING_LABEL = "Submitting…";
 
 // ISO 8601 with the client's local UTC offset (e.g. 2026-07-18T21:34:56+09:00).
 export function formatLocalIso(date: Date): string {
@@ -87,15 +89,77 @@ function defaultEnv(doc: Document): ActionEnv {
 	};
 }
 
+// UI state machine for one submit attempt: idle → pending → success | failure
+// (failure returns the UI to a re-submittable idle-with-error state).
+type SubmitState =
+	| { kind: "pending" }
+	| { kind: "success" }
+	| { kind: "failure" };
+
+function submitButton(doc: Document): HTMLButtonElement | null {
+	return doc.querySelector('form#yaml-form button[type="submit"]');
+}
+
+function setError(doc: Document, message: string | null): void {
+	const errorEl = doc.querySelector("#yaml-form-error");
+	if (!errorEl) return;
+	if (message === null) {
+		errorEl.textContent = "";
+		errorEl.setAttribute("hidden", "");
+	} else {
+		errorEl.textContent = message;
+		errorEl.removeAttribute("hidden");
+	}
+}
+
 function showSuccess(doc: Document, form: Form): void {
 	doc.querySelector("form#yaml-form")?.setAttribute("hidden", "");
 	// Keep the form title as context; the fill-in instructions are done with.
 	doc.querySelector(".form-description")?.setAttribute("hidden", "");
-	const successEl = doc.querySelector("#yaml-form-success");
+	const successEl = doc.querySelector<HTMLElement>("#yaml-form-success");
 	if (!successEl) return;
 	successEl.textContent = form.post_submit?.message ?? DEFAULT_SUCCESS_MESSAGE;
 	successEl.removeAttribute("hidden");
+	// The form (and the focused Submit button) just got hidden; without this,
+	// focus falls back to <body> and screen readers lose their place.
+	successEl.focus();
 }
+
+function applySubmitState(
+	doc: Document,
+	form: Form,
+	state: SubmitState,
+	idleLabel: string,
+): void {
+	const button = submitButton(doc);
+	switch (state.kind) {
+		case "pending":
+			if (button) {
+				button.disabled = true;
+				button.textContent = SUBMITTING_LABEL;
+			}
+			setError(doc, null);
+			break;
+		case "failure":
+			if (button) {
+				button.disabled = false;
+				button.textContent = idleLabel;
+			}
+			setError(doc, SUBMIT_FAILURE_MESSAGE);
+			break;
+		case "success":
+			if (button) {
+				button.disabled = false;
+				button.textContent = idleLabel;
+			}
+			showSuccess(doc, form);
+			break;
+	}
+}
+
+// Documents with a submission in flight; blocks re-entry from a second
+// submit event (programmatic submits bypass the disabled button).
+const pendingDocs = new WeakSet<Document>();
 
 export async function performSubmit(
 	doc: Document,
@@ -103,20 +167,23 @@ export async function performSubmit(
 	answers: SubmitAnswers,
 	envOverride?: Partial<ActionEnv>,
 ): Promise<void> {
+	if (pendingDocs.has(doc)) return;
+	pendingDocs.add(doc);
 	const env = { ...defaultEnv(doc), ...envOverride };
-	const errorEl = doc.querySelector("#yaml-form-error");
-	if (errorEl) {
-		errorEl.textContent = "";
-		errorEl.setAttribute("hidden", "");
-	}
-	const payload = buildPayload(form, answers, {
-		generator: readGenerator(doc),
-	});
-	const result = await runActions(form.actions, payload, form, env);
-	if (result.ok) {
-		showSuccess(doc, form);
-	} else if (errorEl) {
-		errorEl.textContent = SUBMIT_FAILURE_MESSAGE;
-		errorEl.removeAttribute("hidden");
+	const idleLabel = submitButton(doc)?.textContent ?? "Submit";
+	applySubmitState(doc, form, { kind: "pending" }, idleLabel);
+	try {
+		const payload = buildPayload(form, answers, {
+			generator: readGenerator(doc),
+		});
+		const result = await runActions(form.actions, payload, form, env);
+		applySubmitState(
+			doc,
+			form,
+			{ kind: result.ok ? "success" : "failure" },
+			idleLabel,
+		);
+	} finally {
+		pendingDocs.delete(doc);
 	}
 }

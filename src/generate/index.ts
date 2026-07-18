@@ -33,9 +33,9 @@ ${description}
 <form id="yaml-form" novalidate>
 ${items}
 <button type="submit">Submit</button>
-<p class="form-error" id="yaml-form-error" hidden></p>
+<p class="form-error" id="yaml-form-error" role="alert" hidden></p>
 </form>
-<section class="form-success" id="yaml-form-success" hidden></section>
+<section class="form-success" id="yaml-form-success" role="status" tabindex="-1" hidden></section>
 </main>
 <script type="application/json" id="yaml-form-data">${embedJson(form)}</script>
 <script type="application/json" id="yaml-form-meta">${embedJson({ generator: `yaml-form/${pkg.version}` })}</script>

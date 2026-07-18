@@ -93,7 +93,11 @@ button[type="submit"] {
 	padding: 0.6rem 1.5rem;
 	cursor: pointer;
 }
-button[type="submit"]:hover { filter: brightness(1.1); }
+button[type="submit"]:hover:not(:disabled) { filter: brightness(1.1); }
+button[type="submit"]:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
 .form-error {
 	color: var(--error);
 	font-weight: 600;
