@@ -1,7 +1,9 @@
-# yaml-form-cli Specification (Draft)
+# yaml-form-cli Specification (Archived)
 
-Status: **draft — under discussion**. Decided points are marked as such;
-remaining proposals are marked **(proposal)**.
+Status: **archived.** All points were decided and the content has been
+migrated: user-facing behavior → [`docs/reference.md`](../../docs/reference.md),
+decision rationale → [`decisions/`](../). This file is kept as a historical
+record and is no longer maintained.
 
 ## Overview
 
@@ -15,7 +17,7 @@ into a **single self-contained HTML file**:
 
 The YAML schema is based on the form definition used in
 [flexible-form](https://github.com/ncukondo/flexible-form), extended with a
-`rubric` item type. The canonical example is [`examples/sample.yaml`](../examples/sample.yaml).
+`rubric` item type. The canonical example is [`examples/sample.yaml`](../../examples/sample.yaml).
 
 ## CLI
 
@@ -52,6 +54,8 @@ Both of the following, released from the same version tag:
 | Field         | Type                | Required | Description |
 | ------------- | ------------------- | -------- | ----------- |
 | `title`       | string              | yes      | Form title |
+| `id`          | string              | no       | Form identifier, echoed into the submit payload as `form.id` |
+| `version`     | string              | no       | Form definition version, echoed into the submit payload as `form.version` |
 | `description` | string              | no       | Multi-line supported; URLs are auto-linked |
 | `actions`     | action[] \| action  | no       | Actions executed on submit (see below). A single mapping is treated as a one-element array |
 | `post_submit` | object              | no       | `message`: text displayed on the success screen |
@@ -78,25 +82,36 @@ Both of the following, released from the same version tag:
   Extra fields: `choices` (required), `multiple` (default `false`).
   A choice is either a string or `{ title, value? }`; the submitted value is
   `value` if given, otherwise `title`.
-- **`choice_table`** — matrix of questions sharing one scale. Extra fields:
-  - `items` (required): column headers — the individual questions. Each is a
-    string or `{ title, id? }`. The per-column `id` (unique within the item)
-    overrides the key segment used in submitted data; otherwise the title is
-    used.
-  - `choices` (required): row headers — the shared scale. Same value rules as
+- **`choice_table`** — matrix of questions sharing one scale. Questions are
+  **rows**, the scale is **columns** (decided). Extra fields:
+  - `items` (required): rows — the individual questions. Each is a string or
+    `{ title, id? }`. The per-row `id` overrides the key segment used in
+    submitted data; when omitted, the title serves as the key and is subject
+    to the same constraints as an `id` (decided). Either way the key must be
+    unique within the item.
+  - `choices` (required): columns — the shared scale. Same value rules as
     `choice`.
-  - `multiple` (default `false`).
-- **`rubric`** — like `choice_table`, but each cell has its own descriptor text.
-  - `levels` (required): columns; `{ title, value }[]`. `value` is the
-    submitted value.
-  - `criteria` (required): rows; each is `{ id, title, descriptors, allow_na? }`.
-    `id` is required and unique **within the rubric** (referenced as
-    `<rubric_id>.<criterion_id>`). `descriptors` has one entry per level, in
-    level order. `allow_na: true` adds an N/A column, submitted as `"N/A"`.
-  - `comment_per_criterion` (default `false`): adds a free-text box under each
-    row, submitted as `<criterion_id>_comment` within the rubric's answers.
-  - No score computation (decided): instead of a computed score, the selected
-    level values are submitted per criterion as a structured set (see below).
+  - `multiple` (default `false`): allow multiple selections per row
+    (checkboxes instead of radios).
+  - `required` (decided): every row must have at least one selection.
+- **`rubric`** — a `choice_table` whose rows additionally carry per-cell
+  descriptor text (decided: same structure and field names as `choice_table`;
+  the former `levels` / `criteria` / `allow_na` fields are removed). Rows =
+  `items`, columns = `choices`; key rules, submitted shape, and `required`
+  semantics are those of `choice_table`. Differences:
+  - Each row is `{ id?, title, descriptors }`. `descriptors` (required) has
+    exactly one entry per column, in column order — the cell text for that
+    row. A count mismatch with `choices` is a generation-time error.
+  - `multiple` is not allowed (generation-time error).
+  - `comment_per_row` (default `false`): adds a free-text box under each row.
+    When `true`, each row's answer is submitted as
+    `{ "value": <selected value>, "comment": <text> }` (comment omitted when
+    empty) instead of the bare value, referenced from rules as
+    `<rubric_id>.<row_id>.value` / `<rubric_id>.<row_id>.comment`.
+  - An N/A option is not special: model it as a regular column, e.g.
+    `{ title: "N/A", value: "NA" }`, giving it a descriptor in each row.
+  - No score computation (decided): the selected values are submitted per row
+    as a structured set (see below).
 
 ### Submitted data shape
 
@@ -108,22 +123,28 @@ Both of the following, released from the same version tag:
   "id_sample": "free text",
   "single_choice": "option2",
   "multiple_choice": ["option1", "value4"],   // multiple: array of values
-  "choice_table_sample": {                    // choice_table: per-column object
-    "option1": "scale3",
-    "opt8": "scale1"                          // column with explicit id
+  "choice_table_sample": {                    // choice_table: per-row object
+    "sub_question1": "scale3",
+    "sq8": "scale1"                           // row with explicit id
   },
-  "presentation_rubric": {                    // rubric: per-criterion object
+  "multiple_choice_table": {                  // multiple: true → array per row
+    "sub_question1": ["scale1", "scale3"],
+    "sub_question2": ["scale2"]
+  },
+  "presentation_rubric": {                    // rubric: same shape as choice_table
     "clarity": "2",
-    "evidence": "N/A",
-    "clarity_comment": "..."                  // when comment_per_criterion: true
+    "evidence": "3"
+  },
+  "commented_rubric": {                       // comment_per_row: true → object per row
+    "clarity": { "value": "2", "comment": "..." }
   }
 }
 ```
 
 - Hidden items (via `visible_when`) are excluded from validation and from
   `answers`.
-- `required` on a rubric means every visible criterion must be answered
-  (selecting N/A counts as answered).
+- `required` on `choice_table` / `rubric` means every row must have at least
+  one selection.
 
 ### Conditional visibility (`visible_when`)
 
@@ -142,12 +163,13 @@ Logical:     expr and expr           expr or expr          not expr
 Multi-key:   anyOf(id1,id2)="x"      allOf(id1,id2)="x"    noneOf(id1,id2)="x"
 ```
 
-Rules see a **flattened view** of `answers`: nested objects become dotted keys
-(`presentation_rubric.clarity`, `choice_table_sample.option1`). Dots are safe
-characters in unquoted rule keys, so these can be referenced directly:
+Rules see a **flattened view** of `answers`: nested objects become dotted keys,
+recursively (`presentation_rubric.clarity`, `choice_table_sample.sub_question1`,
+and with `comment_per_row: true`, `presentation_rubric.clarity.value`). Dots are
+safe characters in unquoted rule keys, so these can be referenced directly:
 
 ```
-presentation_rubric.clarity in ["1","2","N/A"]
+presentation_rubric.clarity in ["1","2"]
 ```
 
 Array answers (`multiple: true`) are matched with `includes` / `notIncludes`.
@@ -158,6 +180,12 @@ quotes. A quote inside a quoted value is escaped by doubling (`'it''s ok'`).
 
 Note: the rule engine has no ordering operators (`<`, `>`), so conditions like
 "less than" must be expressed by enumeration (`in [...]`).
+
+**(decided)** At generation time, rule keys are validated against the set of
+possible answer keys (item ids and their dotted sub-keys); an unknown key is a
+generation error. This catches stale references — e.g. after toggling
+`comment_per_row`, which changes `<rubric_id>.<row_id>` to
+`<rubric_id>.<row_id>.value`.
 
 ### Actions (decided: explicit `type` objects)
 
@@ -191,22 +219,28 @@ actions:
 - On success of all actions: replace the form with a success screen showing
   `post_submit.message` (default message if unset).
 - On failure: stay on the form (input preserved) and show a submission-failure
-  message; the user can retry. **(proposal)** actions run sequentially and stop
-  at the first failure; retrying runs all actions again (endpoints should
-  tolerate duplicate delivery).
+  message; the user can retry. Actions run sequentially and stop at the first
+  failure; retrying runs all actions again (endpoints should tolerate duplicate
+  delivery) (decided).
 
-**Payload (proposal)** — shared by `log`, `post`, and (serialized as text)
-`mailto`:
+**Payload (decided)** — shared by `log`, `post`, and (serialized as text)
+`mailto`. Keys are snake_case, matching the YAML schema:
 
 ```jsonc
 {
-  "form": { "title": "Test Form" },
-  "submittedAt": "2026-07-18T12:34:56.789Z", // ISO 8601, client clock
+  "payload_version": 1,                        // payload schema version
+  "generator": "yaml-form/1.2.3",              // tool name/version that generated the HTML
+  "form": {
+    "title": "Test Form",
+    "id": "test_form",                         // present only when set in the YAML
+    "version": "2.0"                           // present only when set in the YAML
+  },
+  "submitted_at": "2026-07-18T21:34:56+09:00", // ISO 8601, client clock, local UTC offset
   "answers": { /* see "Submitted data shape" */ }
 }
 ```
 
-**`mailto` body format (proposal)** — human-readable plain text using item
+**`mailto` body format (decided)** — human-readable plain text using item
 titles:
 
 ```
@@ -215,16 +249,21 @@ Test Form
 Short Text: free text
 Multiple Choice: option1, value4
 Choice Table:
-  option1: scale3
+  sub_question1: scale3
 Presentation Rubric:
   Clarity: Competent (2)
-  Use of evidence: N/A
+  Use of evidence: Expert (3)
 ```
 
 ## Generated HTML requirements
 
 - Valid standalone HTML5 document; all assets inlined.
 - Reasonable default styling; readable on mobile (responsive).
+- `choice_table` / `rubric` tables (decided): the header row (scale/levels)
+  and the row-label column (questions/criteria) stay fixed (sticky) while the
+  table body scrolls. When the table still cannot be displayed usefully
+  (narrow screens), fall back to stacking each row vertically as its own
+  block (question label followed by its options).
 - Client-side `required` validation before actions run.
 - `visible_when` re-evaluated live as the user edits.
 - Success screen shows `post_submit.message` (see result handling above).
@@ -232,7 +271,5 @@ Presentation Rubric:
 
 ## Remaining proposals to confirm
 
-1. `post`/`log` payload shape (`{ form, submittedAt, answers }` above).
-2. `mailto` body format (plain text with titles, above).
-3. Multi-action failure handling (sequential, stop at first failure, full
-   retry).
+None — all points are decided. See the `decisions/` directory for the record
+of each decision.

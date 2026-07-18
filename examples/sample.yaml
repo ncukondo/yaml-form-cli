@@ -2,6 +2,8 @@
 # Texts after # are comments and are ignored.
 
 title: "Test Form" # title of form
+# id: "test_form" # optional; echoed into the submit payload as form.id
+# version: "1.0" # optional; echoed into the submit payload as form.version
 description: |
   Desctiption of form
   You can use multiple line text
@@ -78,21 +80,22 @@ items:
   - type: "choice_table"
     id: "choice_table_sample"
     title: "Choice Table"
-    # items is array of choice items. This is required. This represents the column
-    # header of the table: the individual questions sharing one scale.
-    # Answers are submitted as { <column key>: <selected value> } under this item's id;
-    # the column key is the column's "id" if specified, otherwise its title.
+    # items is array of choice items. This is required. This represents the rows
+    # of the table: the individual questions sharing one scale.
+    # Answers are submitted as { <row key>: <selected value> } under this item's id;
+    # the row key is the row's "id" if specified, otherwise its title (which then
+    # must satisfy the same constraints as an id). Keys must be unique within the item.
     items:
-      - "option1"
-      - "option2"
-      - "option3"
-      - "option4"
-      - "option5"
-      - "option6"
-      - "option7"
-      - { title: "option8", id: "opt8" } # id overrides the key for this column (unique within this item).
-    # choices is array of choice items. This is required. This represents the row
-    # header of the table: the shared scale.
+      - "sub_question1"
+      - "sub_question2"
+      - "sub_question3"
+      - "sub_question4"
+      - "sub_question5"
+      - "sub_question6"
+      - "sub_question7"
+      - { title: "sub_question8", id: "sq8" } # id overrides the key for this row (unique within this item).
+    # choices is array of choice items. This is required. This represents the
+    # columns of the table: the shared scale.
     choices:
       - "scale1"
       - "scale2"
@@ -108,12 +111,13 @@ items:
   - type: "choice_table"
     id: "multiple_choice_table"
     title: "Multiple Choice Table"
-    multiple: true # This item is multiple choice. This is optional. It is false by default.
+    multiple: true # Multiple selections allowed per row; the answer for each
+    # row is submitted as an array, e.g. { sub_question1: ["scale1", "scale3"] }.
     items:
-      - "option1"
-      - "option2"
-      - "option3"
-      - "option4"
+      - "sub_question1"
+      - "sub_question2"
+      - "sub_question3"
+      - "sub_question4"
     choices:
       - "scale1"
       - "scale2"
@@ -128,7 +132,7 @@ items:
   # You can conditionally show/hide items using the visible_when field.
   # The item is shown only when the expression evaluates to true.
   # The expression references other items by their id. Answers of choice_table
-  # and rubric items are referenced with dotted keys: <item_id>.<column_or_criterion_id>.
+  # and rubric items are referenced with dotted keys: <item_id>.<row_or_criterion_id>.
   #
   # The rule syntax follows @ncukondo/dynamic-form-rules:
   #   https://github.com/ncukondo/dynamic-form-rules
@@ -157,24 +161,29 @@ items:
     visible_when: 'has_other = "yes"' # shown only when "yes" is selected above
 
   # --- Rubric ---
-  # A rubric is like a choice_table, but each cell has its own descriptor text.
-  # - levels: columns (performance levels). Each level has a title and a value;
-  #   the value is what gets submitted.
-  # - criteria: rows. Each criterion has an id (required, unique within the
-  #   rubric) and descriptors, one per level, in the same order.
-  # Answers are submitted as a structured set under this item's id:
-  #   { presentation_rubric: { clarity: "2", evidence: "N/A" } }
+  # A rubric is a choice_table whose rows carry per-cell descriptor text.
+  # The structure is the same as choice_table (items = rows, choices = columns).
+  # Differences:
+  # - Each row has "descriptors": one text per column, in column order.
+  #   The count must match the number of choices.
+  # - multiple is not allowed.
+  # - comment_per_row (optional) adds a free-text box under each row.
+  # Answers are submitted like choice_table:
+  #   { presentation_rubric: { clarity: "2", evidence: "3" } }
   # and referenced from visible_when with dotted keys:
-  #   presentation_rubric.clarity in ["1","2","N/A"]
+  #   presentation_rubric.clarity in ["1","2"]
   - type: "rubric"
     id: "presentation_rubric"
     title: "Presentation Rubric"
-    required: true # every visible criterion must be answered (N/A counts as answered)
-    levels:
+    required: true # every row must have a selection
+    choices: # columns: the shared scale. Same rules as choice_table choices.
       - { title: "Novice", value: "1" }
       - { title: "Competent", value: "2" }
       - { title: "Expert", value: "3" }
-    criteria:
+      # There is no allow_na field. To offer "not applicable", add it as a
+      # regular column (it applies to all rows and needs a descriptor in each):
+      # - { title: "N/A", value: "NA" }
+    items: # rows: the criteria. Key rules are the same as choice_table rows.
       - id: "clarity"
         title: "Clarity"
         descriptors:
@@ -183,13 +192,14 @@ items:
           - "Consistently clear and well structured"
       - id: "evidence"
         title: "Use of evidence"
-        allow_na: true # optional: adds an N/A column (submitted as "N/A")
         descriptors:
           - "Claims are unsupported"
           - "Some claims supported by evidence"
           - "All claims well supported and cited"
-    comment_per_criterion: false # optional: adds a free-text box under each row,
-    # submitted as <criterion_id>_comment within this rubric's answers
+    comment_per_row: false # optional: adds a free-text box under each row.
+    # When true, each row's answer becomes { value, comment } instead of the
+    # bare value (comment omitted when empty), referenced from visible_when
+    # as presentation_rubric.clarity.value etc.
 
   # A rubric criterion can be referenced from visible_when with a dotted key:
   - type: "long_text"
