@@ -216,51 +216,55 @@ textarea.row-comment { min-height: 3rem; }
    display: block would strip the implicit table/row/cell roles; the markup
    carries explicit ARIA roles (choice-table.ts) so AT still gets a table
    with visible row titles and inlined .cell-choice text — the hidden thead
-   is not needed to interpret a stacked row. */
+   is not needed to interpret a stacked row.
+   Wide choice_tables (.table-wide on the wrapper, ≥ 6 columns — decision
+   0012) are excluded: they keep the desktop scroll layout with sticky
+   header/row labels instead of becoming an enormous vertical list. */
 @media (max-width: 640px) {
-	.table-scroll {
+	.table-scroll:not(.table-wide) {
 		overflow: visible;
 		max-height: none;
 		border: 0;
 		border-radius: 0;
 	}
-	.choice-table,
-	.choice-table tbody,
-	.choice-table tr,
-	.choice-table th,
-	.choice-table td { display: block; width: 100%; }
-	.choice-table thead { display: none; }
-	.choice-table th, .choice-table td {
+	.table-scroll:not(.table-wide) .choice-table,
+	.table-scroll:not(.table-wide) .choice-table tbody,
+	.table-scroll:not(.table-wide) .choice-table tr,
+	.table-scroll:not(.table-wide) .choice-table th,
+	.table-scroll:not(.table-wide) .choice-table td { display: block; width: 100%; }
+	.table-scroll:not(.table-wide) .choice-table thead { display: none; }
+	.table-scroll:not(.table-wide) .choice-table th,
+	.table-scroll:not(.table-wide) .choice-table td {
 		position: static;
 		border: 0;
 		text-align: left;
 		padding: 0.25rem 0.65rem;
 	}
-	.choice-table tr.table-row {
+	.table-scroll:not(.table-wide) .choice-table tr.table-row {
 		border: 1px solid var(--border);
 		border-radius: 0.375rem;
 		margin: 0 0 0.75rem;
 		padding: 0.35rem 0;
 	}
-	.choice-table tr.table-comment-row {
+	.table-scroll:not(.table-wide) .choice-table tr.table-comment-row {
 		margin: -0.5rem 0 0.75rem;
 		padding: 0.25rem 0 0.5rem;
 		border: 1px solid var(--border);
 		border-top: 0;
 		border-radius: 0 0 0.375rem 0.375rem;
 	}
-	.choice-table tr.table-row:has(+ tr.table-comment-row) {
+	.table-scroll:not(.table-wide) .choice-table tr.table-row:has(+ tr.table-comment-row) {
 		margin-bottom: 0;
 		border-bottom: 0;
 		border-radius: 0.375rem 0.375rem 0 0;
 	}
-	.table-cell-label {
+	.table-scroll:not(.table-wide) .table-cell-label {
 		flex-direction: row;
 		align-items: baseline;
 		gap: 0.5rem;
 	}
-	.cell-choice { display: inline; }
-	.cell-descriptor { min-width: 0; }
+	.table-scroll:not(.table-wide) .cell-choice { display: inline; }
+	.table-scroll:not(.table-wide) .cell-descriptor { min-width: 0; }
 }
 
 /* invalid state — aria-invalid is set by the runtime on failed validation */
@@ -289,16 +293,17 @@ textarea[aria-invalid="true"]:focus {
 	box-shadow: inset 2px 0 0 var(--error), inset 0 -1px 0 var(--error);
 }
 @media (max-width: 640px) {
-	/* stacked rows lose cell borders; mark the whole row card instead */
-	.choice-table tr.table-row:has([aria-invalid="true"]) {
+	/* stacked rows lose cell borders; mark the whole row card instead.
+	   Wide tables (.table-wide) keep the desktop cell treatment above. */
+	.table-scroll:not(.table-wide) .choice-table tr.table-row:has([aria-invalid="true"]) {
 		border-color: var(--error);
 		border-width: 2px;
 	}
-	.choice-table tr.table-row:has([aria-invalid="true"]) > th,
-	.choice-table tr.table-row:has([aria-invalid="true"]) > td {
+	.table-scroll:not(.table-wide) .choice-table tr.table-row:has([aria-invalid="true"]) > th,
+	.table-scroll:not(.table-wide) .choice-table tr.table-row:has([aria-invalid="true"]) > td {
 		box-shadow: none;
 	}
-	.choice-table tr.table-row:has([aria-invalid="true"]) .row-label {
+	.table-scroll:not(.table-wide) .choice-table tr.table-row:has([aria-invalid="true"]) .row-label {
 		box-shadow: none;
 	}
 }

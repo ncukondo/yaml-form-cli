@@ -173,6 +173,68 @@ describe("choice_table DOM structure", () => {
 	});
 });
 
+function choiceTableYaml(id: string, type: string, columns: number): string {
+	const choices = Array.from(
+		{ length: columns },
+		(_, i) => `      - { title: "c${i + 1}", value: "${i + 1}" }`,
+	).join("\n");
+	const extra =
+		type === "rubric"
+			? `        descriptors: [${Array.from({ length: columns }, (_, i) => `"d${i + 1}"`).join(", ")}]\n`
+			: "";
+	return `
+title: T
+items:
+  - type: ${type}
+    id: ${id}
+    title: ${id}
+    choices:
+${choices}
+    items:
+      - id: row1
+        title: Row 1
+${extra}`;
+}
+
+describe("mobile wide-table marker (decision 0012)", () => {
+	test("wide choice_tables mark their scroll wrapper with table-wide", () => {
+		// 10 and 8 columns in the sample — both at or above the threshold
+		for (const id of ["choice_table_sample", "multiple_choice_table"]) {
+			const wrapper = document.querySelector(
+				`[data-item-id="${id}"] .table-scroll`,
+			);
+			expect(wrapper?.classList.contains("table-wide")).toBe(true);
+		}
+	});
+
+	test("rubrics never get the wide marker (3 columns in the sample)", () => {
+		const wrapper = document.querySelector(
+			'[data-item-id="presentation_rubric"] .table-scroll',
+		);
+		expect(wrapper?.classList.contains("table-wide")).toBe(false);
+	});
+
+	test("a 5-column choice_table stays below the threshold", async () => {
+		const doc = await loadDom(choiceTableYaml("narrow", "choice_table", 5));
+		const wrapper = doc.querySelector('[data-item-id="narrow"] .table-scroll');
+		expect(wrapper?.classList.contains("table-wide")).toBe(false);
+	});
+
+	test("a 6-column choice_table meets the threshold", async () => {
+		const doc = await loadDom(choiceTableYaml("wide", "choice_table", 6));
+		const wrapper = doc.querySelector('[data-item-id="wide"] .table-scroll');
+		expect(wrapper?.classList.contains("table-wide")).toBe(true);
+	});
+
+	test("even a 6-column rubric stays card-stacked (no marker)", async () => {
+		const doc = await loadDom(choiceTableYaml("wide_rubric", "rubric", 6));
+		const wrapper = doc.querySelector(
+			'[data-item-id="wide_rubric"] .table-scroll',
+		);
+		expect(wrapper?.classList.contains("table-wide")).toBe(false);
+	});
+});
+
 describe("rubric DOM structure", () => {
 	test("renders a table with radios (never checkboxes)", () => {
 		const item = document.querySelector('[data-item-id="presentation_rubric"]');

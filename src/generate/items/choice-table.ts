@@ -5,6 +5,13 @@ import { labelId } from "../ids.ts";
 
 type TableItem = ChoiceTableItem | RubricItem;
 
+/**
+ * choice_tables with at least this many columns keep the horizontal-scroll
+ * table layout below 640px instead of stacking into row cards; the wrapper's
+ * `table-wide` class is what the mobile CSS branches on (decision 0012).
+ */
+export const MOBILE_WIDE_TABLE_MIN_COLS = 6;
+
 export interface TableOptions {
 	inputKind: "radio" | "checkbox";
 	/** Resolved UI strings (per-row comment labels). */
@@ -12,6 +19,8 @@ export interface TableOptions {
 	/** Per-cell descriptor texts for a row, in column order (rubric). */
 	descriptorsFor?: (rowIndex: number) => readonly string[];
 	commentPerRow?: boolean;
+	/** Keep the scrollable table layout on mobile (wide choice_tables). */
+	mobileWide?: boolean;
 }
 
 /**
@@ -83,9 +92,12 @@ export function renderTable(item: TableItem, options: TableOptions): string {
 	const bodyRows = item.items
 		.map((row, rowIndex) => renderRow(item, row, rowIndex, options))
 		.join("\n");
+	const wrapperClass = options.mobileWide
+		? "table-scroll table-wide"
+		: "table-scroll";
 	// Explicit ARIA roles mirror the implicit table semantics: the stacked
 	// mobile layout (display: block in styles.ts) would otherwise strip them.
-	return `<div class="table-scroll">
+	return `<div class="${wrapperClass}">
 <table class="choice-table" role="table" data-table-for="${escapeAttr(item.id)}" aria-labelledby="${escapeAttr(labelId(item.id))}">
 <thead role="rowgroup">
 <tr role="row"><th role="columnheader" class="table-corner"></th>${headCells}</tr>
@@ -104,5 +116,6 @@ export function renderChoiceTable(
 	return renderTable(item, {
 		inputKind: item.multiple ? "checkbox" : "radio",
 		messages,
+		mobileWide: item.choices.length >= MOBILE_WIDE_TABLE_MIN_COLS,
 	});
 }
