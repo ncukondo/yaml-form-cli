@@ -98,6 +98,22 @@ items:
 		]);
 	});
 
+	test("autosave is accepted at form level and defaults to true", () => {
+		const on = parseOk(`
+title: T
+items:
+  - { title: A, id: a }
+`);
+		expect(on.autosave).toBe(true);
+		const off = parseOk(`
+title: T
+autosave: false
+items:
+  - { title: A, id: a }
+`);
+		expect(off.autosave).toBe(false);
+	});
+
 	test("constant accepts from_url / hidden, defaulting to false", () => {
 		const form = parseOk(`
 title: T

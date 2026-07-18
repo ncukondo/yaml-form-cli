@@ -421,3 +421,28 @@ button[type="submit"]:active:not(:disabled) { filter: brightness(0.8); }
 	margin: 0;
 }
 `;
+
+// Appended only for autosaving forms (generate/index.ts): the restore-notice
+// slot is the sole consumer of these rules.
+export const draftStyles = `
+.draft-notice {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	border: 1px solid var(--border);
+	border-radius: 0.375rem;
+	padding: 0.6rem 0.9rem;
+	margin: 0 0 1rem;
+}
+.draft-discard {
+	font: inherit;
+	color: var(--fg);
+	background: none;
+	border: 1px solid var(--border-input);
+	border-radius: 0.375rem;
+	padding: 0.25rem 0.75rem;
+	cursor: pointer;
+}
+`;

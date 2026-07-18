@@ -177,3 +177,53 @@ ${requiredItem}`);
 		);
 	});
 });
+
+describe("draft notice slot", () => {
+	test("skeleton contains the hidden notice with message and discard button", async () => {
+		const { document } = await loadDom(`title: T\n${requiredItem}`);
+		const notice = document.querySelector("#yaml-form-draft-notice");
+		expect(notice?.getAttribute("role")).toBe("status");
+		expect(notice?.hasAttribute("hidden")).toBe(true);
+		expect(notice?.querySelector(".draft-notice-message")?.textContent).toBe(
+			"Restored your previous answers.",
+		);
+		expect(notice?.querySelector("button.draft-discard")?.textContent).toBe(
+			"Discard draft",
+		);
+	});
+
+	test("lang: ja localizes the notice and discard label", async () => {
+		const { document } = await loadDom(`title: T\nlang: ja\n${requiredItem}`);
+		const notice = document.querySelector("#yaml-form-draft-notice");
+		expect(notice?.querySelector(".draft-notice-message")?.textContent).toBe(
+			"前回の入力内容を復元しました。",
+		);
+		expect(notice?.querySelector("button.draft-discard")?.textContent).toBe(
+			"下書きを破棄",
+		);
+	});
+
+	test("autosave: false omits the notice markup and its styles", async () => {
+		const { html, document } = await loadDom(
+			`title: T\nautosave: false\n${requiredItem}`,
+		);
+		expect(document.querySelectorAll("#yaml-form-draft-notice").length).toBe(0);
+		expect(html).not.toContain(".draft-notice");
+	});
+
+	test("messages overrides apply to both keys", async () => {
+		const { document } = await loadDom(`
+title: T
+messages:
+  draft_restored: Wiederhergestellt.
+  draft_discard: Verwerfen
+${requiredItem}`);
+		const notice = document.querySelector("#yaml-form-draft-notice");
+		expect(notice?.querySelector(".draft-notice-message")?.textContent).toBe(
+			"Wiederhergestellt.",
+		);
+		expect(notice?.querySelector("button.draft-discard")?.textContent).toBe(
+			"Verwerfen",
+		);
+	});
+});

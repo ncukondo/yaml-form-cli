@@ -119,6 +119,15 @@ items:
 		]);
 	});
 
+	test("autosave is rejected on items", () => {
+		const errors = parseErrors(`
+title: T
+items:
+  - { title: A, id: a, autosave: false }
+`);
+		expect(errors.some((e) => e.path === "items[0].autosave")).toBe(true);
+	});
+
 	test("from_url / hidden are rejected on non-constant items", () => {
 		const errors = parseErrors(`
 title: T

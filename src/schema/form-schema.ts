@@ -147,6 +147,8 @@ const messagesSchema = z.strictObject({
 	comment: messageOverride,
 	noscript_warning: messageOverride,
 	clear_selection: messageOverride,
+	draft_restored: messageOverride,
+	draft_discard: messageOverride,
 } satisfies Record<MessageKey, typeof messageOverride>);
 
 export const formSchema = z
@@ -160,6 +162,8 @@ export const formSchema = z
 			)
 			.default("en"),
 		messages: messagesSchema.optional(),
+		// Decision 0014: draft autosave to localStorage, on unless opted out.
+		autosave: z.boolean().default(true),
 		id: z.string().min(1).optional(),
 		version: z.string().min(1).optional(),
 		description: z.string().optional(),

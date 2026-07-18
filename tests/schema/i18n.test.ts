@@ -73,6 +73,17 @@ ${minimalItems}`);
 		expect(form.messages?.clear_selection).toBe("選択を解除");
 	});
 
+	test("accepts draft_restored and draft_discard keys", () => {
+		const form = parseOk(`
+title: T
+messages:
+  draft_restored: 復元しました。
+  draft_discard: 破棄
+${minimalItems}`);
+		expect(form.messages?.draft_restored).toBe("復元しました。");
+		expect(form.messages?.draft_discard).toBe("破棄");
+	});
+
 	test("rejects unknown message keys", () => {
 		const errors = parseFail(`
 title: T

@@ -55,9 +55,21 @@
 				"clear_selection": {
 					"type": "string",
 					"minLength": 1
+				},
+				"draft_restored": {
+					"type": "string",
+					"minLength": 1
+				},
+				"draft_discard": {
+					"type": "string",
+					"minLength": 1
 				}
 			},
 			"additionalProperties": false
+		},
+		"autosave": {
+			"default": true,
+			"type": "boolean"
 		},
 		"id": {
 			"type": "string",
