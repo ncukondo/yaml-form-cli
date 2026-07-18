@@ -41,6 +41,13 @@ function attrEscape(value: string): string {
 	return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 }
 
+function scrollBehavior(doc: Document): "auto" | "smooth" {
+	return doc.defaultView?.matchMedia?.("(prefers-reduced-motion: reduce)")
+		.matches
+		? "auto"
+		: "smooth";
+}
+
 export function readFormData(doc: Document): Form {
 	const el = doc.querySelector(
 		'script[type="application/json"]#yaml-form-data',
@@ -311,7 +318,7 @@ export function initForm(doc: Document): void {
 		if (first) {
 			doc
 				.querySelector(`[data-item-id="${attrEscape(first.itemId)}"]`)
-				?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+				?.scrollIntoView?.({ behavior: scrollBehavior(doc), block: "center" });
 			// Any failing control shares its failure key as the input name; a
 			// choice group's first radio/checkbox doubles as the focus target.
 			doc
