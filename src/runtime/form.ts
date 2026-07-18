@@ -2,6 +2,7 @@
 // Imports from src/schema must stay type-only so the bundle carries no
 // server-side dependencies.
 import type { Form, FormItem } from "../schema/form-schema.ts";
+import { performSubmit } from "./submit.ts";
 
 export type Answers = Record<string, string | string[]>;
 
@@ -143,7 +144,6 @@ export function initForm(doc: Document): void {
 				?.scrollIntoView?.({ behavior: "smooth", block: "center" });
 			return;
 		}
-		// Submit actions (log/post/mailto) land with task 0006.
-		console.log("yaml-form answers", collectAnswers(doc));
+		void performSubmit(doc, readFormData(doc), collectAnswers(doc));
 	});
 }
