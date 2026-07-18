@@ -66,9 +66,19 @@ const constantItemSchema = z.strictObject({
 	value: z.string(),
 });
 
+// Text-like single-line input types only (decision 0011): they keep the
+// free-text answer shape. Widget-changing types (date, color, …) would be
+// their own item types; password is out because answers are submitted in
+// plain text.
+export const INPUT_TYPES = ["email", "tel", "url", "number"] as const;
+
 const shortTextItemSchema = z.strictObject({
 	type: z.literal("short_text").default("short_text"),
 	...commonItemFields,
+	input_type: z.enum(INPUT_TYPES).optional(),
+	// Free-form: the HTML autocomplete token list is open-ended and allows
+	// space-separated combinations; browsers ignore unknown tokens.
+	autocomplete: z.string().min(1).optional(),
 });
 
 const longTextItemSchema = z.strictObject({

@@ -131,6 +131,15 @@ describe("radio/checkbox controls", () => {
 	});
 });
 
+describe("choice option touch targets (WCAG 2.5.8)", () => {
+	test("rows carry enough vertical padding to reach a 24px target", () => {
+		const rule = baseStyles.match(/\.choice-option \{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		// 2 × 0.25rem padding + 1rem line box ≥ 24px even at line-height 1
+		expect(rule).toContain("padding: 0.25rem 0;");
+	});
+});
+
 describe("invalid state styling", () => {
 	test("invalid text inputs and textareas take the error border", () => {
 		const rule = baseStyles.match(

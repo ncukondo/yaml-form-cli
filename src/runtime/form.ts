@@ -42,6 +42,13 @@ function attrEscape(value: string): string {
 	return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 }
 
+function scrollBehavior(doc: Document): "auto" | "smooth" {
+	return doc.defaultView?.matchMedia?.("(prefers-reduced-motion: reduce)")
+		.matches
+		? "auto"
+		: "smooth";
+}
+
 export function readFormData(doc: Document): Form {
 	const el = doc.querySelector(
 		'script[type="application/json"]#yaml-form-data',
@@ -278,6 +285,17 @@ function initErrorSlots(doc: Document): void {
 	}
 }
 
+// Live clearing while the user edits: the failure key doubles as the control
+// name, so the edited control names exactly the error to retract. Errors only
+// come back on the next submit — no re-validation mid-edit.
+function clearFieldError(doc: Document, key: string): void {
+	const slot = doc.querySelector(`[data-error-for="${attrEscape(key)}"]`);
+	if (!slot || slot.hasAttribute("hidden")) return;
+	slot.textContent = "";
+	slot.setAttribute("hidden", "");
+	setInvalidState(doc, key, false);
+}
+
 function showErrors(doc: Document, failures: RequiredFailure[]): void {
 	// Covers item-level slots and the per-row slots inside tables.
 	for (const el of Array.from(doc.querySelectorAll("[data-error-for]"))) {
@@ -304,9 +322,25 @@ export function initForm(doc: Document): void {
 	const visibility = createVisibilityEvaluator(form);
 	const refreshVisibility = () =>
 		applyVisibility(doc, visibility.compute(readRawAnswers(doc, form)));
-	formEl.addEventListener("change", refreshVisibility);
+	const onEdit = (event: Event) => {
+		refreshVisibility();
+		const name = (event.target as Element | null)?.getAttribute?.("name");
+		if (name) clearFieldError(doc, name);
+	};
+	formEl.addEventListener("change", onEdit);
 	// text fields fire "input" per keystroke; "change" only on commit
-	formEl.addEventListener("input", refreshVisibility);
+	formEl.addEventListener("input", onEdit);
+	// "Clear selection" on optional single-choice items: unticking radios is
+	// impossible for the user, so the generator emits a .choice-clear button.
+	formEl.addEventListener("click", (event) => {
+		const button = (event.target as Element | null)?.closest?.(".choice-clear");
+		const itemId = button
+			?.closest("[data-item-id]")
+			?.getAttribute("data-item-id");
+		if (!itemId) return;
+		for (const input of inputsByName(doc, itemId)) input.checked = false;
+		refreshVisibility();
+	});
 	refreshVisibility();
 	formEl.addEventListener("submit", (event) => {
 		event.preventDefault();
@@ -316,7 +350,7 @@ export function initForm(doc: Document): void {
 		if (first) {
 			doc
 				.querySelector(`[data-item-id="${attrEscape(first.itemId)}"]`)
-				?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+				?.scrollIntoView?.({ behavior: scrollBehavior(doc), block: "center" });
 			// Any failing control shares its failure key as the input name; a
 			// choice group's first radio/checkbox doubles as the focus target.
 			doc

@@ -144,6 +144,80 @@ describe("focus management", () => {
 	});
 });
 
+function fireEvent(doc: Document, el: Element, type: string) {
+	const EventCtor = (doc.defaultView as unknown as { Event: typeof Event })
+		.Event;
+	el.dispatchEvent(new EventCtor(type, { bubbles: true }));
+}
+
+describe("live error clearing on edit", () => {
+	test("typing in a failed text field clears its error without a resubmit", async () => {
+		const { document } = await loadDom(requiredFormYaml);
+		submitForm(document);
+		const input = textInput(document);
+		expect(input.getAttribute("aria-invalid")).toBe("true");
+
+		input.value = "x";
+		fireEvent(document, input, "input");
+
+		expect(input.hasAttribute("aria-invalid")).toBe(false);
+		expect(input.getAttribute("aria-describedby")).toBe("desc-name");
+		const slot = document.querySelector("#error-name");
+		expect(slot?.hasAttribute("hidden")).toBe(true);
+		expect(slot?.textContent).toBe("");
+	});
+
+	test("selecting an option in a failed choice group clears its error", async () => {
+		const { document } = await loadDom(requiredFormYaml);
+		submitForm(document);
+		const group = document.querySelector(
+			'[data-item-id="pick"] [role="group"]',
+		);
+		expect(group?.getAttribute("aria-invalid")).toBe("true");
+
+		const radio = document.querySelector(
+			'input[name="pick"]',
+		) as HTMLInputElement;
+		radio.checked = true;
+		fireEvent(document, radio, "change");
+
+		expect(group?.hasAttribute("aria-invalid")).toBe(false);
+		expect(group?.hasAttribute("aria-describedby")).toBe(false);
+		expect(document.querySelector("#error-pick")?.hasAttribute("hidden")).toBe(
+			true,
+		);
+	});
+
+	test("answering a failed table row clears that row's error only", async () => {
+		const { document } = await loadDom(requiredFormYaml);
+		submitForm(document);
+
+		const cell = document.querySelector(
+			'input[name="grid.r1"]',
+		) as HTMLInputElement;
+		cell.checked = true;
+		fireEvent(document, cell, "change");
+
+		expect(
+			document
+				.querySelector('[data-error-for="grid.r1"]')
+				?.hasAttribute("hidden"),
+		).toBe(true);
+		for (const input of Array.from(
+			document.querySelectorAll('input[name="grid.r1"]'),
+		)) {
+			expect(input.hasAttribute("aria-invalid")).toBe(false);
+		}
+		// untouched failures stay announced
+		expect(
+			document
+				.querySelector('[data-error-for="grid.r2"]')
+				?.hasAttribute("hidden"),
+		).toBe(false);
+		expect(textInput(document).getAttribute("aria-invalid")).toBe("true");
+	});
+});
+
 describe("invalid state clears once the field passes", () => {
 	test("fixing the text value and resubmitting removes aria-invalid and the error reference", async () => {
 		const { document } = await loadDom(requiredFormYaml);

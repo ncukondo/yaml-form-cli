@@ -6,6 +6,10 @@ import { renderItem } from "./render-item.ts";
 import { getRuntimeBundle } from "./runtime-bundle.ts";
 import { baseStyles } from "./styles.ts";
 
+// Constant so task 0015 can route it through its message table once landed.
+export const NOSCRIPT_WARNING =
+	"This form requires JavaScript. Enable JavaScript and reload the page to fill it in.";
+
 function embedJson(data: unknown): string {
 	// <-escape so "</script>" can never terminate the data block
 	return JSON.stringify(data).replaceAll("<", "\\u003c");
@@ -41,6 +45,7 @@ export async function generateHtml(form: Form): Promise<string> {
 <h1>${escapeHtml(form.title)}</h1>
 ${description}
 </header>
+<noscript><p class="noscript-warning">${escapeHtml(NOSCRIPT_WARNING)}</p></noscript>
 <form id="yaml-form" novalidate>
 ${requiredLegend}${items}
 <button type="submit">${escapeHtml(messages.submit)}</button>

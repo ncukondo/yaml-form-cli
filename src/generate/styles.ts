@@ -79,7 +79,8 @@ textarea { min-height: 6rem; resize: vertical; }
 	display: flex;
 	align-items: baseline;
 	gap: 0.5rem;
-	padding: 0.15rem 0;
+	/* row height ≥ 24px (WCAG 2.5.8) even at line-height 1 */
+	padding: 0.25rem 0;
 	cursor: pointer;
 }
 input[type="radio"], input[type="checkbox"] {
@@ -300,5 +301,30 @@ textarea[aria-invalid="true"]:focus {
 	.choice-table tr.table-row:has([aria-invalid="true"]) .row-label {
 		box-shadow: none;
 	}
+}
+
+/* short_text input_type variants (decision 0011) share the text-input
+   styling. Kept as an appended block (instead of widening the selectors
+   above) so parallel style work does not conflict. */
+input:is([type="email"], [type="tel"], [type="url"], [type="number"]) {
+	width: 100%;
+	font: inherit;
+	color: inherit;
+	background: transparent;
+	padding: 0.5rem 0.65rem;
+	border: 1px solid var(--border-input);
+	border-radius: 0.375rem;
+}
+input:is([type="email"], [type="tel"], [type="url"], [type="number"]):focus {
+	outline: 2px solid var(--accent);
+	outline-offset: 1px;
+	border-color: transparent;
+}
+input:is([type="email"], [type="tel"], [type="url"], [type="number"])[aria-invalid="true"] {
+	border-color: var(--error);
+	box-shadow: inset 0 0 0 1px var(--error);
+}
+input:is([type="email"], [type="tel"], [type="url"], [type="number"])[aria-invalid="true"]:focus {
+	outline-color: var(--error);
 }
 `;

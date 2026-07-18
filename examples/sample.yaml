@@ -54,6 +54,13 @@ items:
     required: true # This item is required. This is optional. It is false by default.
     description: "description for a item" # description of item. This is optional.
 
+  - type: "short_text"
+    id: "email_sample"
+    title: "Email"
+    input_type: "email" # optional: email | tel | url | number. Sets the HTML input
+    # type so browsers offer a matching keyboard and autofill. Default: plain text.
+    autocomplete: "email" # optional: HTML autocomplete token(s) for autofill (WCAG 1.3.5)
+
   - type: "long_text"
     id: "long_text_sample"
     title: "Long Text"
