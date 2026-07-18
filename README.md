@@ -81,6 +81,12 @@ descriptor text). Conditional visibility uses
 expressions; rule keys are validated at generation time, so typos fail fast.
 Submit actions: `log` (console), `post` (JSON POST), `mailto`.
 
+Opening a form with query parameters prefills matching fields
+(`form.html?name=John&tags=a,b`). A `constant` item with `from_url: true`
+(optionally `hidden: true`) turns that into per-respondent distribution
+URLs whose identifier lands in the submit payload — if such URLs identify
+respondents, disclose it to them.
+
 **Full reference:** [docs/reference.md](docs/reference.md) — every field,
 answer shapes, the submit payload, and rule syntax.
 **Complete example:** [examples/sample.yaml](examples/sample.yaml).

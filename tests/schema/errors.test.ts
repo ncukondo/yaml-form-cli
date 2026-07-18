@@ -119,6 +119,39 @@ items:
 		]);
 	});
 
+	test("from_url / hidden are rejected on non-constant items", () => {
+		const errors = parseErrors(`
+title: T
+items:
+  - { title: A, id: a, from_url: true }
+  - { type: choice, title: B, id: b, choices: [x], hidden: true }
+`);
+		const paths = errors.map((e) => e.path);
+		expect(paths).toContain("items[0].from_url");
+		expect(paths).toContain("items[1].hidden");
+	});
+
+	test("hidden + visible_when on a constant is an error", () => {
+		const errors = parseErrors(`
+title: T
+items:
+  - { type: choice, title: G, id: gate, choices: ["yes", "no"] }
+  - type: constant
+    title: C
+    id: c
+    value: v
+    hidden: true
+    visible_when: 'gate = "yes"'
+`);
+		expect(errors).toEqual([
+			expect.objectContaining({
+				code: "hidden_visible_when_conflict",
+				path: "items[1].visible_when",
+			}),
+		]);
+		expect(errors[0]?.message).toMatch(/hidden/);
+	});
+
 	test("missing title and id on an item", () => {
 		const errors = parseErrors(`
 title: T

@@ -83,6 +83,9 @@ function renderTitle(item: FormItem): string {
 }
 
 export function renderItem(item: FormItem, messages: Messages): string {
+	// A hidden constant has no section at all; it still participates in
+	// answers and rules via the embedded form data (decision 0013).
+	if (item.type === "constant" && item.hidden) return "";
 	const title = renderTitle(item);
 	const description = item.description
 		? `<p class="item-description" id="${escapeAttr(descriptionId(item.id))}">${renderText(item.description)}</p>`

@@ -21,7 +21,7 @@ describe("parseForm on examples/sample.yaml", () => {
 	test("parses into typed form data", () => {
 		const form = parseOk(sampleYaml);
 		expect(form.title).toBe("Test Form");
-		expect(form.items).toHaveLength(12);
+		expect(form.items).toHaveLength(13);
 		expect(form.actions).toEqual([{ type: "log" }]);
 		expect(form.post_submit?.message).toBe("Thank you for your submission.");
 	});
@@ -96,6 +96,23 @@ items:
 		expect(form.actions).toEqual([
 			{ type: "post", url: "https://example.com/api" },
 		]);
+	});
+
+	test("constant accepts from_url / hidden, defaulting to false", () => {
+		const form = parseOk(`
+title: T
+items:
+  - { type: constant, title: A, id: a, value: v }
+  - { type: constant, title: B, id: b, value: v, from_url: true, hidden: true }
+`);
+		const a = form.items[0];
+		const b = form.items[1];
+		if (a?.type !== "constant" || b?.type !== "constant")
+			throw new Error("expected constant items");
+		expect(a.from_url).toBe(false);
+		expect(a.hidden).toBe(false);
+		expect(b.from_url).toBe(true);
+		expect(b.hidden).toBe(true);
 	});
 
 	test("actions default to an empty array when omitted", () => {

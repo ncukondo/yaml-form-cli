@@ -65,7 +65,16 @@ the top of your YAML:
 ### Item types
 
 - **`constant`** — fixed, non-editable value. Extra field: `value` (required).
-  Included in submitted data.
+  Included in submitted data. Extra optional fields (decision 0013):
+  - `from_url` (default `false`): allow the value to be overridden by a URL
+    query parameter named after the item's `id`; `value` remains the fallback
+    when the parameter is absent. See
+    [URL-parameter prefill](#url-parameter-prefill).
+  - `hidden` (default `false`): don't render the item at all. It still
+    participates in submitted data and in `visible_when` rules of other
+    items. Combining `hidden` with `visible_when` on the same item is a
+    generation error. Only `constant` supports `hidden` — use `visible_when`
+    for dynamic hiding of input items.
 - **`short_text`** — single-line text input. Extra optional fields
   (decision 0011):
   - `input_type`: one of `email`, `tel`, `url`, `number` — rendered as the
@@ -174,6 +183,48 @@ Notes:
 - Rule keys are validated at generation time against the possible answer
   keys; a typo or stale reference (e.g. after toggling `comment_per_row`)
   fails generation instead of silently hiding items.
+
+### URL-parameter prefill
+
+Opening a generated form with query parameters prefills matching fields
+before the form is shown (decision 0013):
+
+```
+form.html?name=John&role=student&tags=a,b
+```
+
+- Parameter names are matched **exactly** against the form's answer keys:
+  the item `id` for `short_text` / `long_text` / `choice`, `<id>.<rowKey>`
+  for `choice_table` / `rubric` rows, `<id>.<rowKey>.comment` for rubric
+  per-row comments (with `comment_per_row: true`), and the item `id` for
+  `constant` items with `from_url: true`.
+- Choice-like targets match against the choice **`value`** (not `title`).
+  Renaming a `value` breaks previously distributed URLs, same as renaming an
+  `id`.
+- Repeated parameters: single-valued targets take the last occurrence;
+  `multiple: true` targets take the union (`?tags=a&tags=b`).
+- **Comma shorthand** for `multiple: true` targets: `?tags=a,b` checks both.
+  A parameter value is first matched whole against the choice values (so a
+  value that itself contains a comma wins), otherwise split on `,`. Text and
+  single-select targets are never split.
+- Text values are applied verbatim after standard URL decoding (`+` becomes
+  a space).
+- Unknown parameter names and unmatched choice values are ignored with a
+  `console.warn`; prefill never breaks the form and never triggers error
+  messages (`required` is still checked only at submit).
+- `visible_when` rules see prefilled answers on first render.
+- A `constant` item is only overridable when it declares `from_url: true`;
+  without it, URL parameters cannot change submitted metadata.
+
+`hidden: true` + `from_url: true` together enable **per-respondent
+distribution URLs**: hand each respondent a URL like
+`form.html?respondent=r042` and the identifier lands in the submit payload
+without an on-screen field.
+
+> **Disclosure note:** a parameter applied to a hidden constant is invisible
+> to the respondent. If distribution URLs carry identifiers, you are
+> responsible for telling respondents — do not present such a survey as
+> anonymous.
 
 ### Language and UI strings (`lang`, `messages`)
 
@@ -296,3 +347,6 @@ Presentation Rubric:
   too narrow for that, each row stacks vertically as its own block.
 - `required` validation runs client-side before actions.
 - `visible_when` is re-evaluated live as the user edits.
+- Query parameters prefill matching fields at load (see
+  [URL-parameter prefill](#url-parameter-prefill)); this works on `file://`
+  URLs too.

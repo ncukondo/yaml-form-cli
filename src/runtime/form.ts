@@ -10,6 +10,7 @@ import type {
 	FormItem,
 	RubricItem,
 } from "../schema/form-schema.ts";
+import { applyPrefill } from "./prefill.ts";
 import { performSubmit } from "./submit.ts";
 import { initTableScroll } from "./table-scroll.ts";
 import {
@@ -317,7 +318,9 @@ export function initForm(doc: Document): void {
 	const formEl = doc.querySelector("form#yaml-form");
 	if (!formEl) return;
 	initTableScroll(doc);
-	const form = readFormData(doc);
+	// Prefill runs before the evaluator is built and before the first
+	// visibility pass, so rules see prefilled answers on first render.
+	const form = applyPrefill(doc, readFormData(doc));
 	initErrorSlots(doc);
 	const visibility = createVisibilityEvaluator(form);
 	const refreshVisibility = () =>

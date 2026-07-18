@@ -230,6 +230,14 @@
 							},
 							"value": {
 								"type": "string"
+							},
+							"from_url": {
+								"default": false,
+								"type": "boolean"
+							},
+							"hidden": {
+								"default": false,
+								"type": "boolean"
 							}
 						},
 						"required": [
