@@ -30,12 +30,12 @@ Rules:
 | [0008 CLI](archive/0008-cli.md) | 0003 | A | done |
 | [0009 Distribution & upgrade](archive/0009-distribution.md) | 0008 | — | done |
 | [0010 Release docs verification](archive/0010-release-docs.md) | 0009 | — | done |
-| [0011 a11y: field labels & required](0011-a11y-field-labels.md) (#1 #2 #3) | 0010 | B | todo |
+| [0011 a11y: field labels & required](archive/0011-a11y-field-labels.md) (#1 #2 #3) | 0010 | B | done |
 | [0012 a11y: error announcement & invalid styling](0012-a11y-error-announcement.md) (#4 #12) | 0011, 0016 | — | todo |
-| [0013 Submit flow a11y & double-submit guard](0013-submit-flow-a11y-ux.md) (#5 #9) | 0010 | B | todo |
-| [0014 Table cell a11y & mobile semantics](0014-table-cell-a11y.md) (#6) | 0010 | B | todo |
+| [0013 Submit flow a11y & double-submit guard](archive/0013-submit-flow-a11y-ux.md) (#5 #9) | 0010 | B | done |
+| [0014 Table cell a11y & mobile semantics](archive/0014-table-cell-a11y.md) (#6) | 0010 | B | done |
 | [0015 i18n: lang & messages](0015-i18n-lang-and-messages.md) (#7) | 0012, 0013, 0014 | — | todo |
-| [0016 Theme contrast fixes](0016-theme-contrast.md) (#8 #11 #13) | 0010 | B | todo |
+| [0016 Theme contrast fixes](archive/0016-theme-contrast.md) (#8 #11 #13) | 0010 | B | done |
 | [0017 UX/a11y batch](0017-ux-a11y-batch.md) (#10) | 0012, 0016 | — | todo |
 | [0018 Table scroll affordance](0018-table-scroll-affordance.md) (#14) | 0016 | — | todo |
 | [0019 Mobile wide-table layout](0019-mobile-wide-tables.md) (#15) | 0014, 0018 | — | todo |
