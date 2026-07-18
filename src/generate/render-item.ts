@@ -6,19 +6,29 @@ import type {
 	ShortTextItem,
 } from "../schema/form-schema.ts";
 import { escapeAttr, escapeHtml, renderText } from "./escape.ts";
+import { descriptionId, inputId, labelId } from "./ids.ts";
 import { renderChoiceTable } from "./items/choice-table.ts";
 import { renderRubric } from "./items/rubric.ts";
+
+/** aria-describedby / aria-required attributes shared by all input kinds. */
+function ariaAttrs(item: FormItem): string {
+	const describedBy = item.description
+		? ` aria-describedby="${escapeAttr(descriptionId(item.id))}"`
+		: "";
+	const required = item.required ? ' aria-required="true"' : "";
+	return `${describedBy}${required}`;
+}
 
 function renderConstant(item: ConstantItem): string {
 	return `<p class="constant-value">${renderText(item.value)}</p>`;
 }
 
 function renderShortText(item: ShortTextItem): string {
-	return `<input type="text" name="${escapeAttr(item.id)}" id="input-${escapeAttr(item.id)}">`;
+	return `<input type="text" name="${escapeAttr(item.id)}" id="${escapeAttr(inputId(item.id))}"${ariaAttrs(item)}>`;
 }
 
 function renderLongText(item: LongTextItem): string {
-	return `<textarea name="${escapeAttr(item.id)}" id="input-${escapeAttr(item.id)}"></textarea>`;
+	return `<textarea name="${escapeAttr(item.id)}" id="${escapeAttr(inputId(item.id))}"${ariaAttrs(item)}></textarea>`;
 }
 
 function renderChoice(item: ChoiceItem): string {
@@ -29,7 +39,7 @@ function renderChoice(item: ChoiceItem): string {
 				`<label class="choice-option"><input type="${kind}" name="${escapeAttr(item.id)}" value="${escapeAttr(choice.value)}"><span>${escapeHtml(choice.title)}</span></label>`,
 		)
 		.join("\n");
-	return `<div class="choice-options" role="group">\n${options}\n</div>`;
+	return `<div class="choice-options" role="group" aria-labelledby="${escapeAttr(labelId(item.id))}"${ariaAttrs(item)}>\n${options}\n</div>`;
 }
 
 function renderControl(item: FormItem): string {
@@ -49,13 +59,22 @@ function renderControl(item: FormItem): string {
 	}
 }
 
-export function renderItem(item: FormItem): string {
+function renderTitle(item: FormItem): string {
 	const requiredMark = item.required
 		? '<span class="required-mark" aria-hidden="true">*</span>'
 		: "";
-	const title = `<span class="item-title" id="label-${escapeAttr(item.id)}">${escapeHtml(item.title)}${requiredMark}</span>`;
+	const content = `${escapeHtml(item.title)}${requiredMark}`;
+	const id = escapeAttr(labelId(item.id));
+	if (item.type === "short_text" || item.type === "long_text") {
+		return `<label class="item-title" id="${id}" for="${escapeAttr(inputId(item.id))}">${content}</label>`;
+	}
+	return `<span class="item-title" id="${id}">${content}</span>`;
+}
+
+export function renderItem(item: FormItem): string {
+	const title = renderTitle(item);
 	const description = item.description
-		? `<p class="item-description">${renderText(item.description)}</p>`
+		? `<p class="item-description" id="${escapeAttr(descriptionId(item.id))}">${renderText(item.description)}</p>`
 		: "";
 	const error =
 		item.type === "constant"

@@ -1,5 +1,6 @@
 import type { ChoiceTableItem, RubricItem } from "../../schema/form-schema.ts";
 import { escapeAttr, escapeHtml } from "../escape.ts";
+import { labelId } from "../ids.ts";
 
 type TableItem = ChoiceTableItem | RubricItem;
 
@@ -22,7 +23,8 @@ function renderCell(
 		descriptor === undefined
 			? ""
 			: `<span class="cell-descriptor">${escapeHtml(descriptor)}</span>`;
-	return `<td class="table-cell"><label class="table-cell-label"><input type="${inputKind}" name="${escapeAttr(name)}" value="${escapeAttr(choice.value)}" aria-label="${escapeAttr(`${row.title}: ${choice.title}`)}"><span class="cell-choice">${escapeHtml(choice.title)}</span>${descriptorHtml}</label></td>`;
+	const required = item.required ? ' aria-required="true"' : "";
+	return `<td class="table-cell"><label class="table-cell-label"><input type="${inputKind}" name="${escapeAttr(name)}" value="${escapeAttr(choice.value)}" aria-label="${escapeAttr(`${row.title}: ${choice.title}`)}"${required}><span class="cell-choice">${escapeHtml(choice.title)}</span>${descriptorHtml}</label></td>`;
 }
 
 function renderRow(
@@ -60,7 +62,7 @@ export function renderTable(item: TableItem, options: TableOptions): string {
 		.map((row, rowIndex) => renderRow(item, row, rowIndex, options))
 		.join("\n");
 	return `<div class="table-scroll">
-<table class="choice-table" data-table-for="${escapeAttr(item.id)}">
+<table class="choice-table" data-table-for="${escapeAttr(item.id)}" aria-labelledby="${escapeAttr(labelId(item.id))}">
 <thead>
 <tr><th class="table-corner"></th>${headCells}</tr>
 </thead>
