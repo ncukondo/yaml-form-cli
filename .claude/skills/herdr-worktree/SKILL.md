@@ -6,7 +6,7 @@ metadata:
     github-path: skills/herdr-worktree
     github-ref: refs/heads/main
     github-repo: https://github.com/ncukondo/agent-skills
-    github-tree-sha: 6d739d572166bd1f1d1b795a4aa5cc3e1dbc7b54
+    github-tree-sha: e33abcaf69d4523e0cf0d4f5981107a481efbb3e
 name: herdr-worktree
 ---
 # herdr-worktree: worktree並列エージェント管理
@@ -30,6 +30,7 @@ git worktreeでブランチごとに独立した作業環境を作り、[herdr](
 | `launch-agent.sh <dir> [prompt]` | 既存ディレクトリでエージェント起動（spawn-agentの下請け） |
 | `monitor-agents.sh [--watch] [--json] [--all]` | このリポジトリのエージェント一覧・状態 |
 | `check-agent-state.sh <target>` | 状態確認: idle / working / permission / starting |
+| `wait-agents.sh <target>... [--interval <sec>] [--timeout <sec>]` | 複数エージェントの完了待ち（working/startingがいなくなるまでポーリング） |
 | `send-to-agent.sh <target> "<prompt>"` | 実行中エージェントへ追加指示（idle時のみ） |
 | `kill-agent.sh <target> [--keep-pane]` | エージェント停止（ペインを閉じる） |
 | `remove-worktree.sh <branch> [--delete-branch]` | エージェント停止 + workspace/worktree削除 + ブランチ削除 |
@@ -44,6 +45,8 @@ SKILL_SCRIPTS=<このスキルのscripts/への絶対パス>
 
 # 2. 完了待ち（タスク完了で "done" になる）
 herdr wait agent-status <pane> --status done --timeout 3600000
+# 複数ワーカー・長時間の待ちは wait-agents.sh を使う（下記の注意6参照）
+"$SKILL_SCRIPTS/wait-agents.sh" <pane1> <pane2> --interval 60
 
 # 3. 出力確認
 herdr agent read <pane> --lines 30
@@ -67,7 +70,7 @@ herdr agent read <pane> --lines 30
 3. **send直後の `done` 待ちはレースする**。前タスクの done 状態が残っているため即座にマッチしてしまう。追加指示の後は `--status working` を待ってから `--status done` を待つ。
 4. **起動時ダイアログ（MCP確認・trust prompt）が `idle` と報告されることがある**。「idle=完了」と断定せず、`herdr agent read` で画面を確認するか、成果物（PR・ファイル・コミット）で完了を裏取りする。ダイアログで止まっていたら `herdr pane send-keys <pane> Enter` で承認できる。
 5. **workspaceのルートペイン**: `herdr worktree open` はシェルのルートペインを必ず1つ作る。launch-agent.sh は新規作成時にこれを自動で閉じる（既存workspaceのペインは触らない）。
-6. **長時間の `herdr wait` は呼び出し側の都合で切られることがある**。オーケストレーター側のエージェントから数十分規模の完了待ちを張る場合は、`herdr wait` 単発に頼らず、ポーリング（`check-agent-state.sh` のループ）やエージェントハーネス側の監視機能を併用する。
+6. **長時間の `herdr wait` は呼び出し側の都合で切られることがある**。オーケストレーター側のエージェントから数十分規模の完了待ちを張る場合は、`herdr wait` 単発に頼らず、`wait-agents.sh`（バックグラウンド実行推奨）やエージェントハーネス側の監視機能を併用する。ポーリングループを手書きしないこと — オーケストレーターのインラインシェルはzshで実行されることがあり、zshは `$VAR` を単語分割しないため `for p in $PANES` 型のループが「全員完了」の偽陽性で静かに壊れる（実際に発生した事故）。
 7. **`herdr pane run` のEnterがClaude TUIに飲まれることがある**（断続的なrace）。プロンプトが入力欄に未送信のまま残り、エージェントはidleのまま。また pane run は成功時に何も出力しない（他コマンドと違いJSONを返さない）。send-to-agent.sh は送信後に working への遷移を確認し、だめならEnterを再送する — 生の pane run ではなく必ずこちらを使う。
 8. **pane captureの入力行（`❯`）にゴーストサジェストが写ることがある**。Claude TUIが表示する入力候補（例: 次に打ちそうなスラッシュコマンド）で、実際の入力ではない。`herdr agent read` の出力で入力欄に文字が見えても、それだけで「誰かが入力した」と判断しないこと。
 
