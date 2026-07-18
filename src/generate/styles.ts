@@ -5,7 +5,9 @@ export const baseStyles = `
 	--bg: #ffffff;
 	--muted: #555;
 	--border: #ccc;
+	--border-input: #767676;
 	--accent: #2563eb;
+	--accent-contrast: #ffffff;
 	--error: #b91c1c;
 }
 @media (prefers-color-scheme: dark) {
@@ -14,7 +16,9 @@ export const baseStyles = `
 		--bg: #171717;
 		--muted: #a3a3a3;
 		--border: #444;
+		--border-input: #8a8a8a;
 		--accent: #60a5fa;
+		--accent-contrast: #171717;
 		--error: #f87171;
 	}
 }
@@ -61,7 +65,7 @@ input[type="text"], textarea {
 	color: inherit;
 	background: transparent;
 	padding: 0.5rem 0.65rem;
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-input);
 	border-radius: 0.375rem;
 }
 input[type="text"]:focus, textarea:focus {
@@ -78,6 +82,11 @@ textarea { min-height: 6rem; resize: vertical; }
 	padding: 0.15rem 0;
 	cursor: pointer;
 }
+input[type="radio"], input[type="checkbox"] {
+	accent-color: var(--accent);
+	width: 1.1rem;
+	height: 1.1rem;
+}
 .item-error {
 	color: var(--error);
 	font-size: 0.9rem;
@@ -86,14 +95,14 @@ textarea { min-height: 6rem; resize: vertical; }
 button[type="submit"] {
 	font: inherit;
 	font-weight: 600;
-	color: #fff;
+	color: var(--accent-contrast);
 	background: var(--accent);
 	border: 0;
 	border-radius: 0.375rem;
 	padding: 0.6rem 1.5rem;
 	cursor: pointer;
 }
-button[type="submit"]:hover { filter: brightness(1.1); }
+button[type="submit"]:hover { filter: brightness(0.9); }
 .form-error {
 	color: var(--error);
 	font-weight: 600;
