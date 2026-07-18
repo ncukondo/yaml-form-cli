@@ -1,6 +1,6 @@
 # Task 0014: a11y — choice_table/rubric cell labels & mobile table semantics
 
-Status: todo
+Status: done
 Depends on: 0010
 Parallel: yes — group B (owns `src/generate/items/choice-table.ts`, `src/generate/items/rubric.ts`)
 
@@ -48,10 +48,10 @@ structure instead of silently losing table semantics.
 
 ## Acceptance criteria
 
-- [ ] Screen reader announces the descriptor when focusing a rubric radio
-- [ ] Mobile stacked view presents row title + choice text without relying
+- [x] Screen reader announces the descriptor when focusing a rubric radio
+- [x] Mobile stacked view presents row title + choice text without relying
       on (now-absent) column headers
-- [ ] `bun test` and `bun run typecheck` pass
+- [x] `bun test` and `bun run typecheck` pass
 
 ## Verification
 
