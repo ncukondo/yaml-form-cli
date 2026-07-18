@@ -41,6 +41,8 @@ Rules:
 | [0019 Mobile wide-table layout](archive/0019-mobile-wide-tables.md) (#15) | 0014, 0018 | — | done |
 | [0020 UI polish batch](archive/0020-ui-polish-batch.md) (#16) | 0013, 0016, 0018 | — | done |
 | [0021 i18n: noscript & clear-selection labels](archive/0021-i18n-noscript-clear-labels.md) (#28) | 0015, 0017 | — | done |
+| [0022 URL-parameter prefill, constant `from_url` / `hidden`](0022-url-prefill.md) | — | — | todo |
+| [0023 Draft autosave to localStorage](0023-draft-autosave.md) | 0022 | — | todo |
 
 Group A tasks touch disjoint areas (runtime modules / generator modules /
 CLI entry) and can proceed in parallel worktrees once 0003 lands.

@@ -24,6 +24,9 @@ instead of restating them.
 | [0009](0009-development-process.md) | Development process: decisions/tasks dirs, TDD, parallel worktrees |
 | [0010](0010-i18n.md) | i18n: `lang` + built-in bundles (`en`/`ja`) + `messages` overrides |
 | [0011](0011-input-types.md) | `input_type` / `autocomplete` fields on short_text |
+| [0012](0012-mobile-wide-tables.md) | Mobile layout for many-column choice_tables |
+| [0013](0013-url-prefill.md) | URL-parameter prefill and constant overrides |
+| [0014](0014-draft-autosave.md) | Draft autosave to localStorage |
 
 ## Archive
 
