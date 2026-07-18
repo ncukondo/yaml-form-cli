@@ -280,6 +280,17 @@ function initErrorSlots(doc: Document): void {
 	}
 }
 
+// Live clearing while the user edits: the failure key doubles as the control
+// name, so the edited control names exactly the error to retract. Errors only
+// come back on the next submit — no re-validation mid-edit.
+function clearFieldError(doc: Document, key: string): void {
+	const slot = doc.querySelector(`[data-error-for="${attrEscape(key)}"]`);
+	if (!slot || slot.hasAttribute("hidden")) return;
+	slot.textContent = "";
+	slot.setAttribute("hidden", "");
+	setInvalidState(doc, key, false);
+}
+
 function showErrors(doc: Document, failures: RequiredFailure[]): void {
 	// Covers item-level slots and the per-row slots inside tables.
 	for (const el of Array.from(doc.querySelectorAll("[data-error-for]"))) {
@@ -306,9 +317,14 @@ export function initForm(doc: Document): void {
 	const visibility = createVisibilityEvaluator(form);
 	const refreshVisibility = () =>
 		applyVisibility(doc, visibility.compute(readRawAnswers(doc, form)));
-	formEl.addEventListener("change", refreshVisibility);
+	const onEdit = (event: Event) => {
+		refreshVisibility();
+		const name = (event.target as Element | null)?.getAttribute?.("name");
+		if (name) clearFieldError(doc, name);
+	};
+	formEl.addEventListener("change", onEdit);
 	// text fields fire "input" per keystroke; "change" only on commit
-	formEl.addEventListener("input", refreshVisibility);
+	formEl.addEventListener("input", onEdit);
 	refreshVisibility();
 	formEl.addEventListener("submit", (event) => {
 		event.preventDefault();
