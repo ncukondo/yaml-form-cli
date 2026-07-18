@@ -1,6 +1,7 @@
 // Submit orchestration: payload building and the success/failure UI flow.
 // Runs in the browser (bundled into the generated HTML); schema imports must
 // stay type-only.
+import { type Messages, resolveMessages } from "../messages.ts";
 import type { Form } from "../schema/form-schema.ts";
 import { type ActionEnv, runActions } from "./actions.ts";
 
@@ -20,11 +21,6 @@ export interface SubmitPayload {
 	submitted_at: string;
 	answers: SubmitAnswers;
 }
-
-export const DEFAULT_SUCCESS_MESSAGE = "Your response has been submitted.";
-export const SUBMIT_FAILURE_MESSAGE = "Submission failed. Please try again.";
-// Named constant so task 0015 can localize it.
-export const SUBMITTING_LABEL = "Submitting…";
 
 // ISO 8601 with the client's local UTC offset (e.g. 2026-07-18T21:34:56+09:00).
 export function formatLocalIso(date: Date): string {
@@ -112,13 +108,14 @@ function setError(doc: Document, message: string | null): void {
 	}
 }
 
-function showSuccess(doc: Document, form: Form): void {
+function showSuccess(doc: Document, form: Form, messages: Messages): void {
 	doc.querySelector("form#yaml-form")?.setAttribute("hidden", "");
 	// Keep the form title as context; the fill-in instructions are done with.
 	doc.querySelector(".form-description")?.setAttribute("hidden", "");
 	const successEl = doc.querySelector<HTMLElement>("#yaml-form-success");
 	if (!successEl) return;
-	successEl.textContent = form.post_submit?.message ?? DEFAULT_SUCCESS_MESSAGE;
+	// post_submit.message predates messages.submit_success and wins (0010).
+	successEl.textContent = form.post_submit?.message ?? messages.submit_success;
 	successEl.removeAttribute("hidden");
 	// The form (and the focused Submit button) just got hidden; without this,
 	// focus falls back to <body> and screen readers lose their place.
@@ -128,6 +125,7 @@ function showSuccess(doc: Document, form: Form): void {
 function applySubmitState(
 	doc: Document,
 	form: Form,
+	messages: Messages,
 	state: SubmitState,
 	idleLabel: string,
 ): void {
@@ -136,7 +134,7 @@ function applySubmitState(
 		case "pending":
 			if (button) {
 				button.disabled = true;
-				button.textContent = SUBMITTING_LABEL;
+				button.textContent = messages.submitting;
 			}
 			setError(doc, null);
 			break;
@@ -145,14 +143,14 @@ function applySubmitState(
 				button.disabled = false;
 				button.textContent = idleLabel;
 			}
-			setError(doc, SUBMIT_FAILURE_MESSAGE);
+			setError(doc, messages.submit_failed);
 			break;
 		case "success":
 			if (button) {
 				button.disabled = false;
 				button.textContent = idleLabel;
 			}
-			showSuccess(doc, form);
+			showSuccess(doc, form, messages);
 			break;
 	}
 }
@@ -170,8 +168,9 @@ export async function performSubmit(
 	if (pendingDocs.has(doc)) return;
 	pendingDocs.add(doc);
 	const env = { ...defaultEnv(doc), ...envOverride };
-	const idleLabel = submitButton(doc)?.textContent ?? "Submit";
-	applySubmitState(doc, form, { kind: "pending" }, idleLabel);
+	const messages = resolveMessages(form);
+	const idleLabel = submitButton(doc)?.textContent ?? messages.submit;
+	applySubmitState(doc, form, messages, { kind: "pending" }, idleLabel);
 	try {
 		const payload = buildPayload(form, answers, {
 			generator: readGenerator(doc),
@@ -180,6 +179,7 @@ export async function performSubmit(
 		applySubmitState(
 			doc,
 			form,
+			messages,
 			{ kind: result.ok ? "success" : "failure" },
 			idleLabel,
 		);

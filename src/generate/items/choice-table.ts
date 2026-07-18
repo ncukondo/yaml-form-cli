@@ -1,3 +1,4 @@
+import { formatMessage, type Messages } from "../../messages.ts";
 import type { ChoiceTableItem, RubricItem } from "../../schema/form-schema.ts";
 import { escapeAttr, escapeHtml } from "../escape.ts";
 import { labelId } from "../ids.ts";
@@ -6,6 +7,8 @@ type TableItem = ChoiceTableItem | RubricItem;
 
 export interface TableOptions {
 	inputKind: "radio" | "checkbox";
+	/** Resolved UI strings (per-row comment labels). */
+	messages: Messages;
 	/** Per-cell descriptor texts for a row, in column order (rubric). */
 	descriptorsFor?: (rowIndex: number) => readonly string[];
 	commentPerRow?: boolean;
@@ -13,8 +16,8 @@ export interface TableOptions {
 
 /**
  * Accessible name for a cell input. Kept as the single construction point of
- * the "{row}: {choice}" phrase; the ": " separator is hard-coded until the
- * i18n hook (Task 0015) lands.
+ * the "{row}: {choice}" phrase; the ": " separator is punctuation, not prose,
+ * and stays outside the message table (decisions/0010-i18n.md).
  */
 function cellAccessibleName(rowTitle: string, choiceTitle: string): string {
 	return `${rowTitle}: ${choiceTitle}`;
@@ -61,8 +64,11 @@ function renderRow(
 ${cells}
 </tr>`;
 	if (!options.commentPerRow) return rowHtml;
+	const commentLabel = formatMessage(options.messages.comment, {
+		row: row.title,
+	});
 	const commentHtml = `<tr class="table-comment-row" role="row" data-row-key="${escapeAttr(row.key)}">
-<td colspan="${item.choices.length + 1}" role="cell"><label class="row-comment-label"><span class="row-comment-title">Comment — ${escapeHtml(row.title)}</span><textarea class="row-comment" name="${escapeAttr(`${name}.comment`)}"></textarea></label></td>
+<td colspan="${item.choices.length + 1}" role="cell"><label class="row-comment-label"><span class="row-comment-title">${escapeHtml(commentLabel)}</span><textarea class="row-comment" name="${escapeAttr(`${name}.comment`)}"></textarea></label></td>
 </tr>`;
 	return `${rowHtml}\n${commentHtml}`;
 }
@@ -91,8 +97,12 @@ ${bodyRows}
 </div>`;
 }
 
-export function renderChoiceTable(item: ChoiceTableItem): string {
+export function renderChoiceTable(
+	item: ChoiceTableItem,
+	messages: Messages,
+): string {
 	return renderTable(item, {
 		inputKind: item.multiple ? "checkbox" : "radio",
+		messages,
 	});
 }

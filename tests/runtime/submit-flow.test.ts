@@ -1,11 +1,8 @@
 import { describe, expect, mock, test } from "bun:test";
 import { Window } from "happy-dom";
 import { generateHtml } from "../../src/generate/index.ts";
+import { BUILTIN_MESSAGES } from "../../src/messages.ts";
 import { initForm } from "../../src/runtime/form.ts";
-import {
-	SUBMIT_FAILURE_MESSAGE,
-	SUBMITTING_LABEL,
-} from "../../src/runtime/submit.ts";
 import { parseForm } from "../../src/schema/index.ts";
 
 function parseOk(source: string) {
@@ -86,7 +83,7 @@ describe("double-submit guard and pending state", () => {
 		submitForm(document);
 		await flush();
 		expect(button.disabled).toBe(true);
-		expect(button.textContent).toBe(SUBMITTING_LABEL);
+		expect(button.textContent).toBe(BUILTIN_MESSAGES.en.submitting);
 
 		pending.resolve({ ok: true, status: 200 });
 		await flush();
@@ -126,7 +123,7 @@ describe("failure state", () => {
 		expect(button.textContent).toBe(idleLabel);
 		const error = document.querySelector("#yaml-form-error");
 		expect(error?.hasAttribute("hidden")).toBe(false);
-		expect(error?.textContent).toBe(SUBMIT_FAILURE_MESSAGE);
+		expect(error?.textContent).toBe(BUILTIN_MESSAGES.en.submit_failed);
 		// Form stays usable for a retry.
 		expect(
 			document.querySelector("form#yaml-form")?.hasAttribute("hidden"),

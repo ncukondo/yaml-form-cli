@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { MessageKey } from "../messages.ts";
 
 export const ITEM_TYPES = [
 	"constant",
@@ -117,9 +118,32 @@ const actionSchema = z.discriminatedUnion("type", [
 	}),
 ]);
 
+const messageOverride = z.string().min(1).optional();
+
+// `satisfies` keeps this literal in lockstep with MESSAGE_KEYS in
+// src/messages.ts; strictObject makes a typo'd key a parse error.
+const messagesSchema = z.strictObject({
+	required: messageOverride,
+	required_row: messageOverride,
+	required_legend: messageOverride,
+	submit: messageOverride,
+	submitting: messageOverride,
+	submit_failed: messageOverride,
+	submit_success: messageOverride,
+	comment: messageOverride,
+} satisfies Record<MessageKey, typeof messageOverride>);
+
 export const formSchema = z
 	.strictObject({
 		title: z.string().min(1),
+		lang: z
+			.string()
+			.regex(
+				/^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/,
+				'Expected a BCP 47 language tag like "en" or "ja-JP"',
+			)
+			.default("en"),
+		messages: messagesSchema.optional(),
 		id: z.string().min(1).optional(),
 		version: z.string().min(1).optional(),
 		description: z.string().optional(),

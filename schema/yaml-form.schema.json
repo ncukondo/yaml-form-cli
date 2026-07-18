@@ -8,6 +8,49 @@
 			"type": "string",
 			"minLength": 1
 		},
+		"lang": {
+			"default": "en",
+			"type": "string",
+			"pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$"
+		},
+		"messages": {
+			"type": "object",
+			"properties": {
+				"required": {
+					"type": "string",
+					"minLength": 1
+				},
+				"required_row": {
+					"type": "string",
+					"minLength": 1
+				},
+				"required_legend": {
+					"type": "string",
+					"minLength": 1
+				},
+				"submit": {
+					"type": "string",
+					"minLength": 1
+				},
+				"submitting": {
+					"type": "string",
+					"minLength": 1
+				},
+				"submit_failed": {
+					"type": "string",
+					"minLength": 1
+				},
+				"submit_success": {
+					"type": "string",
+					"minLength": 1
+				},
+				"comment": {
+					"type": "string",
+					"minLength": 1
+				}
+			},
+			"additionalProperties": false
+		},
 		"id": {
 			"type": "string",
 			"minLength": 1

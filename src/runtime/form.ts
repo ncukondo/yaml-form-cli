@@ -3,6 +3,7 @@
 // server-side dependencies. src/generate/ids.ts is a pure string helper and
 // safe to bundle; it keeps the element-id conventions in one place.
 import { errorId } from "../generate/ids.ts";
+import { formatMessage, resolveMessages } from "../messages.ts";
 import type {
 	ChoiceTableItem,
 	Form,
@@ -161,6 +162,7 @@ function isItemVisible(doc: Document, item: FormItem): boolean {
 
 export function validateRequired(doc: Document): RequiredFailure[] {
 	const form = readFormData(doc);
+	const messages = resolveMessages(form);
 	const failures: RequiredFailure[] = [];
 	for (const item of form.items) {
 		if (!item.required || item.type === "constant") continue;
@@ -172,7 +174,10 @@ export function validateRequired(doc: Document): RequiredFailure[] {
 					failures.push({
 						itemId: item.id,
 						rowKey: row.key,
-						message: `"${row.title}" in "${item.title}" is required.`,
+						message: formatMessage(messages.required_row, {
+							row: row.title,
+							title: item.title,
+						}),
 					});
 				}
 			}
@@ -181,7 +186,7 @@ export function validateRequired(doc: Document): RequiredFailure[] {
 		if (!isAnswered(readItemValue(doc, item))) {
 			failures.push({
 				itemId: item.id,
-				message: `"${item.title}" is required.`,
+				message: formatMessage(messages.required, { title: item.title }),
 			});
 		}
 	}
