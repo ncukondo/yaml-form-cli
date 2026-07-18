@@ -1,6 +1,6 @@
 # Task 0022: URL-parameter prefill, constant `from_url` / `hidden`
 
-Status: todo
+Status: done
 Depends on: —
 Parallel: no — touches schema, generator, and runtime together
 
@@ -70,16 +70,16 @@ per-respondent distribution URLs.
 
 ## Acceptance criteria
 
-- [ ] `?name=John&role=student` prefills text and choice items; visibility
+- [x] `?name=John&role=student` prefills text and choice items; visibility
       rules react to prefilled values on first render
-- [ ] `?tags=a,b` checks both options; `?tags=a&tags=b` equivalent
-- [ ] `constant` + `from_url: true` overridden by URL and lands in the submit
+- [x] `?tags=a,b` checks both options; `?tags=a&tags=b` equivalent
+- [x] `constant` + `from_url: true` overridden by URL and lands in the submit
       payload; without `from_url` the URL cannot change it
-- [ ] `hidden: true` constant invisible but present in payload and rules
-- [ ] `hidden` + `visible_when` fails generation with a clear message
-- [ ] Unknown params / values never break the form (warn only)
-- [ ] `bun run check` passes
-- [ ] `docs/reference.md` documents prefill (incl. the note that authors must
+- [x] `hidden: true` constant invisible but present in payload and rules
+- [x] `hidden` + `visible_when` fails generation with a clear message
+- [x] Unknown params / values never break the form (warn only)
+- [x] `bun run check` passes
+- [x] `docs/reference.md` documents prefill (incl. the note that authors must
       disclose identifier-carrying distribution URLs); `examples/sample.yaml`
       and README updated
 
