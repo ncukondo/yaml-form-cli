@@ -101,7 +101,9 @@ export function applyChoiceValues(
 		const selected = new Set<string>();
 		for (const value of paramValues) {
 			const tokens =
-				target.values.has(value) || !commaShorthand ? [value] : value.split(",");
+				target.values.has(value) || !commaShorthand
+					? [value]
+					: value.split(",");
 			for (const token of tokens) {
 				if (target.values.has(token)) selected.add(token);
 				else

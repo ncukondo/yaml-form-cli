@@ -5,6 +5,10 @@
 title: "Test Form" # title of form
 # id: "test_form" # optional; echoed into the submit payload as form.id
 # version: "1.0" # optional; echoed into the submit payload as form.version
+# autosave: false # optional; default true. Answers are autosaved to the
+# browser's localStorage and restored when the same URL is reopened; a
+# successful submit clears the draft. Set id (and bump version on changes)
+# when autosave matters. Consider false for shared/kiosk devices.
 description: |
   Desctiption of form
   You can use multiple line text

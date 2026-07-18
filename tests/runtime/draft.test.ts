@@ -308,7 +308,9 @@ describe("pruning", () => {
 				[`${DRAFT_PREFIX}fresh-form::`]: makeDraft({ a: "1" }),
 			},
 		});
-		expect(window.localStorage.getItem(`${DRAFT_PREFIX}other-form::`)).toBeNull();
+		expect(
+			window.localStorage.getItem(`${DRAFT_PREFIX}other-form::`),
+		).toBeNull();
 		expect(
 			window.localStorage.getItem(`${DRAFT_PREFIX}fresh-form::`),
 		).not.toBeNull();

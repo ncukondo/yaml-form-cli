@@ -46,6 +46,7 @@ the top of your YAML:
 | `version`     | string             | no       | Form definition version, echoed as `form.version` |
 | `lang`        | string             | no       | BCP 47 language tag (default `en`); sets `<html lang>` and selects the built-in UI strings (see [Language and UI strings](#language-and-ui-strings-lang-messages)) |
 | `messages`    | object             | no       | Per-string overrides of the built-in UI strings |
+| `autosave`    | boolean            | no       | Draft autosave to localStorage (default `true`; see [Draft autosave](#draft-autosave)) |
 | `description` | string             | no       | Multi-line supported; URLs are auto-linked |
 | `actions`     | action[] \| action | no       | Actions executed on submit (see [Actions](#actions)). A single mapping is treated as a one-element array |
 | `post_submit` | object             | no       | `message`: text displayed on the success screen |
@@ -226,6 +227,42 @@ without an on-screen field.
 > responsible for telling respondents — do not present such a survey as
 > anonymous.
 
+### Draft autosave
+
+Answers are autosaved to the browser's localStorage while the user edits
+(debounced, flushed when the page is left), so closing the tab does not lose
+input (decision 0014). **On by default**; `autosave: false` at the top level
+turns it off entirely (no reads, no writes).
+
+- Reopening the same URL — same form `id`/`title`, same `version`, and the
+  same recognized query parameters — restores the draft, overlaying any URL
+  prefill. Restoring is announced via a `role="status"` notice with a
+  **discard** button (message keys `draft_restored` / `draft_discard`);
+  discarding deletes the draft and reloads the page into the pristine
+  prefilled state.
+- A different distribution URL (different recognized parameters, decision
+  0013) uses a different storage key and starts pristine — one respondent's
+  draft can never leak into another's URL. Unrecognized query noise does not
+  affect the key.
+- A successful submit deletes the draft — except when the form's actions
+  include `mailto`: opening the mail client counts as success but the user
+  may still cancel the mail, so the draft is kept as a safety net.
+- Constants are never stored; their values come from the YAML/URL. Stale or
+  malformed drafts (e.g. after the form changed) apply what still matches
+  and ignore the rest. Drafts older than 30 days are pruned. If storage is
+  unavailable (privacy mode, quota), autosave turns itself off silently.
+- Changing `form.id`, `version`, or choice `value`s orphans existing drafts
+  (they stop matching) — bump `version` deliberately when redistributing an
+  updated form.
+
+**Recommendation:** set `form.id` when autosave matters. The `title`
+fallback is weaker on `file://`, where some browsers give all local files
+one shared storage origin.
+
+> **Shared devices:** answers persist in the browser profile until submitted,
+> discarded, or pruned. For forms filled in on shared or kiosk machines,
+> consider `autosave: false`.
+
 ### Language and UI strings (`lang`, `messages`)
 
 `lang` (default `"en"`) is emitted verbatim as `<html lang="…">` and selects
@@ -250,6 +287,8 @@ unknown placeholders are left as-is.
 | `comment`         | `{row}` = row title | `Comment — {row}` |
 | `noscript_warning` | —                 | `This form requires JavaScript. Enable JavaScript and reload the page to fill it in.` |
 | `clear_selection` | —                  | `Clear selection` |
+| `draft_restored`  | —                  | `Restored your previous answers.` |
+| `draft_discard`   | —                  | `Discard draft` |
 
 ```yaml
 lang: ja
@@ -350,3 +389,5 @@ Presentation Rubric:
 - Query parameters prefill matching fields at load (see
   [URL-parameter prefill](#url-parameter-prefill)); this works on `file://`
   URLs too.
+- Edits are autosaved to localStorage and restored on reopening the same URL
+  (see [Draft autosave](#draft-autosave)); disable with `autosave: false`.

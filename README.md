@@ -87,6 +87,11 @@ Opening a form with query parameters prefills matching fields
 URLs whose identifier lands in the submit payload — if such URLs identify
 respondents, disclose it to them.
 
+Answers are autosaved to the browser's localStorage and restored when the
+same URL is reopened (announced, discardable); a successful submit clears
+the draft. Opt out with `autosave: false` — recommended for shared or kiosk
+devices.
+
 **Full reference:** [docs/reference.md](docs/reference.md) — every field,
 answer shapes, the submit payload, and rule syntax.
 **Complete example:** [examples/sample.yaml](examples/sample.yaml).
