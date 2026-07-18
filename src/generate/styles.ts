@@ -358,6 +358,15 @@ textarea[aria-invalid="true"]:focus {
 }
 .success-message { margin: 0; }
 
+/* Submit button keyboard/pressed states: the same accent ring text inputs
+   use, offset because the button background is the accent itself; :active
+   darkens beyond the hover state. */
+button[type="submit"]:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+button[type="submit"]:active:not(:disabled) { filter: brightness(0.8); }
+
 /* Constant items are read-only content, not disabled inputs: an info box.
    Overrides the muted color set in the base rule above. */
 .constant-value {

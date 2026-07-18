@@ -234,6 +234,26 @@ describe("success screen styling", () => {
 	});
 });
 
+describe("submit button focus and pressed states", () => {
+	test("keyboard focus draws the accent ring used by text inputs", () => {
+		const rule = baseStyles.match(
+			/button\[type="submit"\]:focus-visible\s*\{[^}]*\}/,
+		)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("outline: 2px solid var(--accent);");
+		// the button background is the accent itself, so the ring needs a gap
+		expect(rule).toContain("outline-offset:");
+	});
+
+	test("pressing the button darkens it beyond hover", () => {
+		const rule = baseStyles.match(
+			/button\[type="submit"\]:active:not\(:disabled\)\s*\{[^}]*\}/,
+		)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("brightness(0.8)");
+	});
+});
+
 describe("invalid state styling", () => {
 	test("invalid text inputs and textareas take the error border", () => {
 		const rule = baseStyles.match(
