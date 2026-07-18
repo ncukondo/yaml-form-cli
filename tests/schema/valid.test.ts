@@ -21,7 +21,7 @@ describe("parseForm on examples/sample.yaml", () => {
 	test("parses into typed form data", () => {
 		const form = parseOk(sampleYaml);
 		expect(form.title).toBe("Test Form");
-		expect(form.items).toHaveLength(12);
+		expect(form.items).toHaveLength(13);
 		expect(form.actions).toEqual([{ type: "log" }]);
 		expect(form.post_submit?.message).toBe("Thank you for your submission.");
 	});

@@ -48,6 +48,17 @@ items:
     id: "constant_test" # id of item. This is required and must be unique in the form.
     value: "value" # value of item. This is required only in constant type.
 
+  # A constant can opt in to URL-parameter override and static hiding.
+  # Opening the form as form.html?respondent=r042 puts "r042" into the submit
+  # payload without an on-screen field — per-respondent distribution URLs.
+  # (Disclose to respondents when distribution URLs identify them.)
+  - type: "constant"
+    title: "Respondent"
+    id: "respondent"
+    value: "anonymous" # fallback when the URL parameter is absent
+    from_url: true # optional; allow ?respondent=... to override the value. Default: false.
+    hidden: true # optional; render nothing for this item. constant only. Default: false.
+
   - type: "short_text"
     id: "id_sample"
     title: "Short Text"
