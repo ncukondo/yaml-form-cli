@@ -63,6 +63,18 @@ items:
 	});
 });
 
+describe("success screen markup", () => {
+	test("success section carries a checkmark icon and a message slot", () => {
+		const success = document.querySelector("#yaml-form-success");
+		expect(success).not.toBeNull();
+		const icon = success?.querySelector("svg.success-icon");
+		expect(icon).not.toBeNull();
+		// decorative only — the announced content is the message text
+		expect(icon?.getAttribute("aria-hidden")).toBe("true");
+		expect(success?.querySelector("p.success-message")).not.toBeNull();
+	});
+});
+
 describe("basic item rendering", () => {
 	test("every item gets a container with its id", () => {
 		for (const id of [

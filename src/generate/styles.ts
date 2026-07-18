@@ -337,6 +337,27 @@ textarea[aria-invalid="true"]:focus {
 	}
 }
 
+/* Success screen: card with a checkmark badge (inline SVG in the document,
+   no external assets). Complements the base .form-success text rule above. */
+.form-success {
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+	padding: 2rem 1.5rem;
+	text-align: center;
+}
+.success-icon {
+	display: block;
+	width: 3rem;
+	height: 3rem;
+	margin: 0 auto 0.75rem;
+	padding: 0.6rem;
+	color: var(--accent-contrast);
+	background: var(--accent);
+	border-radius: 50%;
+}
+.success-message { margin: 0; }
+
 /* Constant items are read-only content, not disabled inputs: an info box.
    Overrides the muted color set in the base rule above. */
 .constant-value {

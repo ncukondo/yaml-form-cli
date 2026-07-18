@@ -118,7 +118,11 @@ function showSuccess(doc: Document, form: Form): void {
 	doc.querySelector(".form-description")?.setAttribute("hidden", "");
 	const successEl = doc.querySelector<HTMLElement>("#yaml-form-success");
 	if (!successEl) return;
-	successEl.textContent = form.post_submit?.message ?? DEFAULT_SUCCESS_MESSAGE;
+	// Write into the message slot so the checkmark icon markup survives; fall
+	// back to the section itself for documents without the slot.
+	const messageEl =
+		successEl.querySelector<HTMLElement>(".success-message") ?? successEl;
+	messageEl.textContent = form.post_submit?.message ?? DEFAULT_SUCCESS_MESSAGE;
 	successEl.removeAttribute("hidden");
 	// The form (and the focused Submit button) just got hidden; without this,
 	// focus falls back to <body> and screen readers lose their place.

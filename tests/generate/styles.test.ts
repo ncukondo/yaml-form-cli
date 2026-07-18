@@ -212,6 +212,28 @@ describe(":has() fallback for the mobile comment-row merge", () => {
 	});
 });
 
+describe("success screen styling", () => {
+	test("success section gets card treatment", () => {
+		const rules = [...baseStyles.matchAll(/\.form-success \{[^}]*\}/g)].map(
+			(m) => m[0],
+		);
+		const card = rules.at(-1);
+		expect(card).toBeDefined();
+		expect(card).toContain("border:");
+		expect(card).toContain("border-radius:");
+		expect(card).toContain("background:");
+		expect(card).toContain("padding:");
+	});
+
+	test("checkmark icon renders as an accent badge", () => {
+		const rule = baseStyles.match(/\.success-icon \{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("var(--accent)");
+		expect(rule).toContain("var(--accent-contrast)");
+		expect(rule).toContain("border-radius: 50%;");
+	});
+});
+
 describe("invalid state styling", () => {
 	test("invalid text inputs and textareas take the error border", () => {
 		const rule = baseStyles.match(
