@@ -197,6 +197,8 @@ unknown placeholders are left as-is.
 | `submit_failed`   | —                  | `Submission failed. Please try again.` |
 | `submit_success`  | —                  | `Your response has been submitted.` |
 | `comment`         | `{row}` = row title | `Comment — {row}` |
+| `noscript_warning` | —                 | `This form requires JavaScript. Enable JavaScript and reload the page to fill it in.` |
+| `clear_selection` | —                  | `Clear selection` |
 
 ```yaml
 lang: ja

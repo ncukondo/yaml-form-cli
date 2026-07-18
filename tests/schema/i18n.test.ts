@@ -62,6 +62,17 @@ ${minimalItems}`);
 		expect(parseOk(`title: T\n${minimalItems}`).messages).toBeUndefined();
 	});
 
+	test("accepts noscript_warning and clear_selection keys", () => {
+		const form = parseOk(`
+title: T
+messages:
+  noscript_warning: JavaScript が必要です。
+  clear_selection: 選択を解除
+${minimalItems}`);
+		expect(form.messages?.noscript_warning).toBe("JavaScript が必要です。");
+		expect(form.messages?.clear_selection).toBe("選択を解除");
+	});
+
 	test("rejects unknown message keys", () => {
 		const errors = parseFail(`
 title: T

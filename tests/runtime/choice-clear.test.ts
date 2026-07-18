@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Window } from "happy-dom";
 import { generateHtml } from "../../src/generate/index.ts";
-import { CLEAR_SELECTION_LABEL } from "../../src/generate/render-item.ts";
 import { collectAnswers, initForm } from "../../src/runtime/form.ts";
 import { parseForm } from "../../src/schema/index.ts";
 
@@ -58,7 +57,7 @@ describe("clear-selection affordance markup", () => {
 		expect(button).not.toBeNull();
 		// must not act as a submit button
 		expect(button?.getAttribute("type")).toBe("button");
-		expect(button?.textContent).toBe(CLEAR_SELECTION_LABEL);
+		expect(button?.textContent).toBe("Clear selection");
 	});
 
 	test("required and multiple choice items get no clear button", async () => {
