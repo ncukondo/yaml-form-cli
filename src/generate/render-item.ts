@@ -6,7 +6,7 @@ import type {
 	ShortTextItem,
 } from "../schema/form-schema.ts";
 import { escapeAttr, escapeHtml, renderText } from "./escape.ts";
-import { descriptionId, inputId, labelId } from "./ids.ts";
+import { descriptionId, errorId, inputId, labelId } from "./ids.ts";
 import { renderChoiceTable } from "./items/choice-table.ts";
 import { renderRubric } from "./items/rubric.ts";
 
@@ -79,7 +79,7 @@ export function renderItem(item: FormItem): string {
 	const error =
 		item.type === "constant"
 			? ""
-			: `<p class="item-error" data-error-for="${escapeAttr(item.id)}" hidden></p>`;
+			: `<p class="item-error" id="${escapeAttr(errorId(item.id))}" data-error-for="${escapeAttr(item.id)}" role="alert" hidden></p>`;
 	return `<section class="form-item" data-item-id="${escapeAttr(item.id)}" data-item-type="${item.type}">
 ${title}
 ${description}${renderControl(item)}

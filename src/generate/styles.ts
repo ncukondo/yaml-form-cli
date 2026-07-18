@@ -232,4 +232,44 @@ textarea.row-comment { min-height: 3rem; }
 	.cell-choice { display: inline; }
 	.cell-descriptor { min-width: 0; }
 }
+
+/* invalid state — aria-invalid is set by the runtime on failed validation */
+input[type="text"][aria-invalid="true"],
+textarea[aria-invalid="true"] {
+	border-color: var(--error);
+	/* thicken without shifting layout */
+	box-shadow: inset 0 0 0 1px var(--error);
+}
+input[type="text"][aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus {
+	outline-color: var(--error);
+}
+.choice-options[aria-invalid="true"] {
+	outline: 2px solid var(--error);
+	outline-offset: 0.4rem;
+	border-radius: 0.25rem;
+}
+.choice-table tr.table-row:has([aria-invalid="true"]) > th,
+.choice-table tr.table-row:has([aria-invalid="true"]) > td {
+	border-bottom-color: var(--error);
+	box-shadow: inset 0 -1px 0 var(--error);
+}
+.choice-table tr.table-row:has([aria-invalid="true"]) .row-label {
+	border-right-color: var(--error);
+	box-shadow: inset 2px 0 0 var(--error), inset 0 -1px 0 var(--error);
+}
+@media (max-width: 640px) {
+	/* stacked rows lose cell borders; mark the whole row card instead */
+	.choice-table tr.table-row:has([aria-invalid="true"]) {
+		border-color: var(--error);
+		border-width: 2px;
+	}
+	.choice-table tr.table-row:has([aria-invalid="true"]) > th,
+	.choice-table tr.table-row:has([aria-invalid="true"]) > td {
+		box-shadow: none;
+	}
+	.choice-table tr.table-row:has([aria-invalid="true"]) .row-label {
+		box-shadow: none;
+	}
+}
 `;
