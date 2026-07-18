@@ -126,9 +126,10 @@ describe("submit flow messages", () => {
 		}));
 		submitForm(document);
 		await flush();
-		expect(document.querySelector("#yaml-form-success")?.textContent).toBe(
-			"回答を送信しました。",
-		);
+		expect(
+			document.querySelector("#yaml-form-success .success-message")
+				?.textContent,
+		).toBe("回答を送信しました。");
 	});
 
 	test("post_submit.message wins over messages.submit_success", async () => {
@@ -143,8 +144,9 @@ messages:
 		}));
 		submitForm(document);
 		await flush();
-		expect(document.querySelector("#yaml-form-success")?.textContent).toBe(
-			"ありがとうございました。",
-		);
+		expect(
+			document.querySelector("#yaml-form-success .success-message")
+				?.textContent,
+		).toBe("ありがとうございました。");
 	});
 });

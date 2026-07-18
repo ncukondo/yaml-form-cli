@@ -176,6 +176,154 @@ describe("choice option touch targets (WCAG 2.5.8)", () => {
 	});
 });
 
+describe("constant item styling", () => {
+	test("constant value reads as an info box, not a disabled field", () => {
+		// the base sheet greys .constant-value out; a later rule must restore
+		// foreground color and add the box treatment
+		const rules = [...baseStyles.matchAll(/\.constant-value \{[^}]*\}/g)].map(
+			(m) => m[0],
+		);
+		const box = rules.at(-1);
+		expect(box).toBeDefined();
+		expect(box).toContain("color: var(--fg);");
+		expect(box).toContain("background:");
+		expect(box).toContain("border:");
+		expect(box).toContain("border-radius:");
+		expect(box).toContain("padding:");
+	});
+});
+
+describe("print styles", () => {
+	function printBlock(css: string): string {
+		const match = css.match(/@media print\s*\{[\s\S]*?\n\}/);
+		if (!match) throw new Error("@media print block not found");
+		return match[0];
+	}
+
+	test("tables paginate: scroll container loses max-height and overflow", () => {
+		const block = printBlock(baseStyles);
+		const rule = block.match(/\.table-scroll[^[{,]*\{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("max-height: none;");
+		expect(rule).toContain("overflow: visible;");
+	});
+
+	test("scroll cues (fade mask, sticky shadows) are dropped on paper", () => {
+		const block = printBlock(baseStyles);
+		const mask = block.match(
+			/\.table-scroll\[data-scroll-end\]\s*\{[^}]*\}/,
+		)?.[0];
+		expect(mask).toBeDefined();
+		expect(mask).toContain("mask-image: none;");
+		const shadow = block.match(
+			/\.table-scroll\[data-scroll-start\][^{]*\{[^}]*\}/,
+		)?.[0];
+		expect(shadow).toBeDefined();
+		expect(shadow).toContain("box-shadow: none;");
+	});
+
+	test("sticky header and row labels flow with the page", () => {
+		const block = printBlock(baseStyles);
+		const rule = block.match(/[^{}]*thead th[^{]*\{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("position: static;");
+		expect(rule).toContain(".row-label");
+		expect(rule).toContain(".table-corner");
+	});
+
+	test("interactive-only chrome is hidden", () => {
+		const block = printBlock(baseStyles);
+		const rule = block.match(/button\[type="submit"\][^{]*\{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("display: none;");
+	});
+});
+
+describe(":has() fallback for the mobile comment-row merge", () => {
+	test("non-supporting browsers render the comment as its own card", () => {
+		// the merged look relies on tr.table-row:has(+ tr.table-comment-row);
+		// without :has() the row keeps its bottom border and radius, so the
+		// fallback must give the trailing comment row a complete card of its own
+		const block = baseStyles.match(
+			/@supports not selector\(:has\(\*\)\)\s*\{[\s\S]*?\n\}/,
+		)?.[0];
+		expect(block).toBeDefined();
+		expect(block).toContain("@media (max-width: 640px)");
+		const rule = block?.match(/tr\.table-comment-row\s*\{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("border-top: 1px solid var(--border);");
+		expect(rule).toContain("border-radius: 0.375rem;");
+		expect(rule).toContain("margin-top: 0;");
+	});
+});
+
+describe("success screen styling", () => {
+	test("success section gets card treatment", () => {
+		const rules = [...baseStyles.matchAll(/\.form-success \{[^}]*\}/g)].map(
+			(m) => m[0],
+		);
+		const card = rules.at(-1);
+		expect(card).toBeDefined();
+		expect(card).toContain("border:");
+		expect(card).toContain("border-radius:");
+		expect(card).toContain("background:");
+		expect(card).toContain("padding:");
+	});
+
+	test("checkmark icon renders as an accent badge", () => {
+		const rule = baseStyles.match(/\.success-icon \{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("var(--accent)");
+		expect(rule).toContain("var(--accent-contrast)");
+		expect(rule).toContain("border-radius: 50%;");
+	});
+});
+
+describe("submit button focus and pressed states", () => {
+	test("keyboard focus draws the accent ring used by text inputs", () => {
+		const rule = baseStyles.match(
+			/button\[type="submit"\]:focus-visible\s*\{[^}]*\}/,
+		)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("outline: 2px solid var(--accent);");
+		// the button background is the accent itself, so the ring needs a gap
+		expect(rule).toContain("outline-offset:");
+	});
+
+	test("pressing the button darkens it beyond hover", () => {
+		const rule = baseStyles.match(
+			/button\[type="submit"\]:active:not\(:disabled\)\s*\{[^}]*\}/,
+		)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("brightness(0.8)");
+	});
+});
+
+describe("nested table scroll threshold", () => {
+	test("the scroll container itself no longer caps height", () => {
+		// an unconditional max-height traps wheel scrolling on short tables
+		const rule = baseStyles.match(/\.table-scroll \{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).not.toContain("max-height");
+		expect(rule).toContain("overflow: auto;");
+	});
+
+	test("only renderer-marked tall tables get the 75vh scroll region", () => {
+		// desktop-only: the stacked mobile layout always flows with the page
+		const block = baseStyles.match(
+			/@media \(min-width: 641px\)\s*\{\s*\.table-scroll\.table-scroll-tall\s*\{[^}]*\}\s*\}/,
+		)?.[0];
+		expect(block).toBeDefined();
+		expect(block).toContain("max-height: 75vh;");
+	});
+
+	test("print resets the tall variant too", () => {
+		const print = baseStyles.match(/@media print\s*\{[\s\S]*?\n\}/)?.[0];
+		expect(print).toBeDefined();
+		expect(print).toContain(".table-scroll.table-scroll-tall");
+	});
+});
+
 describe("invalid state styling", () => {
 	test("invalid text inputs and textareas take the error border", () => {
 		const rule = baseStyles.match(

@@ -417,7 +417,11 @@ items:
 		).toBe(true);
 		const success = document.querySelector("#yaml-form-success");
 		expect(success?.hasAttribute("hidden")).toBe(false);
-		expect(success?.textContent).toBe("Custom thanks");
+		// the message lands in the dedicated slot, next to the checkmark icon
+		expect(success?.querySelector(".success-message")?.textContent).toBe(
+			"Custom thanks",
+		);
+		expect(success?.querySelector(".success-icon")).not.toBeNull();
 		// Success screen keeps the form title but hides the description
 		expect(document.querySelector("h1")?.textContent).toBe("T");
 		expect(
@@ -443,7 +447,9 @@ items:
 		await flush();
 		const success = document.querySelector("#yaml-form-success");
 		expect(success?.hasAttribute("hidden")).toBe(false);
-		expect(success?.textContent).toBe("Your response has been submitted.");
+		expect(success?.querySelector(".success-message")?.textContent).toBe(
+			"Your response has been submitted.",
+		);
 	});
 
 	test("a failed action keeps the form with a retry-able error; retry re-runs all actions", async () => {

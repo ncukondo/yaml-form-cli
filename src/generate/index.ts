@@ -51,7 +51,10 @@ ${requiredLegend}${items}
 <button type="submit">${escapeHtml(messages.submit)}</button>
 <p class="form-error" id="yaml-form-error" role="alert" hidden></p>
 </form>
-<section class="form-success" id="yaml-form-success" role="status" tabindex="-1" hidden></section>
+<section class="form-success" id="yaml-form-success" role="status" tabindex="-1" hidden>
+<svg class="success-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<p class="success-message"></p>
+</section>
 </main>
 <script type="application/json" id="yaml-form-data">${embedJson(form)}</script>
 <script type="application/json" id="yaml-form-meta">${embedJson({ generator: `yaml-form/${pkg.version}` })}</script>

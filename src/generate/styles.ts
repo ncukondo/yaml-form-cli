@@ -121,7 +121,6 @@ button[type="submit"]:disabled {
 /* choice_table / rubric: scrolling table with sticky header + row labels */
 .table-scroll {
 	overflow: auto;
-	max-height: 75vh;
 	border: 1px solid var(--border);
 	border-radius: 0.375rem;
 }
@@ -331,5 +330,94 @@ input:is([type="email"], [type="tel"], [type="url"], [type="number"])[aria-inval
 }
 input:is([type="email"], [type="tel"], [type="url"], [type="number"])[aria-invalid="true"]:focus {
 	outline-color: var(--error);
+}
+
+/* Nested scroll region only for tall tables — the renderer marks containers
+   with more than 10 rendered rows (choice-table.ts); an unconditional
+   max-height would trap wheel scrolling on short tables. Desktop widths
+   only: the stacked mobile layout always flows with the page. Kept above
+   the print block so the print reset wins on equal specificity. */
+@media (min-width: 641px) {
+	.table-scroll.table-scroll-tall {
+		max-height: 75vh;
+	}
+}
+
+/* Print: tables must paginate instead of scrolling, sticky cells must flow
+   with the page, and screen-only chrome (submit button, scroll cues) is
+   meaningless on paper. */
+@media print {
+	.table-scroll,
+	.table-scroll.table-scroll-tall {
+		max-height: none;
+		overflow: visible;
+	}
+	.table-scroll[data-scroll-end] {
+		-webkit-mask-image: none;
+		mask-image: none;
+	}
+	.table-scroll[data-scroll-start] .table-corner,
+	.table-scroll[data-scroll-start] .row-label { box-shadow: none; }
+	.choice-table thead th,
+	.choice-table .table-corner,
+	.choice-table .row-label { position: static; }
+	button[type="submit"] { display: none; }
+}
+
+/* Fallback for the mobile comment-row merge, which relies on
+   tr.table-row:has(+ tr.table-comment-row) (stacked-layout block above).
+   Browsers without :has() leave the row card its bottom border and full
+   radius, so tucking the comment underneath would clash; render the comment
+   as a complete card of its own right below the row instead. */
+@supports not selector(:has(*)) {
+	@media (max-width: 640px) {
+		.table-scroll:not(.table-wide) .choice-table tr.table-comment-row {
+			border-top: 1px solid var(--border);
+			border-radius: 0.375rem;
+			margin-top: 0;
+		}
+	}
+}
+
+/* Success screen: card with a checkmark badge (inline SVG in the document,
+   no external assets). Complements the base .form-success text rule above. */
+.form-success {
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+	padding: 2rem 1.5rem;
+	text-align: center;
+}
+.success-icon {
+	display: block;
+	width: 3rem;
+	height: 3rem;
+	margin: 0 auto 0.75rem;
+	padding: 0.6rem;
+	color: var(--accent-contrast);
+	background: var(--accent);
+	border-radius: 50%;
+}
+.success-message { margin: 0; }
+
+/* Submit button keyboard/pressed states: the same accent ring text inputs
+   use, offset because the button background is the accent itself; :active
+   darkens beyond the hover state. */
+button[type="submit"]:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+button[type="submit"]:active:not(:disabled) { filter: brightness(0.8); }
+
+/* Constant items are read-only content, not disabled inputs: an info box.
+   Overrides the muted color set in the base rule above. */
+.constant-value {
+	color: var(--fg);
+	background: color-mix(in srgb, var(--accent) 6%, var(--bg));
+	border: 1px solid var(--border);
+	border-left: 3px solid var(--accent);
+	border-radius: 0.375rem;
+	padding: 0.5rem 0.75rem;
+	margin: 0;
 }
 `;
