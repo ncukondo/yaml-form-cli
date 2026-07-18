@@ -1,0 +1,178 @@
+# This is a sample YAML definition for the form.
+# Texts after # are comments and are ignored.
+
+title: "Test Form" # title of form
+description: |
+  Desctiption of form
+  You can use multiple line text
+  URLs are auto linked -> https://sample.com/
+# description of form. This is optional.
+
+# Define actions to be executed when the form is submitted. This can be string or array of string.
+# Available actions are:
+# - log: Log the form data to the server console.
+# - mailto: Send the form data to the email address specified.(e.g. mailto:example@example)
+# - https: Send the form data to the specified URL via POST method.(e.g. https://example.com)
+actions: "log:"
+
+# Define actions to be executed after the form is submitted. This is optional.
+post_submit:
+  # message is the message to be displayed after the form is submitted.
+  message: "Thank you for your submission."
+
+# Define form items as array of items.
+# Available types are:
+# - constant: Constant value. This is not editable.
+# - short_text: Short text input.
+# - long_text: Long text input.
+# - choice: Single choice or multiple choice.
+# - choice_table: Single choice or multiple choice table.
+# If you do not specify the type, it will be treated as a short_text.
+items:
+  - type: "constant" # type of item. This is required.
+    title: "constant_sample" # title of item. This is required.
+    id: "constant_test" # id of item. This is optional. You can use this id to get the value of this item in actions.
+    value: "value" # value of item. This is required only in constant type.
+
+  - type: "short_text"
+    id: "id_sample"
+    title: "Short Text"
+    required: true # This item is required. This is optional. It is false by default.
+    description: "description for a item" # description of item. This is optional.
+
+  - type: "long_text"
+    title: "Long Text"
+
+  - type: "choice"
+    title: "Single Choice"
+    # choices is array of choice items.
+    choices:
+      - "option1"
+      - "option2"
+      - "option3"
+      - "option4"
+
+  - type: "choice"
+    title: "Multiple Choice"
+    multiple: true # This item is multiple choice. This is optional. It is false by default.
+    choices:
+      - "option1"
+      - "option2"
+      - "option3"
+      - { title: "option4", value: "value4" } # You can specify the value of the choice item.
+
+  - type: "choice_table"
+    title: "Choice Table"
+    # items is array of choice items. This is required. This represents the column header of the table.
+    items:
+      - "option1"
+      - "option2"
+      - "option3"
+      - "option4"
+      - "option5"
+      - "option6"
+      - "option7"
+      - { title: "option8", id: "global_unique_id8" } # You can specify the id of the choice item. The id must be unique in the form.
+    # choices is array of choice items. This is required. This represents the row header of the table.
+    choices:
+      - "scale1"
+      - "scale2"
+      - "scale3"
+      - "scale4"
+      - "scale5"
+      - "scale6"
+      - "scale7"
+      - "scale8"
+      - "scale9"
+      - "scale10"
+
+  - type: "choice_table"
+    title: "Multiple Choice Table"
+    multiple: true # This item is multiple choice. This is optional. It is false by default.
+    items:
+      - "option1"
+      - "option2"
+      - "option3"
+      - "option4"
+    choices:
+      - "scale1"
+      - "scale2"
+      - "scale3"
+      - "scale4"
+      - "scale5"
+      - "scale6"
+      - "scale7"
+      - "scale8"
+
+  # --- Conditional Visibility (visible_when) ---
+  # You can conditionally show/hide items using the visible_when field.
+  # The item is shown only when the expression evaluates to true.
+  # The expression references other items by their id.
+  #
+  # The rule syntax follows @ncukondo/dynamic-form-rules:
+  #   https://github.com/ncukondo/dynamic-form-rules
+  #
+  # Syntax:
+  #   Comparison:  id="value"              id<>"value"
+  #   Contains:    id includes "value"     id notIncludes "value"
+  #   Set:         id in ["a","b","c"]     id notIn ["a","b"]
+  #   Regex:       id matches "\d+"        id notMatches "\d+"
+  #   Logical:     expr and expr           expr or expr          not expr
+  #                ("and" has higher precedence than "or"; parentheses are supported)
+  #   Multi-key:   anyOf(id1,id2)="x"      allOf(id1,id2)="x"    noneOf(id1,id2)="x"
+  #
+  # Quoting: keys/values may be unquoted if they contain only safe characters
+  # (no , = ( ) < > [ ] quotes or whitespace); otherwise use single or double
+  # quotes. A quote inside a quoted value is escaped by doubling (e.g. 'it''s ok').
+
+  - type: "choice"
+    id: "has_other"
+    title: "Do you have other comments?"
+    choices: ["yes", "no"]
+
+  - type: "long_text"
+    id: "other_comments"
+    title: "Other Comments"
+    visible_when: 'has_other = "yes"' # shown only when "yes" is selected above
+
+  # --- Rubric ---
+  # A rubric is like a choice_table, but each cell has its own descriptor text.
+  # - levels: columns (performance levels). Each level has a title and a value;
+  #   the value is what gets submitted and what visible_when rules see.
+  # - criteria: rows. Each criterion has an id (must be unique in the form,
+  #   like choice_table item ids) and descriptors, one per level, in the same order.
+  # Submitted data is flat: { criterion_id: selected_level_value, ... },
+  # so criteria can be referenced from visible_when directly.
+  - type: "rubric"
+    id: "presentation_rubric"
+    title: "Presentation Rubric"
+    required: true
+    levels:
+      - { title: "Novice", value: "1" }
+      - { title: "Competent", value: "2" }
+      - { title: "Expert", value: "3" }
+    criteria:
+      - id: "rubric_clarity"
+        title: "Clarity"
+        descriptors:
+          - "Hard to follow; main point unclear"
+          - "Mostly clear with minor gaps"
+          - "Consistently clear and well structured"
+      - id: "rubric_evidence"
+        title: "Use of evidence"
+        allow_na: true # optional: adds an N/A column (submitted as "na")
+        descriptors:
+          - "Claims are unsupported"
+          - "Some claims supported by evidence"
+          - "All claims well supported and cited"
+    # optional extras
+    comment_per_criterion: false # add a free-text box under each row
+    scoring: # optional; if omitted, no score is computed
+      method: "sum" # sum | average | weighted
+      # weights: { rubric_clarity: 2, rubric_evidence: 1 } # for method: weighted
+
+  # A criterion can be referenced from visible_when like any other id:
+  - type: "long_text"
+    id: "clarity_feedback"
+    title: "Advice for improving clarity"
+    visible_when: "rubric_clarity in [1,2]"
