@@ -1,18 +1,36 @@
 // Browser-side runtime, bundled and inlined into the generated HTML.
 // Imports from src/schema must stay type-only so the bundle carries no
 // server-side dependencies.
-import type { Form, FormItem } from "../schema/form-schema.ts";
+import type {
+	ChoiceTableItem,
+	Form,
+	FormItem,
+	RubricItem,
+} from "../schema/form-schema.ts";
 import {
 	applyVisibility,
 	createVisibilityEvaluator,
 	type RawAnswers,
 } from "./visibility.ts";
 
-export type Answers = Record<string, string | string[]>;
+export type TableRowAnswer =
+	| string
+	| string[]
+	| { value?: string; comment?: string };
+export type AnswerValue = string | string[] | Record<string, TableRowAnswer>;
+export type Answers = Record<string, AnswerValue>;
 
 export interface RequiredFailure {
 	itemId: string;
+	/** Set for choice_table / rubric failures: the unanswered row. */
+	rowKey?: string;
 	message: string;
+}
+
+function failureKey(failure: RequiredFailure): string {
+	return failure.rowKey === undefined
+		? failure.itemId
+		: `${failure.itemId}.${failure.rowKey}`;
 }
 
 function attrEscape(value: string): string {
@@ -54,9 +72,54 @@ function readItemValue(
 			return selected[0];
 		}
 		default:
-			// constant is read from the form data; tables land with task 0005
+			// constant is read from the form data; tables via readTableValue
 			return undefined;
 	}
+}
+
+function readRowSelection(
+	doc: Document,
+	item: ChoiceTableItem | RubricItem,
+	rowKey: string,
+): string[] {
+	return inputsByName(doc, `${item.id}.${rowKey}`)
+		.filter((el) => el.checked)
+		.map((el) => el.value);
+}
+
+function readRowComment(
+	doc: Document,
+	item: RubricItem,
+	rowKey: string,
+): string {
+	const el = doc.querySelector<HTMLTextAreaElement>(
+		`[name="${attrEscape(`${item.id}.${rowKey}.comment`)}"]`,
+	);
+	return el?.value ?? "";
+}
+
+function readTableValue(
+	doc: Document,
+	item: ChoiceTableItem | RubricItem,
+): Record<string, TableRowAnswer> {
+	const rows: Record<string, TableRowAnswer> = {};
+	for (const row of item.items) {
+		const selected = readRowSelection(doc, item, row.key);
+		if (item.type === "choice_table" && item.multiple) {
+			if (selected.length > 0) rows[row.key] = selected;
+		} else if (item.type === "rubric" && item.comment_per_row) {
+			const value = selected[0];
+			const comment = readRowComment(doc, item, row.key);
+			if (value === undefined && comment.trim() === "") continue;
+			const entry: { value?: string; comment?: string } = {};
+			if (value !== undefined) entry.value = value;
+			if (comment.trim() !== "") entry.comment = comment;
+			rows[row.key] = entry;
+		} else if (selected[0] !== undefined) {
+			rows[row.key] = selected[0];
+		}
+	}
+	return rows;
 }
 
 function isAnswered(value: string | string[] | undefined): boolean {
@@ -93,8 +156,20 @@ export function validateRequired(doc: Document): RequiredFailure[] {
 	const failures: RequiredFailure[] = [];
 	for (const item of form.items) {
 		if (!item.required || item.type === "constant") continue;
-		if (item.type === "choice_table" || item.type === "rubric") continue;
 		if (!isItemVisible(doc, item)) continue;
+		if (item.type === "choice_table" || item.type === "rubric") {
+			// required = every row has a selection; a comment alone is not enough
+			for (const row of item.items) {
+				if (readRowSelection(doc, item, row.key).length === 0) {
+					failures.push({
+						itemId: item.id,
+						rowKey: row.key,
+						message: `"${row.title}" in "${item.title}" is required.`,
+					});
+				}
+			}
+			continue;
+		}
 		if (!isAnswered(readItemValue(doc, item))) {
 			failures.push({
 				itemId: item.id,
@@ -127,20 +202,24 @@ export function collectAnswers(doc: Document): Answers {
 				}
 				break;
 			}
-			default:
-				// choice_table / rubric collection lands with task 0005
+			case "choice_table":
+			case "rubric": {
+				const rows = readTableValue(doc, item);
+				if (Object.keys(rows).length > 0) {
+					answers[item.id] = rows;
+				}
 				break;
+			}
 		}
 	}
 	return answers;
 }
 
 function showErrors(doc: Document, failures: RequiredFailure[]): void {
-	const form = readFormData(doc);
-	for (const item of form.items) {
-		const el = doc.querySelector(`[data-error-for="${attrEscape(item.id)}"]`);
-		if (!el) continue;
-		const failure = failures.find((f) => f.itemId === item.id);
+	// Covers item-level slots and the per-row slots inside tables.
+	for (const el of Array.from(doc.querySelectorAll("[data-error-for]"))) {
+		const key = el.getAttribute("data-error-for");
+		const failure = failures.find((f) => failureKey(f) === key);
 		if (failure) {
 			el.textContent = failure.message;
 			el.removeAttribute("hidden");

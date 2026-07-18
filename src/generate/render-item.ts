@@ -1,13 +1,13 @@
 import type {
 	ChoiceItem,
-	ChoiceTableItem,
 	ConstantItem,
 	FormItem,
 	LongTextItem,
-	RubricItem,
 	ShortTextItem,
 } from "../schema/form-schema.ts";
 import { escapeAttr, escapeHtml, renderText } from "./escape.ts";
+import { renderChoiceTable } from "./items/choice-table.ts";
+import { renderRubric } from "./items/rubric.ts";
 
 function renderConstant(item: ConstantItem): string {
 	return `<p class="constant-value">${renderText(item.value)}</p>`;
@@ -32,13 +32,6 @@ function renderChoice(item: ChoiceItem): string {
 	return `<div class="choice-options" role="group">\n${options}\n</div>`;
 }
 
-// Real table rendering lands with task 0005.
-function renderChoiceTablePlaceholder(
-	item: ChoiceTableItem | RubricItem,
-): string {
-	return `<p class="placeholder">${escapeHtml(item.type)} rendering is not yet supported</p>`;
-}
-
 function renderControl(item: FormItem): string {
 	switch (item.type) {
 		case "constant":
@@ -50,8 +43,9 @@ function renderControl(item: FormItem): string {
 		case "choice":
 			return renderChoice(item);
 		case "choice_table":
+			return renderChoiceTable(item);
 		case "rubric":
-			return renderChoiceTablePlaceholder(item);
+			return renderRubric(item);
 	}
 }
 
