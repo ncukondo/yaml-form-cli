@@ -169,7 +169,11 @@ button[type="submit"]:hover { filter: brightness(1.1); }
 textarea.row-comment { min-height: 3rem; }
 .row-error { font-weight: 400; }
 
-/* Narrow screens: stack each table row as its own block */
+/* Narrow screens: stack each table row as its own block.
+   display: block would strip the implicit table/row/cell roles; the markup
+   carries explicit ARIA roles (choice-table.ts) so AT still gets a table
+   with visible row titles and inlined .cell-choice text — the hidden thead
+   is not needed to interpret a stacked row. */
 @media (max-width: 640px) {
 	.table-scroll {
 		overflow: visible;
