@@ -1,6 +1,6 @@
 {
 	"name": "@ncukondo/yaml-form",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Generate self-contained HTML forms from YAML definitions",
 	"type": "module",
 	"bin": {
