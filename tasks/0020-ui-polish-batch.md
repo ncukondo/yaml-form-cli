@@ -1,6 +1,6 @@
 # Task 0020: UI polish batch — constant styling, print, :has() fallback, success screen, focus-visible, nested scroll
 
-Status: todo
+Status: done
 Depends on: 0013 (success screen markup), 0016, 0018 (styles.ts churn)
 Parallel: no — touches `styles.ts`, `render-item.ts`, success section
 
@@ -46,10 +46,10 @@ Sub-items (issue #16):
 
 ## Acceptance criteria
 
-- [ ] All six sub-items addressed (fallback item may resolve as a
-      documented acceptance)
-- [ ] Print preview of a long-table form shows complete tables
-- [ ] `bun test` and `bun run typecheck` pass
+- [x] All six sub-items addressed (fallback implemented as a separate
+      `@supports not selector(:has(*))` rule)
+- [x] Print preview of a long-table form shows complete tables
+- [x] `bun test` and `bun run typecheck` pass
 
 ## Verification
 
