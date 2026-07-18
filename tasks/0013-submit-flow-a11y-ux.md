@@ -1,6 +1,6 @@
 # Task 0013: Submit flow — success/failure announcement, focus, double-submit guard
 
-Status: todo
+Status: done
 Depends on: 0010
 Parallel: yes — group B (owns `src/runtime/submit.ts` + success/error sections in `src/generate/index.ts`)
 
@@ -49,10 +49,10 @@ multiple POSTs while a submission is in flight.
 
 ## Acceptance criteria
 
-- [ ] Double-clicking Submit on a slow connection sends exactly one POST
-- [ ] Success and failure are announced; focus moves to the success section
-- [ ] Failure leaves the form usable (button re-enabled)
-- [ ] `bun test` and `bun run typecheck` pass
+- [x] Double-clicking Submit on a slow connection sends exactly one POST
+- [x] Success and failure are announced; focus moves to the success section
+- [x] Failure leaves the form usable (button re-enabled)
+- [x] `bun test` and `bun run typecheck` pass
 
 ## Verification
 

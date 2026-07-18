@@ -47,7 +47,7 @@ describe("theme contrast tokens", () => {
 		// brightness(1.1) drops light-mode hover to 4.44:1; 0.9 gives
 		// 6.10:1 light / 5.79:1 dark
 		const rule = baseStyles.match(
-			/button\[type="submit"\]:hover \{[^}]*\}/,
+			/button\[type="submit"\]:hover[^{]*\{[^}]*\}/,
 		)?.[0];
 		expect(rule).toBeDefined();
 		expect(rule).toContain("brightness(0.9)");
