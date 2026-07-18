@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { Window } from "happy-dom";
-import { generateHtml } from "../../src/generate/index.ts";
+import { generateHtml, NOSCRIPT_WARNING } from "../../src/generate/index.ts";
 import { parseForm } from "../../src/schema/index.ts";
 
 const sampleYaml = await Bun.file(
@@ -39,6 +39,13 @@ describe("generated document shell", () => {
 		expect(document.querySelector("style")).not.toBeNull();
 		const scripts = document.querySelectorAll("script");
 		expect(scripts.length).toBeGreaterThan(0);
+	});
+
+	test("warns via noscript when JavaScript is disabled", () => {
+		// assert on the raw HTML: DOM parsers treat noscript content as text
+		expect(html).toContain("<noscript>");
+		expect(html).toContain(NOSCRIPT_WARNING);
+		expect(NOSCRIPT_WARNING.length).toBeGreaterThan(0);
 	});
 
 	test("renders form title and auto-linked description", () => {
