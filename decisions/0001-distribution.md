@@ -22,5 +22,8 @@ Release both, from the same version tag:
 
 - Automatic binary download requires the GitHub releases to be publicly
   reachable (or a token). Revisit repository visibility before first release.
+  **Resolved (2026-07-18):** the repository is public; releases need no token.
+  The npm package is published as **`@ncukondo/yaml-form`** (scoped), the
+  binary and CLI keep the name `yaml-form`.
 - CI must build a per-platform binary matrix and publish npm + releases from
   one tag.

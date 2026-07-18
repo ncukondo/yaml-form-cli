@@ -1,7 +1,47 @@
-#!/usr/bin/env bun
+// Must stay runnable under plain Node (npx) as well as Bun: no Bun.* APIs.
+import { chmod, readFile, rename, rm, writeFile } from "node:fs/promises";
 import pkg from "../package.json";
 import { generateHtml } from "./generate/index.ts";
 import { parseForm } from "./schema/index.ts";
+import { runUpgrade, type UpgradeEnv } from "./upgrade.ts";
+
+function makeUpgradeEnv(): UpgradeEnv {
+	const headers = {
+		"User-Agent": `yaml-form/${pkg.version}`,
+		Accept: "application/vnd.github+json",
+	};
+	return {
+		currentVersion: pkg.version,
+		execPath: process.execPath,
+		platform: process.platform,
+		arch: process.arch,
+		async fetchJson(url) {
+			const res = await fetch(url, { headers });
+			if (!res.ok) throw new Error(`GET ${url} -> ${res.status}`);
+			return res.json();
+		},
+		async download(url) {
+			const res = await fetch(url, {
+				headers: { "User-Agent": headers["User-Agent"] },
+			});
+			if (!res.ok) throw new Error(`GET ${url} -> ${res.status}`);
+			return new Uint8Array(await res.arrayBuffer());
+		},
+		async replaceSelf(execPath, data) {
+			const next = `${execPath}.new`;
+			await writeFile(next, data);
+			await chmod(next, 0o755);
+			if (process.platform === "win32") {
+				// a running .exe cannot be overwritten, but it can be renamed away
+				await rename(execPath, `${execPath}.old`);
+			}
+			await rename(next, execPath);
+			await rm(`${execPath}.old`, { force: true }).catch(() => {});
+		},
+		log: (message) => console.log(message),
+		error: (message) => console.error(`yaml-form: ${message}`),
+	};
+}
 
 const USAGE = `Usage: yaml-form <input.yaml> [-o <output.html>]
 
@@ -11,7 +51,9 @@ Options:
   --version             Show version
 
 Subcommands:
-  yaml-form upgrade     Self-upgrade to the latest released version
+  yaml-form upgrade [--dry-run]
+                        Self-upgrade a binary install to the latest release
+                        (npm installs: upgrade via your package manager)
 `;
 
 interface CliOptions {
@@ -59,18 +101,21 @@ async function main(argv: string[]): Promise<void> {
 		return;
 	}
 	if (argv[0] === "upgrade") {
-		console.error("yaml-form upgrade is not yet available");
-		process.exit(1);
+		const result = await runUpgrade(makeUpgradeEnv(), {
+			dryRun: argv.includes("--dry-run"),
+		});
+		process.exit(result.kind === "error" ? 1 : 0);
 	}
 
 	const options = parseArgs(argv);
 
-	const file = Bun.file(options.input);
-	if (!(await file.exists())) {
+	let source: string;
+	try {
+		source = await readFile(options.input, "utf8");
+	} catch {
 		console.error(`yaml-form: cannot read ${options.input}: no such file`);
 		process.exit(1);
 	}
-	const source = await file.text();
 
 	const result = parseForm(source);
 	if (!result.ok) {
@@ -85,7 +130,7 @@ async function main(argv: string[]): Promise<void> {
 	if (options.output === undefined) {
 		process.stdout.write(html);
 	} else {
-		await Bun.write(options.output, html);
+		await writeFile(options.output, html);
 	}
 }
 

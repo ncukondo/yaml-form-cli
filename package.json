@@ -1,11 +1,10 @@
 {
-	"name": "yaml-form-cli",
+	"name": "@ncukondo/yaml-form",
 	"version": "0.0.0",
 	"description": "Generate self-contained HTML forms from YAML definitions",
 	"type": "module",
-	"private": true,
 	"bin": {
-		"yaml-form": "./src/cli.ts"
+		"yaml-form": "./dist/cli.js"
 	},
 	"scripts": {
 		"test": "bun test",
@@ -13,7 +12,10 @@
 		"build:schema": "bun scripts/build-schema.ts",
 		"lint": "bun x biome check .",
 		"format": "bun x biome format --write .",
-		"check": "bun run typecheck && bun run lint && bun test"
+		"check": "bun run build:runtime && bun run typecheck && bun run lint && bun test",
+		"build:runtime": "bun scripts/build-runtime.ts",
+		"build:dist": "bun scripts/build-dist.ts",
+		"prepack": "bun run build:dist"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.4",
@@ -26,5 +28,17 @@
 		"@ncukondo/dynamic-form-rules": "^0.0.7",
 		"yaml": "^2.9.0",
 		"zod": "^4.4.3"
+	},
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ncukondo/yaml-form-cli.git"
+	},
+	"files": [
+		"dist/cli.js",
+		"schema"
+	],
+	"publishConfig": {
+		"access": "public"
 	}
 }

@@ -1,22 +1,10 @@
-let cached: string | undefined;
+import { runtimeBundle } from "./runtime.generated.ts";
 
 /**
- * Bundle the browser runtime (src/runtime/main.ts) into a single inline
- * script. Uses Bun.build at generation time; distribution builds for Node
- * will prebuild this bundle instead (task 0009).
+ * The browser runtime as an inline script, prebuilt by
+ * `bun run build:runtime` into runtime.generated.ts so generation works
+ * without a bundler (Node, compiled binaries).
  */
 export async function getRuntimeBundle(): Promise<string> {
-	if (cached !== undefined) return cached;
-	const entry = new URL("../runtime/main.ts", import.meta.url).pathname;
-	const result = await Bun.build({
-		entrypoints: [entry],
-		target: "browser",
-		minify: true,
-	});
-	const output = result.outputs[0];
-	if (!result.success || !output) {
-		throw new Error(`failed to bundle form runtime: ${result.logs.join("\n")}`);
-	}
-	cached = await output.text();
-	return cached;
+	return runtimeBundle;
 }

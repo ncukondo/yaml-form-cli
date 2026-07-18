@@ -6,7 +6,13 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["src/**", "tests/**", "scripts/**", "*.json"]
+		"includes": [
+			"src/**",
+			"tests/**",
+			"scripts/**",
+			"*.json",
+			"!src/generate/runtime.generated.ts"
+		]
 	},
 	"formatter": {
 		"enabled": true,

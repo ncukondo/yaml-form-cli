@@ -130,17 +130,19 @@ describe("usage, help, and version", () => {
 });
 
 describe("upgrade subcommand", () => {
-	test("is a placeholder for now", async () => {
-		const { stderr, exitCode } = await runCli(["upgrade"]);
-		expect(exitCode).not.toBe(0);
-		expect(stderr).toContain("not yet available");
+	test("running under a JS runtime prints package-manager guidance", async () => {
+		// tests spawn the CLI via `bun`, which is exactly the non-binary case
+		const { stdout, exitCode } = await runCli(["upgrade"]);
+		expect(exitCode).toBe(0);
+		expect(stdout).toContain("@ncukondo/yaml-form");
+		expect(stdout).toContain("package manager");
 	});
 });
 
 describe("packaging", () => {
 	test("package.json registers the CLI bin entry", () => {
 		expect((pkg as { bin?: Record<string, string> }).bin).toEqual({
-			"yaml-form": "./src/cli.ts",
+			"yaml-form": "./dist/cli.js",
 		});
 	});
 });

@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+
+      - run: bun install --frozen-lockfile
+
+      - name: Verify tag matches package.json version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(jq -r .version package.json)"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "tag v$TAG does not match package.json version $PKG" >&2
+            exit 1
+          fi
+
+      - run: bun run check
+
+      - name: Build npm distribution
+        run: bun run build:dist
+
+      - name: Smoke-test dist under Node
+        run: |
+          node dist/cli.js --version
+          node dist/cli.js examples/sample.yaml -o /tmp/smoke.html
+          grep -q "yaml-form-data" /tmp/smoke.html
+
+      - name: Compile binaries
+        run: |
+          mkdir -p out
+          for target in bun-linux-x64 bun-linux-arm64 bun-darwin-x64 bun-darwin-arm64; do
+            name="yaml-form-${target#bun-}"
+            bun build src/cli.ts --compile --target="$target" --outfile "out/$name"
+          done
+          bun build src/cli.ts --compile --target=bun-windows-x64 --outfile out/yaml-form-windows-x64.exe
+
+      - name: Smoke-test native binary
+        run: |
+          out/yaml-form-linux-x64 --version
+          out/yaml-form-linux-x64 examples/sample.yaml -o /tmp/smoke-bin.html
+          out/yaml-form-linux-x64 upgrade --dry-run || true
+
+      - name: Checksums
+        working-directory: out
+        run: sha256sum yaml-form-* > SHA256SUMS
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" out/* \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public

@@ -1,32 +1,91 @@
-# yaml-form-cli
+# yaml-form
 
-A CLI tool that generates a **single self-contained HTML form** from a YAML
-definition. The generated HTML inlines all CSS/JS, works offline (including
-`file://`), and handles rendering, validation, conditional visibility, and
-submit actions entirely client-side.
-
-> **Status: spec fixed, implementation starting.** The full format and CLI
-> reference is in [docs/reference.md](docs/reference.md). Design decisions are
-> recorded in [decisions/](decisions/), and the implementation plan in
-> [tasks/](tasks/).
-
-## Example
-
-See [examples/sample.yaml](examples/sample.yaml) for a full-featured form
-definition, including:
-
-- Basic items: `constant`, `short_text`, `long_text`, `choice`
-- `choice_table` (questions as rows sharing one scale) and `rubric`
-  (a choice_table with per-cell descriptor text)
-- Conditional visibility via `visible_when`
-  ([@ncukondo/dynamic-form-rules](https://github.com/ncukondo/dynamic-form-rules) syntax)
-- Submit actions (`log`, `post`, `mailto`)
-
-## Planned usage
+Generate a **single self-contained HTML form** from a YAML definition. The
+generated HTML inlines all CSS/JS, works offline (including `file://`), and
+handles rendering, required validation, conditional visibility, and submit
+actions entirely client-side — no server needed to host the form.
 
 ```sh
-yaml-form form.yaml -o form.html
+bunx @ncukondo/yaml-form form.yaml -o form.html
+# or
+npx @ncukondo/yaml-form form.yaml -o form.html
 ```
+
+## Install
+
+- **No install** — `bunx @ncukondo/yaml-form` / `npx @ncukondo/yaml-form`
+- **Global** — `npm install -g @ncukondo/yaml-form` (upgrade via npm)
+- **Single-file binary** — download for your platform from
+  [GitHub Releases](https://github.com/ncukondo/yaml-form-cli/releases)
+  (linux/macOS x64 & arm64, windows x64). Upgrade later with
+  `yaml-form upgrade`.
+
+## Usage
+
+```
+yaml-form <input.yaml> [-o <output.html>]
+
+Options:
+  -o, --output <file>   Write HTML to file (default: stdout)
+  -h, --help            Show help
+  --version             Show version
+
+Subcommands:
+  yaml-form upgrade [--dry-run]
+                        Self-upgrade a binary install to the latest release
+                        (npm installs: upgrade via your package manager)
+```
+
+## YAML definition
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ncukondo/yaml-form-cli/main/schema/yaml-form.schema.json
+title: "Session feedback"
+actions:
+  - type: post
+    url: "https://example.com/api/submit"
+post_submit:
+  message: "Thank you!"
+items:
+  - type: short_text
+    id: name
+    title: "Your name"
+    required: true
+
+  - type: choice
+    id: role
+    title: "Your role"
+    choices: [student, resident, faculty]
+
+  - type: rubric
+    id: talk_rubric
+    title: "Rate the talk"
+    choices:
+      - { title: "Novice", value: "1" }
+      - { title: "Expert", value: "2" }
+    items:
+      - id: clarity
+        title: "Clarity"
+        descriptors: ["Hard to follow", "Consistently clear"]
+
+  - type: long_text
+    id: clarity_advice
+    title: "How could clarity improve?"
+    visible_when: 'talk_rubric.clarity = "1"'
+```
+
+Item types: `constant`, `short_text`, `long_text`, `choice`, `choice_table`
+(questions as rows sharing one scale), `rubric` (a choice_table with per-cell
+descriptor text). Conditional visibility uses
+[@ncukondo/dynamic-form-rules](https://github.com/ncukondo/dynamic-form-rules)
+expressions; rule keys are validated at generation time, so typos fail fast.
+Submit actions: `log` (console), `post` (JSON POST), `mailto`.
+
+**Full reference:** [docs/reference.md](docs/reference.md) — every field,
+answer shapes, the submit payload, and rule syntax.
+**Complete example:** [examples/sample.yaml](examples/sample.yaml).
+A JSON Schema ([schema/yaml-form.schema.json](schema/yaml-form.schema.json))
+provides editor completion/validation via yaml-language-server.
 
 ## Development
 
@@ -34,12 +93,16 @@ Toolchain: [Bun](https://bun.sh) + TypeScript.
 
 ```sh
 bun install
-bun test
+bun run check   # typecheck + lint + tests
 ```
 
-Process: TDD per task file in [tasks/](tasks/) (template included); decisions
-go in [decisions/](decisions/); parallel-safe tasks are developed in separate
-git worktrees. See [decisions/0009-development-process.md](decisions/0009-development-process.md).
+Process: TDD per task file in [tasks/](tasks/); decisions are recorded in
+[decisions/](decisions/); parallel-safe tasks are developed in separate git
+worktrees. See
+[decisions/0009-development-process.md](decisions/0009-development-process.md).
+
+Releases: pushing a tag `vX.Y.Z` (matching `package.json`) builds per-platform
+binaries, creates a GitHub release, and publishes to npm.
 
 ## Related projects
 
@@ -47,3 +110,7 @@ git worktrees. See [decisions/0009-development-process.md](decisions/0009-develo
   builder this YAML schema originates from
 - [@ncukondo/dynamic-form-rules](https://github.com/ncukondo/dynamic-form-rules)
   — rule engine used for `visible_when`
+
+## License
+
+[MIT](LICENSE)
