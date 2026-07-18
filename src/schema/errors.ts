@@ -6,7 +6,9 @@ export type FormErrorCode =
 	| "constant_value_required"
 	| "descriptor_count_mismatch"
 	| "rubric_multiple_not_allowed"
-	| "unknown_item_type";
+	| "unknown_item_type"
+	| "unknown_rule_key"
+	| "rule_syntax_error";
 
 export interface FormError {
 	code: FormErrorCode;
