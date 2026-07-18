@@ -182,6 +182,35 @@ button[type="submit"]:disabled {
 textarea.row-comment { min-height: 3rem; }
 .row-error { font-weight: 400; }
 
+/* Scroll affordance: table-scroll.ts toggles data-scroll-start/-end on
+   .table-scroll while columns are hidden to the left/right. A pure-CSS
+   background-attachment scroll shadow cannot work here — every cell paints
+   an opaque background for the sticky header/row labels, which would cover
+   anything drawn on the container's own background. */
+.table-scroll[data-scroll-end] {
+	-webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.25rem), transparent);
+	mask-image: linear-gradient(to right, #000 calc(100% - 2.25rem), transparent);
+}
+/* Sticky cells stack above scrolled content, so their shadow paints over it. */
+.table-scroll[data-scroll-start] .table-corner,
+.table-scroll[data-scroll-start] .row-label {
+	box-shadow: 0.4rem 0 0.5rem -0.25rem color-mix(in srgb, var(--fg) 30%, transparent);
+}
+
+/* Row tracking (zebra + hover), desktop widths only: the stacked mobile
+   layout below renders rows as bordered cards and needs neither. Both rules
+   tie for specificity, so hover must stay after zebra. */
+@media (min-width: 641px) {
+	.choice-table tbody tr:nth-child(even of .table-row) > th,
+	.choice-table tbody tr:nth-child(even of .table-row) > td {
+		background: color-mix(in srgb, var(--fg) 5%, var(--bg));
+	}
+	.choice-table tbody tr.table-row:hover > th,
+	.choice-table tbody tr.table-row:hover > td {
+		background: color-mix(in srgb, var(--fg) 12%, var(--bg));
+	}
+}
+
 /* Narrow screens: stack each table row as its own block.
    display: block would strip the implicit table/row/cell roles; the markup
    carries explicit ARIA roles (choice-table.ts) so AT still gets a table

@@ -10,6 +10,7 @@ import type {
 	RubricItem,
 } from "../schema/form-schema.ts";
 import { performSubmit } from "./submit.ts";
+import { initTableScroll } from "./table-scroll.ts";
 import {
 	applyVisibility,
 	createVisibilityEvaluator,
@@ -292,6 +293,7 @@ function showErrors(doc: Document, failures: RequiredFailure[]): void {
 export function initForm(doc: Document): void {
 	const formEl = doc.querySelector("form#yaml-form");
 	if (!formEl) return;
+	initTableScroll(doc);
 	const form = readFormData(doc);
 	initErrorSlots(doc);
 	const visibility = createVisibilityEvaluator(form);

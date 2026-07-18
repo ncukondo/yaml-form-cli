@@ -1,6 +1,6 @@
 # Task 0018: choice_table desktop UX — scroll affordance & row/column tracking
 
-Status: todo
+Status: done
 Depends on: 0016 (styles.ts token/rule churn)
 Parallel: no — shares `src/generate/styles.ts`
 
@@ -43,11 +43,11 @@ can track which row/column a cell belongs to.
 
 ## Acceptance criteria
 
-- [ ] A 10-column table shows an edge cue whenever more columns exist
+- [x] A 10-column table shows an edge cue whenever more columns exist
       off-screen (both themes, overlay-scrollbar platforms included)
-- [ ] Hovering a row highlights it; rows are zebra-striped
-- [ ] Sticky header/label behavior from 0005 unchanged
-- [ ] `bun test` and `bun run typecheck` pass
+- [x] Hovering a row highlights it; rows are zebra-striped
+- [x] Sticky header/label behavior from 0005 unchanged
+- [x] `bun test` and `bun run typecheck` pass
 
 ## Verification
 

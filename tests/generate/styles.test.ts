@@ -55,6 +55,70 @@ describe("theme contrast tokens", () => {
 	});
 });
 
+describe("choice_table row tracking (zebra + hover)", () => {
+	function desktopTableBlock(css: string): string {
+		const match = css.match(/@media \(min-width: 641px\)\s*\{[\s\S]*?\n\}/);
+		if (!match) throw new Error("desktop-width table media block not found");
+		return match[0];
+	}
+
+	test("zebra striping colors even rows in both themes via tokens", () => {
+		const block = desktopTableBlock(baseStyles);
+		const rule = block.match(
+			/[^{}]*:nth-child\(even of \.table-row\)[^{]*\{[^}]*\}/,
+		)?.[0];
+		expect(rule).toBeDefined();
+		// color-mix over --fg/--bg adapts to both themes without new tokens
+		expect(rule).toContain("color-mix");
+		expect(rule).toContain("var(--fg)");
+		expect(rule).toContain("var(--bg)");
+	});
+
+	test("hovering a body row highlights it, overriding zebra", () => {
+		const block = desktopTableBlock(baseStyles);
+		const rule = block.match(/[^{}]*tr\.table-row:hover[^{]*\{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("color-mix");
+		// equal specificity with the zebra rule: source order must let hover win
+		expect(block.indexOf("tr.table-row:hover")).toBeGreaterThan(
+			block.indexOf(":nth-child(even of .table-row)"),
+		);
+	});
+
+	test("zebra and hover stay out of the stacked mobile layout", () => {
+		const outsideDesktopBlock = baseStyles.replace(
+			/@media \(min-width: 641px\)\s*\{[\s\S]*?\n\}/,
+			"",
+		);
+		expect(outsideDesktopBlock).not.toContain(":nth-child(even of .table-row)");
+		expect(outsideDesktopBlock).not.toContain("tr.table-row:hover");
+	});
+});
+
+describe("choice_table scroll affordance", () => {
+	test("right-edge fade cue while columns are hidden to the right", () => {
+		const rule = baseStyles.match(
+			/\.table-scroll\[data-scroll-end\]\s*\{[^}]*\}/,
+		)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("mask-image");
+		expect(rule).toContain("linear-gradient(to right");
+	});
+
+	test("sticky corner and row labels cast a shadow once scrolled right", () => {
+		const rule = baseStyles.match(
+			/\.table-scroll\[data-scroll-start\][^{]*\{[^}]*\}/,
+		)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain(".table-corner");
+		expect(rule).toContain(".row-label");
+		expect(rule).toContain("box-shadow");
+		// theme-adaptive shadow color derived from the foreground token
+		expect(rule).toContain("color-mix");
+		expect(rule).toContain("var(--fg)");
+	});
+});
+
 describe("radio/checkbox controls", () => {
 	test("controls take the theme accent and a ~1.1rem size", () => {
 		const rule = baseStyles.match(
