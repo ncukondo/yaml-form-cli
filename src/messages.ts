@@ -14,6 +14,8 @@ export const MESSAGE_KEYS = [
 	"comment",
 	"noscript_warning",
 	"clear_selection",
+	"draft_restored",
+	"draft_discard",
 ] as const;
 
 export type MessageKey = (typeof MESSAGE_KEYS)[number];
@@ -33,6 +35,8 @@ export const BUILTIN_MESSAGES: Record<"en" | "ja", Messages> = {
 		noscript_warning:
 			"This form requires JavaScript. Enable JavaScript and reload the page to fill it in.",
 		clear_selection: "Clear selection",
+		draft_restored: "Restored your previous answers.",
+		draft_discard: "Discard draft",
 	},
 	ja: {
 		required: "「{title}」は必須です。",
@@ -46,6 +50,8 @@ export const BUILTIN_MESSAGES: Record<"en" | "ja", Messages> = {
 		noscript_warning:
 			"このフォームの入力には JavaScript が必要です。JavaScript を有効にしてページを再読み込みしてください。",
 		clear_selection: "選択を解除",
+		draft_restored: "前回の入力内容を復元しました。",
+		draft_discard: "下書きを破棄",
 	},
 };
 

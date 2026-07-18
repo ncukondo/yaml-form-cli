@@ -10,6 +10,7 @@ import type {
 	FormItem,
 	RubricItem,
 } from "../schema/form-schema.ts";
+import { initDraft } from "./draft.ts";
 import { applyPrefill } from "./prefill.ts";
 import { performSubmit } from "./submit.ts";
 import { initTableScroll } from "./table-scroll.ts";
@@ -325,8 +326,12 @@ export function initForm(doc: Document): void {
 	const visibility = createVisibilityEvaluator(form);
 	const refreshVisibility = () =>
 		applyVisibility(doc, visibility.compute(readRawAnswers(doc, form)));
+	// Draft restore runs after prefill (draft overlays it) and before the
+	// first refreshVisibility() below, so rules see restored answers.
+	const draft = initDraft(doc, form, () => readRawAnswers(doc, form));
 	const onEdit = (event: Event) => {
 		refreshVisibility();
+		draft?.save();
 		const name = (event.target as Element | null)?.getAttribute?.("name");
 		if (name) clearFieldError(doc, name);
 	};
@@ -343,6 +348,7 @@ export function initForm(doc: Document): void {
 		if (!itemId) return;
 		for (const input of inputsByName(doc, itemId)) input.checked = false;
 		refreshVisibility();
+		draft?.save();
 	});
 	refreshVisibility();
 	formEl.addEventListener("submit", (event) => {

@@ -3,7 +3,7 @@
 // src/schema must stay type-only.
 import type { Form } from "../schema/form-schema.ts";
 
-type Target =
+export type PrefillTarget =
 	| { kind: "text" }
 	| { kind: "choice"; multiple: boolean; values: Set<string> }
 	| { kind: "constant" };
@@ -14,8 +14,8 @@ type Target =
  * choice items, `<id>.<rowKey>` for table rows, `<id>.<rowKey>.comment` for
  * rubric per-row comments, and item id for constants with `from_url: true`.
  */
-function enumerateTargets(form: Form): Map<string, Target> {
-	const targets = new Map<string, Target>();
+export function enumerateTargets(form: Form): Map<string, PrefillTarget> {
+	const targets = new Map<string, PrefillTarget>();
 	const choiceValues = (choices: { value: string }[]) =>
 		new Set(choices.map((c) => c.value));
 	for (const item of form.items) {
@@ -68,18 +68,29 @@ function warn(message: string): void {
 	console.warn(`yaml-form: ${message}`);
 }
 
-function setText(doc: Document, name: string, value: string): void {
+export function applyTextValue(
+	doc: Document,
+	name: string,
+	value: string,
+): void {
 	const el = doc.querySelector<HTMLInputElement | HTMLTextAreaElement>(
 		`[name="${attrEscape(name)}"]`,
 	);
 	if (el) el.value = value;
 }
 
-function setChoice(
+/**
+ * Check the inputs matching `values` (union for `multiple`, last-wins
+ * otherwise); values outside the choice set are warn-and-ignore.
+ * `commaShorthand` enables 0013's comma splitting for `multiple` targets —
+ * URL parameters use it, draft restore (exact stored values) must not.
+ */
+export function applyChoiceValues(
 	doc: Document,
 	name: string,
-	target: Extract<Target, { kind: "choice" }>,
+	target: Extract<PrefillTarget, { kind: "choice" }>,
 	paramValues: string[],
+	commaShorthand: boolean,
 ): void {
 	const inputs = Array.from(
 		doc.querySelectorAll<HTMLInputElement>(`input[name="${attrEscape(name)}"]`),
@@ -89,7 +100,8 @@ function setChoice(
 		// choice value containing a comma wins), otherwise splits on commas.
 		const selected = new Set<string>();
 		for (const value of paramValues) {
-			const tokens = target.values.has(value) ? [value] : value.split(",");
+			const tokens =
+				target.values.has(value) || !commaShorthand ? [value] : value.split(",");
 			for (const token of tokens) {
 				if (target.values.has(token)) selected.add(token);
 				else
@@ -135,10 +147,10 @@ export function applyPrefill(doc: Document, form: Form): Form {
 		const last = values[values.length - 1];
 		switch (target.kind) {
 			case "text":
-				if (last !== undefined) setText(doc, key, last);
+				if (last !== undefined) applyTextValue(doc, key, last);
 				break;
 			case "choice":
-				setChoice(doc, key, target, values);
+				applyChoiceValues(doc, key, target, values, true);
 				break;
 			case "constant":
 				if (last !== undefined) overrides.set(key, last);
