@@ -22,6 +22,7 @@ instead of restating them.
 | [0007](0007-submit-payload.md) | Submit payload shape |
 | [0008](0008-json-schema.md) | Publish a JSON Schema for the YAML format |
 | [0009](0009-development-process.md) | Development process: decisions/tasks dirs, TDD, parallel worktrees |
+| [0010](0010-i18n.md) | i18n: `lang` + built-in bundles (`en`/`ja`) + `messages` overrides |
 
 ## Archive
 
