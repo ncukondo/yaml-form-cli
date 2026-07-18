@@ -1,6 +1,7 @@
 # yaml-form-cli Specification (Draft)
 
-Status: **draft — under discussion**. Nothing here is final.
+Status: **draft — under discussion**. Decided points are marked as such;
+remaining proposals are marked **(proposal)**.
 
 ## Overview
 
@@ -16,7 +17,7 @@ The YAML schema is based on the form definition used in
 [flexible-form](https://github.com/ncukondo/flexible-form), extended with a
 `rubric` item type. The canonical example is [`examples/sample.yaml`](../examples/sample.yaml).
 
-## CLI (draft)
+## CLI
 
 ```
 yaml-form <input.yaml> [-o <output.html>]
@@ -25,24 +26,36 @@ Options:
   -o, --output <file>   Write HTML to file (default: stdout)
   -h, --help            Show help
   --version             Show version
+
+Subcommands:
+  yaml-form upgrade     Self-upgrade to the latest released version
 ```
 
-Possible future subcommands (not in v1 unless decided otherwise):
+### Distribution (decided)
 
-- `yaml-form validate <input.yaml>` — validate the definition without generating HTML
-- `yaml-form preview <input.yaml>` — serve the generated HTML locally with reload
+Both of the following, released from the same version tag:
+
+- **npm package** — run via `bunx yaml-form` / `npx yaml-form`, upgraded
+  through the package manager.
+- **Single-file executable** — built with `bun build --compile` per platform,
+  attached to GitHub Releases. `yaml-form upgrade` downloads and replaces the
+  running binary with the latest release.
+
+> Note: automatic binary download requires the GitHub repository (or at least
+> its releases) to be public, or a token to be configured. To revisit before
+> the first release.
 
 ## YAML schema
 
 ### Top level
 
-| Field         | Type                 | Required | Description |
-| ------------- | -------------------- | -------- | ----------- |
-| `title`       | string               | yes      | Form title |
-| `description` | string               | no       | Multi-line supported; URLs are auto-linked |
-| `actions`     | string \| string[]   | no       | Actions executed on submit (see below) |
-| `post_submit` | object               | no       | `message`: text displayed after submission |
-| `items`       | item[]               | yes      | Form items in display order |
+| Field         | Type                | Required | Description |
+| ------------- | ------------------- | -------- | ----------- |
+| `title`       | string              | yes      | Form title |
+| `description` | string              | no       | Multi-line supported; URLs are auto-linked |
+| `actions`     | action[] \| action  | no       | Actions executed on submit (see below). A single mapping is treated as a one-element array |
+| `post_submit` | object              | no       | `message`: text displayed on the success screen |
+| `items`       | item[]              | yes      | Form items in display order |
 
 ### Common item fields
 
@@ -50,7 +63,7 @@ Possible future subcommands (not in v1 unless decided otherwise):
 | -------------- | ------- | -------- | ----------- |
 | `type`         | string  | no       | One of `constant`, `short_text`, `long_text`, `choice`, `choice_table`, `rubric`. Defaults to `short_text` |
 | `title`        | string  | yes      | Item label |
-| `id`           | string  | no       | Unique key used in submitted data and `visible_when` rules |
+| `id`           | string  | **yes**  | Unique key across the form; used in submitted data and `visible_when` rules (decided: required for every item) |
 | `description`  | string  | no       | Help text for the item |
 | `required`     | boolean | no       | Defaults to `false` |
 | `visible_when` | string  | no       | Rule expression; item is shown only when it evaluates to true |
@@ -63,25 +76,54 @@ Possible future subcommands (not in v1 unless decided otherwise):
 - **`long_text`** — multi-line text input.
 - **`choice`** — single (`radio`) or multiple (`checkbox`) choice.
   Extra fields: `choices` (required), `multiple` (default `false`).
-  A choice is either a string or `{ title, value?, id? }`.
-- **`choice_table`** — matrix of choices. Extra fields:
-  - `items` (required): column headers; each may be a string or `{ title, id? }`.
-    An `id` given here must be unique across the whole form.
-  - `choices` (required): row headers.
+  A choice is either a string or `{ title, value? }`; the submitted value is
+  `value` if given, otherwise `title`.
+- **`choice_table`** — matrix of questions sharing one scale. Extra fields:
+  - `items` (required): column headers — the individual questions. Each is a
+    string or `{ title, id? }`. The per-column `id` (unique within the item)
+    overrides the key segment used in submitted data; otherwise the title is
+    used.
+  - `choices` (required): row headers — the shared scale. Same value rules as
+    `choice`.
   - `multiple` (default `false`).
 - **`rubric`** — like `choice_table`, but each cell has its own descriptor text.
-  - `levels` (required): columns; `{ title, value }[]`. `value` is what is
-    submitted and what `visible_when` rules see.
+  - `levels` (required): columns; `{ title, value }[]`. `value` is the
+    submitted value.
   - `criteria` (required): rows; each is `{ id, title, descriptors, allow_na? }`.
-    `descriptors` has one entry per level, in level order.
-    `allow_na: true` adds an N/A column (submitted as `"na"`).
-    Criterion `id`s must be unique across the whole form.
-  - `comment_per_criterion` (default `false`): adds a free-text box under each row.
-  - `scoring` (optional): `{ method: sum | average | weighted, weights? }`.
-    If omitted, no score is computed.
+    `id` is required and unique **within the rubric** (referenced as
+    `<rubric_id>.<criterion_id>`). `descriptors` has one entry per level, in
+    level order. `allow_na: true` adds an N/A column, submitted as `"N/A"`.
+  - `comment_per_criterion` (default `false`): adds a free-text box under each
+    row, submitted as `<criterion_id>_comment` within the rubric's answers.
+  - No score computation (decided): instead of a computed score, the selected
+    level values are submitted per criterion as a structured set (see below).
 
-  Submitted data is flat — `{ criterion_id: selected_level_value, ... }` — so
-  criteria can be referenced from `visible_when` directly.
+### Submitted data shape
+
+`answers` is an object keyed by item `id`:
+
+```jsonc
+{
+  "constant_test": "value",
+  "id_sample": "free text",
+  "single_choice": "option2",
+  "multiple_choice": ["option1", "value4"],   // multiple: array of values
+  "choice_table_sample": {                    // choice_table: per-column object
+    "option1": "scale3",
+    "opt8": "scale1"                          // column with explicit id
+  },
+  "presentation_rubric": {                    // rubric: per-criterion object
+    "clarity": "2",
+    "evidence": "N/A",
+    "clarity_comment": "..."                  // when comment_per_criterion: true
+  }
+}
+```
+
+- Hidden items (via `visible_when`) are excluded from validation and from
+  `answers`.
+- `required` on a rubric means every visible criterion must be answered
+  (selecting N/A counts as answered).
 
 ### Conditional visibility (`visible_when`)
 
@@ -100,37 +142,83 @@ Logical:     expr and expr           expr or expr          not expr
 Multi-key:   anyOf(id1,id2)="x"      allOf(id1,id2)="x"    noneOf(id1,id2)="x"
 ```
 
+Rules see a **flattened view** of `answers`: nested objects become dotted keys
+(`presentation_rubric.clarity`, `choice_table_sample.option1`). Dots are safe
+characters in unquoted rule keys, so these can be referenced directly:
+
+```
+presentation_rubric.clarity in ["1","2","N/A"]
+```
+
+Array answers (`multiple: true`) are matched with `includes` / `notIncludes`.
+
 Quoting: keys/values may be unquoted if they contain only safe characters
 (no `, = ( ) < > [ ]`, quotes, or whitespace); otherwise use single or double
 quotes. A quote inside a quoted value is escaped by doubling (`'it''s ok'`).
 
-Hidden items are excluded from validation (a `required` item that is hidden
-does not block submission) and from submitted data. (TBC)
+Note: the rule engine has no ordering operators (`<`, `>`), so conditions like
+"less than" must be expressed by enumeration (`in [...]`).
 
-### Actions
+### Actions (decided: explicit `type` objects)
 
-`actions` is a string or array of strings, executed in order on submit:
+`actions` is an array of action objects executed in order after client-side
+validation passes:
 
-| Action              | Behavior in a self-contained HTML |
-| ------------------- | --------------------------------- |
-| `log:`              | Log submitted data to the browser console (**TBD** — original semantics were "server console") |
-| `mailto:<address>`  | Open a `mailto:` URL with the submitted data serialized into the body (**TBD**: body format) |
-| `https://<url>`     | `POST` the submitted data as JSON via `fetch` (**TBD**: payload shape, CORS expectations, error handling) |
+```yaml
+actions:
+  - type: log
+  - type: post
+    url: "https://example.com/api/submit"
+  - type: mailto
+    to: "example@example.com"
+    subject: "Optional subject"   # default: form title
+```
 
-### Submitted data shape (draft)
+| Action   | Behavior |
+| -------- | -------- |
+| `log`    | Log the payload to the **browser console** (decided). Always succeeds. Useful for testing |
+| `post`   | `POST` the payload as JSON (`Content-Type: application/json`) via `fetch`. Success = HTTP 2xx |
+| `mailto` | Build a `mailto:` URL with the answers serialized into the body and open it. The user's mail client opens with the message pre-filled; the user sends it manually |
 
-A flat object keyed by item `id` (items without an `id` get a generated key — **TBD**):
+`mailto` caveats (documented limitations, kept in spec):
+
+- URL length is effectively limited (~2000 chars); long forms may be truncated.
+- Whether the mail was actually sent cannot be detected; opening the mail
+  client is treated as success.
+
+**Result handling (decided):**
+
+- On success of all actions: replace the form with a success screen showing
+  `post_submit.message` (default message if unset).
+- On failure: stay on the form (input preserved) and show a submission-failure
+  message; the user can retry. **(proposal)** actions run sequentially and stop
+  at the first failure; retrying runs all actions again (endpoints should
+  tolerate duplicate delivery).
+
+**Payload (proposal)** — shared by `log`, `post`, and (serialized as text)
+`mailto`:
 
 ```jsonc
 {
-  "constant_test": "value",
-  "id_sample": "free text",
-  "single_choice": "option2",
-  "multiple_choice": ["option1", "value4"],   // multiple: array
-  "global_unique_id8": "scale3",              // choice_table cell by column id
-  "rubric_clarity": "2",                      // rubric criterion by id
-  "rubric_evidence": "na"
+  "form": { "title": "Test Form" },
+  "submittedAt": "2026-07-18T12:34:56.789Z", // ISO 8601, client clock
+  "answers": { /* see "Submitted data shape" */ }
 }
+```
+
+**`mailto` body format (proposal)** — human-readable plain text using item
+titles:
+
+```
+Test Form
+=========
+Short Text: free text
+Multiple Choice: option1, value4
+Choice Table:
+  option1: scale3
+Presentation Rubric:
+  Clarity: Competent (2)
+  Use of evidence: N/A
 ```
 
 ## Generated HTML requirements
@@ -139,24 +227,12 @@ A flat object keyed by item `id` (items without an `id` get a generated key — 
 - Reasonable default styling; readable on mobile (responsive).
 - Client-side `required` validation before actions run.
 - `visible_when` re-evaluated live as the user edits.
-- After successful submit, show `post_submit.message` (if set).
+- Success screen shows `post_submit.message` (see result handling above).
 - No build-time network access: generation must work fully offline.
 
-## Open questions
+## Remaining proposals to confirm
 
-1. **`log:` semantics** — browser console only, or also render the payload on
-   the page (useful for testing)?
-2. **`mailto:` body format** — plain text `key: value` lines? JSON?
-3. **`https:` action** — payload shape (`{ answers: {...}, meta: {...} }`?),
-   success/failure UI, retry.
-4. **Items without `id`** — auto-generate keys (from title? index?), or make
-   `id` required for non-constant items?
-5. **`choice_table` submitted keys** — by column `id` (as drafted above), and
-   what key when a column has no `id`?
-6. **Rubric `scoring`** — where is the score shown (live on the page? included
-   in submitted data as `<rubric_id>_score`?), and how does `na` interact with
-   sum/average/weighted?
-7. **i18n** — UI strings (validation messages, submit button) configurable?
-   Default language?
-8. **Distribution** — npm package (`bunx yaml-form`), single-file executable
-   (`bun build --compile`), or both?
+1. `post`/`log` payload shape (`{ form, submittedAt, answers }` above).
+2. `mailto` body format (plain text with titles, above).
+3. Multi-action failure handling (sequential, stop at first failure, full
+   retry).

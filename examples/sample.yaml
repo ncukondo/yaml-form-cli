@@ -8,12 +8,20 @@ description: |
   URLs are auto linked -> https://sample.com/
 # description of form. This is optional.
 
-# Define actions to be executed when the form is submitted. This can be string or array of string.
-# Available actions are:
-# - log: Log the form data to the server console.
-# - mailto: Send the form data to the email address specified.(e.g. mailto:example@example)
-# - https: Send the form data to the specified URL via POST method.(e.g. https://example.com)
-actions: "log:"
+# Define actions to be executed when the form is submitted.
+# This is an array of action objects (a single mapping is also accepted).
+# Available types are:
+# - log: Log the payload to the browser console. Useful for testing.
+# - post: Send the payload to the specified URL as JSON via POST.
+# - mailto: Open the user's mail client with the answers pre-filled in the body.
+#   (The user sends the mail manually; long forms may hit mailto URL length limits.)
+actions:
+  - type: log
+  # - type: post
+  #   url: "https://example.com/api/submit"
+  # - type: mailto
+  #   to: "example@example.com"
+  #   subject: "Form submission" # optional; defaults to the form title
 
 # Define actions to be executed after the form is submitted. This is optional.
 post_submit:
@@ -27,11 +35,14 @@ post_submit:
 # - long_text: Long text input.
 # - choice: Single choice or multiple choice.
 # - choice_table: Single choice or multiple choice table.
+# - rubric: Rubric table with per-cell descriptors.
 # If you do not specify the type, it will be treated as a short_text.
+# Every item requires a unique "id"; it is the key in the submitted data
+# and the key referenced from visible_when rules.
 items:
   - type: "constant" # type of item. This is required.
     title: "constant_sample" # title of item. This is required.
-    id: "constant_test" # id of item. This is optional. You can use this id to get the value of this item in actions.
+    id: "constant_test" # id of item. This is required and must be unique in the form.
     value: "value" # value of item. This is required only in constant type.
 
   - type: "short_text"
@@ -41,9 +52,11 @@ items:
     description: "description for a item" # description of item. This is optional.
 
   - type: "long_text"
+    id: "long_text_sample"
     title: "Long Text"
 
   - type: "choice"
+    id: "single_choice"
     title: "Single Choice"
     # choices is array of choice items.
     choices:
@@ -53,6 +66,7 @@ items:
       - "option4"
 
   - type: "choice"
+    id: "multiple_choice"
     title: "Multiple Choice"
     multiple: true # This item is multiple choice. This is optional. It is false by default.
     choices:
@@ -62,8 +76,12 @@ items:
       - { title: "option4", value: "value4" } # You can specify the value of the choice item.
 
   - type: "choice_table"
+    id: "choice_table_sample"
     title: "Choice Table"
-    # items is array of choice items. This is required. This represents the column header of the table.
+    # items is array of choice items. This is required. This represents the column
+    # header of the table: the individual questions sharing one scale.
+    # Answers are submitted as { <column key>: <selected value> } under this item's id;
+    # the column key is the column's "id" if specified, otherwise its title.
     items:
       - "option1"
       - "option2"
@@ -72,8 +90,9 @@ items:
       - "option5"
       - "option6"
       - "option7"
-      - { title: "option8", id: "global_unique_id8" } # You can specify the id of the choice item. The id must be unique in the form.
-    # choices is array of choice items. This is required. This represents the row header of the table.
+      - { title: "option8", id: "opt8" } # id overrides the key for this column (unique within this item).
+    # choices is array of choice items. This is required. This represents the row
+    # header of the table: the shared scale.
     choices:
       - "scale1"
       - "scale2"
@@ -87,6 +106,7 @@ items:
       - "scale10"
 
   - type: "choice_table"
+    id: "multiple_choice_table"
     title: "Multiple Choice Table"
     multiple: true # This item is multiple choice. This is optional. It is false by default.
     items:
@@ -107,7 +127,8 @@ items:
   # --- Conditional Visibility (visible_when) ---
   # You can conditionally show/hide items using the visible_when field.
   # The item is shown only when the expression evaluates to true.
-  # The expression references other items by their id.
+  # The expression references other items by their id. Answers of choice_table
+  # and rubric items are referenced with dotted keys: <item_id>.<column_or_criterion_id>.
   #
   # The rule syntax follows @ncukondo/dynamic-form-rules:
   #   https://github.com/ncukondo/dynamic-form-rules
@@ -138,41 +159,40 @@ items:
   # --- Rubric ---
   # A rubric is like a choice_table, but each cell has its own descriptor text.
   # - levels: columns (performance levels). Each level has a title and a value;
-  #   the value is what gets submitted and what visible_when rules see.
-  # - criteria: rows. Each criterion has an id (must be unique in the form,
-  #   like choice_table item ids) and descriptors, one per level, in the same order.
-  # Submitted data is flat: { criterion_id: selected_level_value, ... },
-  # so criteria can be referenced from visible_when directly.
+  #   the value is what gets submitted.
+  # - criteria: rows. Each criterion has an id (required, unique within the
+  #   rubric) and descriptors, one per level, in the same order.
+  # Answers are submitted as a structured set under this item's id:
+  #   { presentation_rubric: { clarity: "2", evidence: "N/A" } }
+  # and referenced from visible_when with dotted keys:
+  #   presentation_rubric.clarity in ["1","2","N/A"]
   - type: "rubric"
     id: "presentation_rubric"
     title: "Presentation Rubric"
-    required: true
+    required: true # every visible criterion must be answered (N/A counts as answered)
     levels:
       - { title: "Novice", value: "1" }
       - { title: "Competent", value: "2" }
       - { title: "Expert", value: "3" }
     criteria:
-      - id: "rubric_clarity"
+      - id: "clarity"
         title: "Clarity"
         descriptors:
           - "Hard to follow; main point unclear"
           - "Mostly clear with minor gaps"
           - "Consistently clear and well structured"
-      - id: "rubric_evidence"
+      - id: "evidence"
         title: "Use of evidence"
-        allow_na: true # optional: adds an N/A column (submitted as "na")
+        allow_na: true # optional: adds an N/A column (submitted as "N/A")
         descriptors:
           - "Claims are unsupported"
           - "Some claims supported by evidence"
           - "All claims well supported and cited"
-    # optional extras
-    comment_per_criterion: false # add a free-text box under each row
-    scoring: # optional; if omitted, no score is computed
-      method: "sum" # sum | average | weighted
-      # weights: { rubric_clarity: 2, rubric_evidence: 1 } # for method: weighted
+    comment_per_criterion: false # optional: adds a free-text box under each row,
+    # submitted as <criterion_id>_comment within this rubric's answers
 
-  # A criterion can be referenced from visible_when like any other id:
+  # A rubric criterion can be referenced from visible_when with a dotted key:
   - type: "long_text"
     id: "clarity_feedback"
     title: "Advice for improving clarity"
-    visible_when: "rubric_clarity in [1,2]"
+    visible_when: 'presentation_rubric.clarity in ["1","2"]'
