@@ -1,6 +1,6 @@
 # Task 0015: i18n — `lang` attribute and overridable UI strings
 
-Status: todo
+Status: done
 Depends on: 0012, 0013, 0014 (all hard-coded strings landed in final shape)
 Parallel: no — touches schema, generator, and runtime strings
 
@@ -53,12 +53,12 @@ legend, submitting indicator) can be produced in the form's language.
 
 ## Acceptance criteria
 
-- [ ] `<html lang="ja">` output when the YAML says so
-- [ ] A Japanese form shows no English text end-to-end (validation,
+- [x] `<html lang="ja">` output when the YAML says so
+- [x] A Japanese form shows no English text end-to-end (validation,
       submitting, success/failure, Submit button, comment labels)
-- [ ] Defaults unchanged for existing English forms
-- [ ] JSON Schema + docs updated
-- [ ] `bun test` and `bun run typecheck` pass
+- [x] Defaults unchanged for existing English forms
+- [x] JSON Schema + docs updated
+- [x] `bun test` and `bun run typecheck` pass
 
 ## Verification
 
