@@ -4,6 +4,9 @@
 	"description": "Generate self-contained HTML forms from YAML definitions",
 	"type": "module",
 	"private": true,
+	"bin": {
+		"yaml-form": "./src/cli.ts"
+	},
 	"scripts": {
 		"test": "bun test",
 		"typecheck": "bun x tsc --noEmit",
