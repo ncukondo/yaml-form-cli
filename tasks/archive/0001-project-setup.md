@@ -1,6 +1,6 @@
 # Task 0001: Project setup
 
-Status: todo
+Status: done (2026-07-18)
 Depends on: —
 Parallel: no (everything depends on it)
 
@@ -35,9 +35,17 @@ lint/format run locally and in CI.
 
 ## Acceptance criteria
 
-- [ ] `bun install && bun test && bun run typecheck && bun run lint` all pass
-- [ ] CI runs the same steps on push
-- [ ] `bun test` and `bun run typecheck` pass
+- [x] `bun install && bun test && bun run typecheck && bun run lint` all pass
+- [x] CI runs the same steps on push
+- [x] `bun test` and `bun run typecheck` pass
+
+## Notes on completion
+
+- Lint/format: **Biome 2.x** adopted as proposed (single tool, tab indent,
+  recommended rules, `organizeImports` assist). Config in `biome.json`.
+- Scripts: `lint`, `format`, `check` (typecheck + lint + test) wired into
+  `package.json`; CI (`.github/workflows/ci.yml`) runs install → typecheck →
+  lint → test on push to main and PRs via `oven-sh/setup-bun`.
 
 ## Verification
 

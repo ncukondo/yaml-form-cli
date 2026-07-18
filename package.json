@@ -1,15 +1,19 @@
 {
-  "name": "yaml-form-cli",
-  "version": "0.0.0",
-  "description": "Generate self-contained HTML forms from YAML definitions",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "test": "bun test",
-    "typecheck": "bun x tsc --noEmit"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "typescript": "^5.8.0"
-  }
+	"name": "yaml-form-cli",
+	"version": "0.0.0",
+	"description": "Generate self-contained HTML forms from YAML definitions",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"test": "bun test",
+		"typecheck": "bun x tsc --noEmit",
+		"lint": "bun x biome check .",
+		"format": "bun x biome format --write .",
+		"check": "bun run typecheck && bun run lint && bun test"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.4",
+		"@types/bun": "latest",
+		"typescript": "^5.8.0"
+	}
 }
