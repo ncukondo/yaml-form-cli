@@ -1,6 +1,8 @@
 // Browser-side runtime, bundled and inlined into the generated HTML.
 // Imports from src/schema must stay type-only so the bundle carries no
-// server-side dependencies.
+// server-side dependencies. src/generate/ids.ts is a pure string helper and
+// safe to bundle; it keeps the element-id conventions in one place.
+import { errorId } from "../generate/ids.ts";
 import type {
 	ChoiceTableItem,
 	Form,
@@ -220,10 +222,61 @@ export function collectAnswers(doc: Document): Answers {
 	return answers;
 }
 
+// Elements that carry aria-invalid for a failure key: the choice group
+// wrapper when the item renders one, otherwise every control named after the
+// key (text inputs/textareas, a table row's cell inputs).
+function invalidTargets(doc: Document, key: string): Element[] {
+	const group = doc.querySelector(
+		`[data-item-id="${attrEscape(key)}"] [role="group"]`,
+	);
+	if (group) return [group];
+	return Array.from(doc.querySelectorAll(`[name="${attrEscape(key)}"]`));
+}
+
+function addDescribedBy(el: Element, id: string): void {
+	const tokens = (el.getAttribute("aria-describedby") ?? "")
+		.split(/\s+/)
+		.filter(Boolean);
+	if (!tokens.includes(id)) tokens.push(id);
+	el.setAttribute("aria-describedby", tokens.join(" "));
+}
+
+function removeDescribedBy(el: Element, id: string): void {
+	const tokens = (el.getAttribute("aria-describedby") ?? "")
+		.split(/\s+/)
+		.filter((token) => token !== "" && token !== id);
+	if (tokens.length === 0) el.removeAttribute("aria-describedby");
+	else el.setAttribute("aria-describedby", tokens.join(" "));
+}
+
+function setInvalidState(doc: Document, key: string, invalid: boolean): void {
+	for (const el of invalidTargets(doc, key)) {
+		if (invalid) {
+			el.setAttribute("aria-invalid", "true");
+			addDescribedBy(el, errorId(key));
+		} else {
+			el.removeAttribute("aria-invalid");
+			removeDescribedBy(el, errorId(key));
+		}
+	}
+}
+
+// Table-row slots are generated without announcement attributes; make every
+// slot an addressable live region before the first submit can populate it.
+function initErrorSlots(doc: Document): void {
+	for (const el of Array.from(doc.querySelectorAll("[data-error-for]"))) {
+		const key = el.getAttribute("data-error-for");
+		if (!key) continue;
+		if (!el.id) el.id = errorId(key);
+		if (!el.hasAttribute("role")) el.setAttribute("role", "alert");
+	}
+}
+
 function showErrors(doc: Document, failures: RequiredFailure[]): void {
 	// Covers item-level slots and the per-row slots inside tables.
 	for (const el of Array.from(doc.querySelectorAll("[data-error-for]"))) {
 		const key = el.getAttribute("data-error-for");
+		if (key === null) continue;
 		const failure = failures.find((f) => failureKey(f) === key);
 		if (failure) {
 			el.textContent = failure.message;
@@ -232,6 +285,7 @@ function showErrors(doc: Document, failures: RequiredFailure[]): void {
 			el.textContent = "";
 			el.setAttribute("hidden", "");
 		}
+		setInvalidState(doc, key, failure !== undefined);
 	}
 }
 
@@ -239,6 +293,7 @@ export function initForm(doc: Document): void {
 	const formEl = doc.querySelector("form#yaml-form");
 	if (!formEl) return;
 	const form = readFormData(doc);
+	initErrorSlots(doc);
 	const visibility = createVisibilityEvaluator(form);
 	const refreshVisibility = () =>
 		applyVisibility(doc, visibility.compute(readRawAnswers(doc, form)));
@@ -250,12 +305,16 @@ export function initForm(doc: Document): void {
 		event.preventDefault();
 		const failures = validateRequired(doc);
 		showErrors(doc, failures);
-		if (failures.length > 0) {
+		const first = failures[0];
+		if (first) {
 			doc
-				.querySelector(
-					`[data-item-id="${attrEscape(failures[0]?.itemId ?? "")}"]`,
-				)
+				.querySelector(`[data-item-id="${attrEscape(first.itemId)}"]`)
 				?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+			// Any failing control shares its failure key as the input name; a
+			// choice group's first radio/checkbox doubles as the focus target.
+			doc
+				.querySelector<HTMLElement>(`[name="${attrEscape(failureKey(first))}"]`)
+				?.focus?.({ preventScroll: true });
 			return;
 		}
 		void performSubmit(doc, readFormData(doc), collectAnswers(doc));
