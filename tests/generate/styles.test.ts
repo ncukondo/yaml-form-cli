@@ -66,3 +66,31 @@ describe("radio/checkbox controls", () => {
 		expect(rule).toContain("height: 1.1rem;");
 	});
 });
+
+describe("invalid state styling", () => {
+	test("invalid text inputs and textareas take the error border", () => {
+		const rule = baseStyles.match(
+			/input\[type="text"\]\[aria-invalid="true"\][^{]*\{[^}]*\}/,
+		)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain('textarea[aria-invalid="true"]');
+		expect(rule).toContain("border-color: var(--error);");
+	});
+
+	test("invalid choice groups get a visible error outline", () => {
+		const rule = baseStyles.match(
+			/\.choice-options\[aria-invalid="true"\] \{[^}]*\}/,
+		)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("var(--error)");
+	});
+
+	test("invalid table rows get row-level error treatment", () => {
+		expect(baseStyles).toContain('tr.table-row:has([aria-invalid="true"])');
+		const rule = baseStyles.match(
+			/\.choice-table tr\.table-row:has\(\[aria-invalid="true"\]\)[^{]*\{[^}]*\}/,
+		)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("var(--error)");
+	});
+});
