@@ -20,6 +20,7 @@
 		"typescript": "^5.8.0"
 	},
 	"dependencies": {
+		"@ncukondo/dynamic-form-rules": "^0.0.7",
 		"yaml": "^2.9.0",
 		"zod": "^4.4.3"
 	}

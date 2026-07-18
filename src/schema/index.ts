@@ -15,3 +15,4 @@ export type {
 export { formSchema, ITEM_TYPES } from "./form-schema.ts";
 export { emitJsonSchema, renderJsonSchema } from "./json-schema.ts";
 export { type ParseResult, parseForm } from "./parse.ts";
+export { answerKeys, checkRuleKeys } from "./rule-keys.ts";

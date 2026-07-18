@@ -1,6 +1,6 @@
 # Task 0007: Generation-time rule-key validation
 
-Status: todo
+Status: done
 Depends on: 0002
 Parallel: yes — group A (owns `src/schema/rule-keys*`)
 
@@ -40,9 +40,26 @@ key that no item can produce.
 
 ## Acceptance criteria
 
-- [ ] Unknown or stale rule keys fail generation with item path + key name
-- [ ] `bun test` and `bun run typecheck` pass
+- [x] Unknown or stale rule keys fail generation with item path + key name
+- [x] `bun test` and `bun run typecheck` pass
 
 ## Verification
 
 - `bun test tests/schema/rule-keys`
+
+## Completion notes (2026-07-18)
+
+- Added `@ncukondo/dynamic-form-rules@0.0.7` as a runtime dependency;
+  `safeParseSource` parses `visible_when` expressions and
+  `extractDependentKeys` returns referenced keys with anyOf/allOf/noneOf
+  already expanded.
+- New module `src/schema/rule-keys.ts`: `answerKeys(form)` computes the
+  flattened answer-key set (item ids; `<id>.<row_key>` for choice_table and
+  rubric; with `comment_per_row`, `.value`/`.comment` replace the bare row
+  key), `checkRuleKeys(form)` validates every expression. Wired into
+  `parseForm` after successful structural parsing; exported from
+  `src/schema/index.ts`.
+- New `FormErrorCode`s: `unknown_rule_key`, `rule_syntax_error` — both
+  reported at `items[i].visible_when` naming the item id.
+- Minor `parse.ts` change: the error dedup key now includes the message so
+  multiple unknown keys in one expression each get reported.
