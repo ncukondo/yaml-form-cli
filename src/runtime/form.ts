@@ -7,6 +7,7 @@ import type {
 	FormItem,
 	RubricItem,
 } from "../schema/form-schema.ts";
+import { performSubmit } from "./submit.ts";
 import {
 	applyVisibility,
 	createVisibilityEvaluator,
@@ -251,7 +252,6 @@ export function initForm(doc: Document): void {
 				?.scrollIntoView?.({ behavior: "smooth", block: "center" });
 			return;
 		}
-		// Submit actions (log/post/mailto) land with task 0006.
-		console.log("yaml-form answers", collectAnswers(doc));
+		void performSubmit(doc, readFormData(doc), collectAnswers(doc));
 	});
 }

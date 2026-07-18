@@ -101,6 +101,15 @@ button[type="submit"] {
 	cursor: pointer;
 }
 button[type="submit"]:hover { filter: brightness(1.1); }
+.form-error {
+	color: var(--error);
+	font-weight: 600;
+	margin: 1rem 0 0;
+}
+.form-success {
+	font-size: 1.1rem;
+	white-space: pre-line;
+}
 
 /* choice_table / rubric: scrolling table with sticky header + row labels */
 .table-scroll {
