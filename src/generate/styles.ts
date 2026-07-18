@@ -301,4 +301,16 @@ textarea[aria-invalid="true"]:focus {
 		box-shadow: none;
 	}
 }
+
+/* Constant items are read-only content, not disabled inputs: an info box.
+   Overrides the muted color set in the base rule above. */
+.constant-value {
+	color: var(--fg);
+	background: color-mix(in srgb, var(--accent) 6%, var(--bg));
+	border: 1px solid var(--border);
+	border-left: 3px solid var(--accent);
+	border-radius: 0.375rem;
+	padding: 0.5rem 0.75rem;
+	margin: 0;
+}
 `;

@@ -131,6 +131,23 @@ describe("radio/checkbox controls", () => {
 	});
 });
 
+describe("constant item styling", () => {
+	test("constant value reads as an info box, not a disabled field", () => {
+		// the base sheet greys .constant-value out; a later rule must restore
+		// foreground color and add the box treatment
+		const rules = [...baseStyles.matchAll(/\.constant-value \{[^}]*\}/g)].map(
+			(m) => m[0],
+		);
+		const box = rules.at(-1);
+		expect(box).toBeDefined();
+		expect(box).toContain("color: var(--fg);");
+		expect(box).toContain("background:");
+		expect(box).toContain("border:");
+		expect(box).toContain("border-radius:");
+		expect(box).toContain("padding:");
+	});
+});
+
 describe("invalid state styling", () => {
 	test("invalid text inputs and textareas take the error border", () => {
 		const rule = baseStyles.match(
