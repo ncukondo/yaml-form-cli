@@ -1,6 +1,6 @@
 # Task 0003: HTML generator skeleton + basic items
 
-Status: todo
+Status: done (2026-07-18)
 Depends on: 0002
 Parallel: no (runtime/render foundations for group A)
 
@@ -44,11 +44,29 @@ client-side `required` validation.
 
 ## Acceptance criteria
 
-- [ ] Generated file opens from `file://` offline and renders the sample's
+- [x] Generated file opens from `file://` offline and renders the sample's
       basic items on desktop and mobile widths
-- [ ] No external resource references in the output
-- [ ] Required validation works client-side
-- [ ] `bun test` and `bun run typecheck` pass
+- [x] No external resource references in the output
+- [x] Required validation works client-side
+- [x] `bun test` and `bun run typecheck` pass
+
+## Notes on completion
+
+- `src/generate/`: `index.ts` (`generateHtml(form): Promise<string>` — shell,
+  embedded form JSON `script#yaml-form-data`, inlined runtime), `render-item.ts`
+  (per-type dispatch; `choice_table`/`rubric` render placeholders until 0005),
+  `escape.ts` (HTML escaping + URL auto-linking), `styles.ts` (inline CSS,
+  light/dark, mobile-friendly), `runtime-bundle.ts` (bundles the runtime with
+  `Bun.build` at generation time, memoized — Node/npm distribution will
+  prebuild this in task 0009).
+- `src/runtime/`: `form.ts` (readFormData / validateRequired / collectAnswers /
+  initForm; visibility hook returns true until 0004; submit success path just
+  console.logs until 0006), `main.ts` (browser entry).
+- Tests: happy-dom `Window` + `document.write` over the generated string;
+  runtime functions imported directly for behavior tests (dispatch events with
+  the happy-dom window's own `Event` constructor).
+- Answer shapes pinned: text items always present (possibly ""), single choice
+  = value or omitted, multiple choice = array or omitted, constant included.
 
 ## Verification
 
