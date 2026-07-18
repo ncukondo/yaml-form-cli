@@ -63,7 +63,13 @@ the top of your YAML:
 
 - **`constant`** — fixed, non-editable value. Extra field: `value` (required).
   Included in submitted data.
-- **`short_text`** — single-line text input.
+- **`short_text`** — single-line text input. Extra optional fields
+  (decision 0011):
+  - `input_type`: one of `email`, `tel`, `url`, `number` — rendered as the
+    input's `type` attribute so browsers offer a matching keyboard and
+    autofill (WCAG 1.3.5). Omitted → plain text input.
+  - `autocomplete`: HTML autocomplete token(s), rendered verbatim (e.g.
+    `email`, `name`, `section-x shipping tel`).
 - **`long_text`** — multi-line text input.
 - **`choice`** — single (`radio`) or multiple (`checkbox`) choice.
   Extra fields: `choices` (required), `multiple` (default `false`).

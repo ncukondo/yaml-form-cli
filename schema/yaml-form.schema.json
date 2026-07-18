@@ -214,6 +214,19 @@
 							},
 							"visible_when": {
 								"type": "string"
+							},
+							"input_type": {
+								"type": "string",
+								"enum": [
+									"email",
+									"tel",
+									"url",
+									"number"
+								]
+							},
+							"autocomplete": {
+								"type": "string",
+								"minLength": 1
 							}
 						},
 						"required": [

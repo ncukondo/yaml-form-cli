@@ -24,7 +24,10 @@ function renderConstant(item: ConstantItem): string {
 }
 
 function renderShortText(item: ShortTextItem): string {
-	return `<input type="text" name="${escapeAttr(item.id)}" id="${escapeAttr(inputId(item.id))}"${ariaAttrs(item)}>`;
+	const autocomplete = item.autocomplete
+		? ` autocomplete="${escapeAttr(item.autocomplete)}"`
+		: "";
+	return `<input type="${item.input_type ?? "text"}" name="${escapeAttr(item.id)}" id="${escapeAttr(inputId(item.id))}"${autocomplete}${ariaAttrs(item)}>`;
 }
 
 function renderLongText(item: LongTextItem): string {
