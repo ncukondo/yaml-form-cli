@@ -80,48 +80,50 @@ export function applyTextValue(
 }
 
 /**
- * Check the inputs matching `values` (union for `multiple`, last-wins
- * otherwise); values outside the choice set are warn-and-ignore.
- * `commaShorthand` enables 0013's comma splitting for `multiple` targets —
- * URL parameters use it, draft restore (exact stored values) must not.
+ * Set a choice group's complete selection state: inputs whose value is in
+ * `values` are checked, all others unchecked (an empty set clears the group).
+ * Validation and policy (comma shorthand, last-wins, warnings) belong to the
+ * callers — URL prefill here, draft restore in draft.ts.
  */
-export function applyChoiceValues(
+export function applySelection(
 	doc: Document,
 	name: string,
-	target: Extract<PrefillTarget, { kind: "choice" }>,
-	paramValues: string[],
-	commaShorthand: boolean,
+	values: ReadonlySet<string>,
 ): void {
 	const inputs = Array.from(
 		doc.querySelectorAll<HTMLInputElement>(`input[name="${attrEscape(name)}"]`),
 	);
+	for (const input of inputs) input.checked = values.has(input.value);
+}
+
+// Decision 0013's URL policy: union of repeated params with comma shorthand
+// for `multiple` targets (a choice value containing a comma matches whole and
+// wins over splitting); last occurrence wins for single-select. Unknown
+// values are warn-and-ignore; null means "leave the group untouched".
+function selectionFromParams(
+	target: Extract<PrefillTarget, { kind: "choice" }>,
+	name: string,
+	paramValues: string[],
+): Set<string> | null {
 	if (target.multiple) {
-		// Union of all occurrences; each occurrence matches whole first (a
-		// choice value containing a comma wins), otherwise splits on commas.
 		const selected = new Set<string>();
 		for (const value of paramValues) {
-			const tokens =
-				target.values.has(value) || !commaShorthand
-					? [value]
-					: value.split(",");
+			const tokens = target.values.has(value) ? [value] : value.split(",");
 			for (const token of tokens) {
 				if (target.values.has(token)) selected.add(token);
 				else
 					warn(`ignoring unknown value "${token}" for URL parameter "${name}"`);
 			}
 		}
-		for (const input of inputs) {
-			if (selected.has(input.value)) input.checked = true;
-		}
-		return;
+		return selected;
 	}
 	const value = paramValues[paramValues.length - 1];
-	if (value === undefined) return;
+	if (value === undefined) return null;
 	if (!target.values.has(value)) {
 		warn(`ignoring unknown value "${value}" for URL parameter "${name}"`);
-		return;
+		return null;
 	}
-	for (const input of inputs) input.checked = input.value === value;
+	return new Set([value]);
 }
 
 /**
@@ -151,9 +153,11 @@ export function applyPrefill(doc: Document, form: Form): Form {
 			case "text":
 				if (last !== undefined) applyTextValue(doc, key, last);
 				break;
-			case "choice":
-				applyChoiceValues(doc, key, target, values, true);
+			case "choice": {
+				const selection = selectionFromParams(target, key, values);
+				if (selection) applySelection(doc, key, selection);
 				break;
+			}
 			case "constant":
 				if (last !== undefined) overrides.set(key, last);
 				break;

@@ -4,7 +4,7 @@ import type { Form } from "../schema/form-schema.ts";
 import { escapeAttr, escapeHtml, renderText } from "./escape.ts";
 import { renderItem } from "./render-item.ts";
 import { getRuntimeBundle } from "./runtime-bundle.ts";
-import { baseStyles } from "./styles.ts";
+import { baseStyles, draftStyles } from "./styles.ts";
 
 function embedJson(data: unknown): string {
 	// <-escape so "</script>" can never terminate the data block
@@ -27,13 +27,23 @@ export async function generateHtml(form: Form): Promise<string> {
 	const requiredLegend = form.items.some((item) => item.required)
 		? `<p class="required-legend">${legendHtml}</p>\n`
 		: "";
+	// Only autosaving forms carry the restore-notice slot (and its styles);
+	// with autosave: false the runtime never shows it.
+	const draftNotice = form.autosave
+		? `<div class="draft-notice" id="yaml-form-draft-notice" role="status" hidden>
+<span class="draft-notice-message">${escapeHtml(messages.draft_restored)}</span>
+<button type="button" class="draft-discard">${escapeHtml(messages.draft_discard)}</button>
+</div>
+`
+		: "";
+	const styles = `${baseStyles}${form.autosave ? draftStyles : ""}`;
 	return `<!doctype html>
 <html lang="${escapeAttr(form.lang)}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(form.title)}</title>
-<style>${baseStyles}</style>
+<style>${styles}</style>
 </head>
 <body>
 <main class="container">
@@ -42,11 +52,7 @@ export async function generateHtml(form: Form): Promise<string> {
 ${description}
 </header>
 <noscript><p class="noscript-warning">${escapeHtml(messages.noscript_warning)}</p></noscript>
-<div class="draft-notice" id="yaml-form-draft-notice" role="status" hidden>
-<span class="draft-notice-message">${escapeHtml(messages.draft_restored)}</span>
-<button type="button" class="draft-discard">${escapeHtml(messages.draft_discard)}</button>
-</div>
-<form id="yaml-form" novalidate>
+${draftNotice}<form id="yaml-form" novalidate>
 ${requiredLegend}${items}
 <button type="submit">${escapeHtml(messages.submit)}</button>
 <p class="form-error" id="yaml-form-error" role="alert" hidden></p>

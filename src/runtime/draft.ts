@@ -5,9 +5,10 @@
 // the form itself must never be affected.
 import type { Form } from "../schema/form-schema.ts";
 import {
-	applyChoiceValues,
+	applySelection,
 	applyTextValue,
 	enumerateTargets,
+	type PrefillTarget,
 } from "./prefill.ts";
 import type { RawAnswers } from "./visibility.ts";
 
@@ -16,8 +17,6 @@ const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const DEBOUNCE_MS = 300;
 
 export interface DraftStore {
-	/** Whether a draft was found and applied at init. */
-	restored: boolean;
 	/** Schedule a debounced write; call on every edit. */
 	save(): void;
 	/** Write pending changes immediately (pagehide). */
@@ -33,8 +32,11 @@ export interface DraftStore {
  * order, unknown parameters excluded. A different distribution URL therefore
  * produces a different key, while query noise does not fragment drafts.
  */
-export function draftKey(form: Form, search: string): string {
-	const targets = enumerateTargets(form);
+export function draftKey(
+	form: Form,
+	search: string,
+	targets: Map<string, PrefillTarget> = enumerateTargets(form),
+): string {
 	const entries = Array.from(new URLSearchParams(search).entries()).filter(
 		([key]) => targets.has(key),
 	);
@@ -45,6 +47,10 @@ export function draftKey(form: Form, search: string): string {
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function warn(message: string): void {
+	console.warn(`yaml-form: ${message}`);
 }
 
 function getStorage(doc: Document): Storage | null {
@@ -82,52 +88,67 @@ function prune(storage: Storage): void {
 	for (const key of doomed) storage.removeItem(key);
 }
 
-// Restore degrades exactly like prefill: apply what still matches the form,
-// skip unknown ids and out-of-set values, never break rendering. Constants
-// are never applied from a draft — their values come from the YAML/URL.
-function applyDraftAnswers(doc: Document, form: Form, answers: unknown): void {
-	if (!isPlainObject(answers)) return;
-	const targets = enumerateTargets(form);
-	const apply = (key: string, value: unknown): void => {
-		const target = targets.get(key);
-		if (!target) return;
-		if (target.kind === "text" && typeof value === "string") {
-			applyTextValue(doc, key, value);
-			return;
-		}
-		if (target.kind !== "choice") return;
-		const values =
-			typeof value === "string"
-				? [value]
-				: Array.isArray(value)
-					? value.filter((v): v is string => typeof v === "string")
-					: [];
-		if (values.length > 0) applyChoiceValues(doc, key, target, values, false);
-	};
+// The stored raw-answers shape flattened to the same keys enumerateTargets
+// produces: item id, `<id>.<rowKey>`, `<id>.<rowKey>.comment`.
+function flattenStored(answers: Record<string, unknown>): Map<string, unknown> {
+	const flat = new Map<string, unknown>();
 	for (const [id, value] of Object.entries(answers)) {
 		if (!isPlainObject(value)) {
-			apply(id, value);
+			flat.set(id, value);
 			continue;
 		}
 		for (const [rowKey, cell] of Object.entries(value)) {
 			const key = `${id}.${rowKey}`;
 			if (!isPlainObject(cell)) {
-				apply(key, cell);
+				flat.set(key, cell);
 				continue;
 			}
-			if (typeof cell.value === "string") apply(key, cell.value);
+			if (typeof cell.value === "string") flat.set(key, cell.value);
 			if (typeof cell.comment === "string")
-				apply(`${key}.comment`, cell.comment);
+				flat.set(`${key}.comment`, cell.comment);
 		}
 	}
+	return flat;
 }
 
-function noticeElements(doc: Document): {
-	notice: Element | null;
-	discard: Element | null;
-} {
-	const notice = doc.querySelector("#yaml-form-draft-notice");
-	return { notice, discard: notice?.querySelector(".draft-discard") ?? null };
+/**
+ * Apply a stored draft to the form. The draft is a full snapshot of the
+ * answers at save time, so choice groups are set to exactly the stored
+ * selection — absent or empty means the user had nothing selected there
+ * (deliberate clearing of prefilled choices included). Stale entries
+ * (unknown keys, values no longer in the choice set) are skipped with a
+ * warning. Returns false — and touches nothing — when no stored key matches
+ * the form, so a fully stale draft shows no "restored" notice.
+ */
+function applyDraftAnswers(
+	doc: Document,
+	targets: Map<string, PrefillTarget>,
+	answers: unknown,
+): boolean {
+	if (!isPlainObject(answers)) return false;
+	const flat = flattenStored(answers);
+	if (!Array.from(flat.keys()).some((key) => targets.has(key))) return false;
+	for (const [key, target] of targets) {
+		if (target.kind === "constant") continue;
+		const stored = flat.get(key);
+		if (target.kind === "text") {
+			if (typeof stored === "string") applyTextValue(doc, key, stored);
+			continue;
+		}
+		const values =
+			typeof stored === "string"
+				? [stored]
+				: Array.isArray(stored)
+					? stored.filter((v): v is string => typeof v === "string")
+					: [];
+		const valid = values.filter((v) => target.values.has(v));
+		for (const v of values) {
+			if (!target.values.has(v))
+				warn(`ignoring stale draft value "${v}" for "${key}"`);
+		}
+		applySelection(doc, key, new Set(valid));
+	}
+	return true;
 }
 
 /**
@@ -145,34 +166,41 @@ export function initDraft(
 	const storage = getStorage(doc);
 	if (!storage) return null;
 	const win = doc.defaultView;
+	const targets = enumerateTargets(form);
+	const constantIds = new Set(
+		form.items
+			.filter((item) => item.type === "constant")
+			.map((item) => item.id),
+	);
 
 	let disabled = false;
 	let restored = false;
 	let dirty = false;
 	let timer: number | null = null;
-	const key = draftKey(form, win?.location?.search ?? "");
+	const key = draftKey(form, win?.location?.search ?? "", targets);
 
 	try {
 		prune(storage);
 		const raw = storage.getItem(key);
 		if (raw !== null) {
 			const parsed: unknown = JSON.parse(raw);
-			if (isPlainObject(parsed) && isPlainObject(parsed.answers)) {
-				applyDraftAnswers(doc, form, parsed.answers);
-				restored = true;
+			if (isPlainObject(parsed)) {
+				restored = applyDraftAnswers(doc, targets, parsed.answers);
 			}
 		}
 	} catch {
 		disabled = true;
 	}
 
+	const cancelTimer = (): void => {
+		if (timer !== null) {
+			win?.clearTimeout(timer);
+			timer = null;
+		}
+	};
+
 	const write = (): void => {
 		if (disabled || !dirty) return;
-		const constantIds = new Set(
-			form.items
-				.filter((item) => item.type === "constant")
-				.map((item) => item.id),
-		);
 		const answers: RawAnswers = {};
 		for (const [id, value] of Object.entries(readAnswers())) {
 			if (!constantIds.has(id)) answers[id] = value;
@@ -182,30 +210,32 @@ export function initDraft(
 				key,
 				JSON.stringify({ saved_at: new Date().toISOString(), answers }),
 			);
+			dirty = false;
 		} catch {
 			disabled = true;
 		}
 	};
 
 	const store: DraftStore = {
-		restored,
 		save() {
 			if (disabled || !win) return;
 			dirty = true;
-			if (timer !== null) win.clearTimeout(timer);
+			cancelTimer();
 			timer = win.setTimeout(() => {
 				timer = null;
 				write();
 			}, DEBOUNCE_MS);
 		},
 		flush() {
-			if (timer !== null) {
-				win?.clearTimeout(timer);
-				timer = null;
-			}
+			cancelTimer();
 			write();
 		},
 		clear() {
+			// A cleared draft must stay cleared: drop the pending debounce
+			// timer and the dirty mark so a later pagehide flush cannot
+			// resurrect the just-submitted answers.
+			cancelTimer();
+			dirty = false;
 			try {
 				storage.removeItem(key);
 			} catch {
@@ -215,18 +245,20 @@ export function initDraft(
 	};
 
 	if (restored) {
-		const { notice, discard } = noticeElements(doc);
+		const notice = doc.querySelector("#yaml-form-draft-notice");
+		const discard = notice?.querySelector(".draft-discard");
 		notice?.removeAttribute("hidden");
 		discard?.addEventListener("click", () => {
 			store.clear();
-			// Stop re-saving the restored values, then reload: same URL, no
-			// draft → pristine prefilled state.
-			disabled = true;
 			notice?.setAttribute("hidden", "");
+			// Reload lands on the pristine prefilled state. Where reload is
+			// refused (some file:// setups), the restored values stay visible
+			// but the draft is gone and autosave keeps working, so continued
+			// edits are still preserved.
 			try {
 				win?.location.reload();
 			} catch {
-				// happy-dom / file:// may refuse; the visible state is already reset
+				// keep going without a reload
 			}
 		});
 	}

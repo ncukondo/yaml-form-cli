@@ -235,6 +235,26 @@ describe("restoring", () => {
 		expect(data).not.toContain("hacked");
 	});
 
+	test("restores deselection: choices cleared by the user stay cleared over prefill", async () => {
+		const yaml = `
+title: T
+id: desel
+items:
+  - { type: choice, id: role, title: Role, choices: [student, teacher] }
+  - { type: choice, id: tags, title: Tags, multiple: true, choices: [a, b] }
+`;
+		const form = parseOk(yaml);
+		const search = "?role=student&tags=a,b";
+		// The user opened the prefilled URL, cleared everything, and left:
+		// the snapshot has an empty multi-choice and no single-choice key.
+		const { document } = await loadDom(yaml, {
+			search,
+			seed: { [draftKey(form, search)]: makeDraft({ tags: [] }) },
+		});
+		expect(checkedValues(document, "role")).toEqual([]);
+		expect(checkedValues(document, "tags")).toEqual([]);
+	});
+
 	test("restores only on an exact key hit", async () => {
 		const form = parseOk(basicYaml);
 		const { document } = await loadDom(basicYaml, {
@@ -286,6 +306,15 @@ describe("restore notice", () => {
 		expect(noticeHidden(pristine.document)).toBe(true);
 	});
 
+	test("no notice when the draft matches nothing in the form", async () => {
+		const key = draftKey(parseOk(basicYaml), "");
+		const { document } = await loadDom(basicYaml, {
+			seed: { [key]: makeDraft({ ghost: "x", other: ["y"] }) },
+		});
+		expect(noticeHidden(document)).toBe(true);
+		expect(textValue(document, "name")).toBe("");
+	});
+
 	test("discard removes the draft and hides the notice", async () => {
 		const key = draftKey(parseOk(basicYaml), "");
 		const { window, document } = await loadDom(basicYaml, {
@@ -296,6 +325,54 @@ describe("restore notice", () => {
 		button.click();
 		expect(window.localStorage.getItem(key)).toBeNull();
 		expect(noticeHidden(document)).toBe(true);
+	});
+
+	test("autosave keeps working after a discard (reload may be unavailable)", async () => {
+		const key = draftKey(parseOk(basicYaml), "");
+		const { window, document } = await loadDom(basicYaml, {
+			seed: { [key]: makeDraft({ name: "Jane" }) },
+		});
+		document.querySelector<HTMLElement>(".draft-discard")?.click();
+		expect(window.localStorage.getItem(key)).toBeNull();
+		setText(document, "name", "typed after discard");
+		firePagehide(window);
+		const stored = window.localStorage.getItem(key);
+		expect(stored).not.toBeNull();
+		expect(JSON.parse(stored ?? "{}").answers.name).toBe("typed after discard");
+	});
+});
+
+describe("draft lifecycle after submit", () => {
+	const logYaml = `
+title: T
+id: lifecycle
+actions:
+  - type: log
+items:
+  - { title: Name, id: name }
+`;
+
+	test("pagehide after a successful submit does not resurrect the draft", async () => {
+		const { window, document } = await loadDom(logYaml);
+		setText(document, "name", "Jane");
+		firePagehide(window); // draft persisted
+		const key = draftKey(parseOk(logYaml), "");
+		expect(window.localStorage.getItem(key)).not.toBeNull();
+		submitForm(document);
+		await flushMicrotasks();
+		expect(window.localStorage.getItem(key)).toBeNull();
+		firePagehide(window); // leaving the success screen
+		expect(window.localStorage.getItem(key)).toBeNull();
+	});
+
+	test("a pending debounce timer does not resurrect the draft", async () => {
+		const { window, document } = await loadDom(logYaml);
+		setText(document, "name", "Jane"); // schedules a debounced save
+		submitForm(document); // succeeds before the timer fires
+		await flushMicrotasks();
+		await Bun.sleep(400);
+		const key = draftKey(parseOk(logYaml), "");
+		expect(window.localStorage.getItem(key)).toBeNull();
 	});
 });
 
@@ -338,7 +415,8 @@ items:
 			},
 		});
 		expect(textValue(document, "name")).toBe(""); // not restored
-		expect(noticeHidden(document)).toBe(true);
+		// the notice slot is not even generated for autosave: false
+		expect(document.querySelectorAll("#yaml-form-draft-notice").length).toBe(0);
 		setText(document, "name", "typed");
 		firePagehide(window);
 		await Bun.sleep(400);
