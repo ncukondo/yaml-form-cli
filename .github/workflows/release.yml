@@ -40,7 +40,7 @@ jobs:
       - name: Smoke-test dist under Node
         run: |
           node dist/cli.js --version
-          node dist/cli.js examples/sample.yaml -o /tmp/smoke.html
+          node dist/cli.js generate examples/sample.yaml -o /tmp/smoke.html
           grep -q "yaml-form-data" /tmp/smoke.html
 
       - name: Compile binaries
@@ -55,7 +55,7 @@ jobs:
       - name: Smoke-test native binary
         run: |
           out/yaml-form-linux-x64 --version
-          out/yaml-form-linux-x64 examples/sample.yaml -o /tmp/smoke-bin.html
+          out/yaml-form-linux-x64 generate examples/sample.yaml -o /tmp/smoke-bin.html
           out/yaml-form-linux-x64 upgrade --dry-run || true
 
       - name: Checksums
