@@ -1,6 +1,6 @@
 # Task 0024: CLI subcommands, `validate`, `--json`, exit codes
 
-Status: todo
+Status: done
 Depends on: —
 Parallel: yes (worktree-safe) — alongside 0026 (disjoint: CLI entry vs schema layer)
 

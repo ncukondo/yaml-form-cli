@@ -1,6 +1,6 @@
 # Task 0026: `visible_when` value-domain check
 
-Status: todo
+Status: done
 Depends on: —
 Parallel: yes (worktree-safe) — alongside 0024 (disjoint: schema layer vs CLI entry)
 

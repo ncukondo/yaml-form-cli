@@ -1,6 +1,6 @@
 # Task 0027: `eval` — headless `visible_when` evaluation
 
-Status: todo
+Status: done
 Depends on: 0024
 Parallel: yes (worktree-safe) — alongside 0025 (disjoint: eval vs embed pipeline)
 

@@ -1,6 +1,6 @@
 # Task 0025: `docs` / `schema` / `example` subcommands (embedded knowledge)
 
-Status: todo
+Status: done
 Depends on: 0024
 Parallel: yes (worktree-safe) — alongside 0027 (disjoint: embed pipeline vs eval)
 

@@ -43,10 +43,10 @@ Rules:
 | [0021 i18n: noscript & clear-selection labels](archive/0021-i18n-noscript-clear-labels.md) (#28) | 0015, 0017 | — | done |
 | [0022 URL-parameter prefill, constant `from_url` / `hidden`](archive/0022-url-prefill.md) | — | — | done |
 | [0023 Draft autosave to localStorage](archive/0023-draft-autosave.md) | 0022 | — | done |
-| [0024 CLI subcommands, `validate`, `--json`, exit codes](0024-cli-subcommands.md) | — | C | todo |
-| [0025 `docs` / `schema` / `example` subcommands](0025-embedded-docs-commands.md) | 0024 | D | todo |
-| [0026 `visible_when` value-domain check](0026-rule-value-domain-check.md) | — | C | todo |
-| [0027 `eval` headless rule evaluation](0027-eval-command.md) | 0024 | D | todo |
+| [0024 CLI subcommands, `validate`, `--json`, exit codes](archive/0024-cli-subcommands.md) | — | C | done |
+| [0025 `docs` / `schema` / `example` subcommands](archive/0025-embedded-docs-commands.md) | 0024 | D | done |
+| [0026 `visible_when` value-domain check](archive/0026-rule-value-domain-check.md) | — | C | done |
+| [0027 `eval` headless rule evaluation](archive/0027-eval-command.md) | 0024 | D | done |
 
 Group A tasks touch disjoint areas (runtime modules / generator modules /
 CLI entry) and can proceed in parallel worktrees once 0003 lands.
