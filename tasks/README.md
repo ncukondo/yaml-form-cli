@@ -47,6 +47,9 @@ Rules:
 | [0025 `docs` / `schema` / `example` subcommands](archive/0025-embedded-docs-commands.md) | 0024 | D | done |
 | [0026 `visible_when` value-domain check](archive/0026-rule-value-domain-check.md) | — | C | done |
 | [0027 `eval` headless rule evaluation](archive/0027-eval-command.md) | 0024 | D | done |
+| [0028 `robots` meta output](0028-robots-meta.md) (#33) | — | E | todo |
+| [0029 Link policy: structured `links`, autolink, target, allowlist](0029-links-and-autolink-policy.md) (#32 #34) | — | E | todo |
+| [0030 `post` action relative URL](0030-post-relative-url.md) (#35) | 0029 | — | todo |
 
 Group A tasks touch disjoint areas (runtime modules / generator modules /
 CLI entry) and can proceed in parallel worktrees once 0003 lands.
@@ -64,3 +67,9 @@ schema layer (`src/schema/`) — and can run in parallel worktrees. Group D
 pipeline vs `eval` — and can then run in parallel. Decisions
 `0015-agent-cli-commands.md` and `0016-rule-semantics-feedback.md` cover this
 batch.
+
+Group E (0028 / 0029) address issues #32–#35. They share `form-schema.ts`,
+the JSON Schema regen, and embedded docs, so they merge sequentially rather
+than in isolated worktrees, but carry no logical dependency (order is free).
+0030 depends on 0029's shared URL-policy helper. Decisions
+`0017-robots-meta.md` and `0018-links-and-url-policy.md` cover this batch.

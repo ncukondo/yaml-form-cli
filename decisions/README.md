@@ -29,6 +29,8 @@ instead of restating them.
 | [0014](0014-draft-autosave.md) | Draft autosave to localStorage |
 | [0015](0015-agent-cli-commands.md) | Agent-oriented CLI: subcommands, `--json`, exit codes, help/docs split |
 | [0016](0016-rule-semantics-feedback.md) | `visible_when` semantics: value-domain check + headless `eval` |
+| [0017](0017-robots-meta.md) | `robots` meta: `noindex, nofollow` by default, per-directive opt-out |
+| [0018](0018-links-and-url-policy.md) | Links & URL policy: structured `links`, relative autolink, `post` relative URLs |
 
 ## Archive
 
