@@ -477,6 +477,11 @@ button[type="submit"]:active:not(:disabled) { filter: brightness(0.8); }
 // Appended only for autosaving forms (generate/index.ts): the restore-notice
 // slot is the sole consumer of these rules.
 export const draftStyles = `
+/* display: flex below beats the UA's [hidden] { display: none }, so the
+   pre-restore hidden state needs its own higher-specificity rule. */
+.draft-notice[hidden] {
+	display: none;
+}
 .draft-notice {
 	display: flex;
 	align-items: center;

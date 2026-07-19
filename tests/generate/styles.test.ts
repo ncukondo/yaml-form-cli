@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { baseStyles } from "../../src/generate/styles.ts";
+import { baseStyles, draftStyles } from "../../src/generate/styles.ts";
 
 function lightBlock(css: string): string {
 	const match = css.match(/:root\s*\{[^}]*\}/);
@@ -361,6 +361,17 @@ describe("nested table scroll threshold", () => {
 		const print = baseStyles.match(/@media print\s*\{[\s\S]*?\n\}/)?.[0];
 		expect(print).toBeDefined();
 		expect(print).toContain(".table-scroll.table-scroll-tall");
+	});
+});
+
+describe("draft notice hidden state", () => {
+	test("the [hidden] notice stays hidden despite display: flex", () => {
+		// .draft-notice { display: flex } outranks the UA's [hidden] rule, so
+		// the sheet needs an explicit higher-specificity guard or the notice
+		// shows on every load, draft or not
+		const rule = draftStyles.match(/\.draft-notice\[hidden\]\s*\{[^}]*\}/)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain("display: none;");
 	});
 });
 
