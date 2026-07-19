@@ -184,3 +184,147 @@ items:
 		expect(errors[0]?.path).toBe("items[1].visible_when");
 	});
 });
+
+const roleForm = `
+title: "Role Form"
+items:
+  - type: "choice"
+    id: "role"
+    title: "Your role"
+    choices: ["student", "resident", "faculty"]
+`;
+
+describe("rule value-domain validation", () => {
+	test("a literal outside the choice values fails, naming the choices", () => {
+		const errors = parseErrors(`${roleForm}
+  - type: "long_text"
+    id: "detail"
+    title: "Detail"
+    visible_when: 'role = "Student"'
+`);
+		expect(errors).toHaveLength(1);
+		expect(errors[0]?.code).toBe("rule_value_unreachable");
+		expect(errors[0]?.path).toBe("items[1].visible_when");
+		expect(errors[0]?.message).toContain('"Student"');
+		expect(errors[0]?.message).toContain("student, resident, faculty");
+		expect(errors[0]?.message).toContain("yaml-form eval");
+	});
+
+	test("a valid literal passes", () => {
+		expect(
+			parseForm(`${roleForm}
+  - type: "long_text"
+    id: "detail"
+    title: "Detail"
+    visible_when: 'role = "student"'
+`).ok,
+		).toBe(true);
+	});
+
+	test("one bad member of an in [...] list is flagged and named", () => {
+		const errors = parseErrors(`${roleForm}
+  - type: "long_text"
+    id: "detail"
+    title: "Detail"
+    visible_when: 'role in ["student", "teacher"]'
+`);
+		expect(errors).toHaveLength(1);
+		expect(errors[0]?.code).toBe("rule_value_unreachable");
+		expect(errors[0]?.message).toContain('"teacher"');
+	});
+
+	test("free-text keys are never flagged", () => {
+		expect(
+			parseForm(`
+title: "Free text"
+items:
+  - type: "short_text"
+    id: "name"
+    title: "Name"
+  - type: "long_text"
+    id: "detail"
+    title: "Detail"
+    visible_when: 'name = "anything at all"'
+`).ok,
+		).toBe(true);
+	});
+
+	test("choices given as {title, value} check against value, not title", () => {
+		const valueForm = `
+title: "Value form"
+items:
+  - type: "choice"
+    id: "grade"
+    title: "Grade"
+    choices:
+      - { title: "Beginner", value: "b" }
+      - { title: "Advanced", value: "a" }
+`;
+		// comparing against the title "Beginner" is unreachable
+		const errors = parseErrors(`${valueForm}
+  - type: "long_text"
+    id: "detail"
+    title: "Detail"
+    visible_when: 'grade = "Beginner"'
+`);
+		expect(errors).toHaveLength(1);
+		expect(errors[0]?.code).toBe("rule_value_unreachable");
+
+		// comparing against the value "b" is reachable
+		expect(
+			parseForm(`${valueForm}
+  - type: "long_text"
+    id: "detail"
+    title: "Detail"
+    visible_when: 'grade = "b"'
+`).ok,
+		).toBe(true);
+	});
+
+	test("choice_table row keys resolve to the shared scale values", () => {
+		const tableForm = `
+title: "Table"
+items:
+  - type: "choice_table"
+    id: "table"
+    title: "Table"
+    items: ["row1"]
+    choices: ["a", "b"]
+  - type: "long_text"
+    id: "detail"
+    title: "Detail"
+`;
+		expect(
+			parseForm(`${tableForm}
+    visible_when: 'table.row1 = "a"'
+`).ok,
+		).toBe(true);
+		const errors = parseErrors(`${tableForm}
+    visible_when: 'table.row1 = "c"'
+`);
+		expect(errors).toHaveLength(1);
+		expect(errors[0]?.code).toBe("rule_value_unreachable");
+	});
+
+	test("rubric .value is domain-checked while .comment is free text", () => {
+		// comment_per_row: true → .value closed against the scale, .comment open
+		const badValue = parseErrors(
+			rubricForm(true, 'rubric.clarity.value = "9"'),
+		);
+		expect(badValue).toHaveLength(1);
+		expect(badValue[0]?.code).toBe("rule_value_unreachable");
+
+		expect(
+			parseForm(rubricForm(true, 'rubric.clarity.comment includes "9"')).ok,
+		).toBe(true);
+		expect(parseForm(rubricForm(true, 'rubric.clarity.value = "1"')).ok).toBe(
+			true,
+		);
+	});
+
+	test("bare rubric row key (comment_per_row: false) is domain-checked", () => {
+		const errors = parseErrors(rubricForm(false, 'rubric.clarity = "9"'));
+		expect(errors).toHaveLength(1);
+		expect(errors[0]?.code).toBe("rule_value_unreachable");
+	});
+});

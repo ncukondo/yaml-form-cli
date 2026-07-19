@@ -184,6 +184,12 @@ Notes:
 - Rule keys are validated at generation time against the possible answer
   keys; a typo or stale reference (e.g. after toggling `comment_per_row`)
   fails generation instead of silently hiding items.
+- Literal values compared against a choice-derived key are validated too: a
+  comparison a choice can never satisfy (e.g. `role = "Student"` when the
+  values are `student` / `resident` / `faculty`) makes the rule constant and
+  fails generation. Free-text keys (`short_text`, `long_text`, a rubric
+  `.comment`) accept any literal. To confirm a rule behaves as intended for a
+  given set of answers, use `yaml-form eval`.
 
 ### URL-parameter prefill
 

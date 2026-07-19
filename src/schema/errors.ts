@@ -9,6 +9,7 @@ export type FormErrorCode =
 	| "unknown_item_type"
 	| "hidden_visible_when_conflict"
 	| "unknown_rule_key"
+	| "rule_value_unreachable"
 	| "rule_syntax_error";
 
 export interface FormError {
