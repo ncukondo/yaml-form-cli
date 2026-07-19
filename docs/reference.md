@@ -191,6 +191,30 @@ Notes:
   `.comment`) accept any literal. To confirm a rule behaves as intended for a
   given set of answers, use `yaml-form eval`.
 
+#### Testing rules with `yaml-form eval`
+
+`yaml-form eval <form.yaml> --answers <json>` prints each item's visibility
+for a given set of answers, evaluated by the exact code the generated form
+runs — so it verifies rule *behavior* the static checks above cannot:
+
+```
+$ yaml-form eval form.yaml --answers '{"has_other":"yes"}'
+{"ok":true,"visible":{"has_other":true,"other_comments":true, ...}}
+```
+
+- Answers are the **nested** answer shape (the same shape the form submits,
+  before flattening): a top-level object keyed by item `id`, with
+  `choice_table` / `rubric` rows as a nested object
+  (`{"presentation_rubric":{"clarity":"1"}}`), and `comment_per_row` rows as
+  `{value, comment}`. Multiple-select answers are arrays.
+- Every item id appears in `visible`; items without `visible_when` are always
+  `true`. Omitted answers count as unanswered (a hidden item's answers are
+  excluded from what rules see, so hiding one item can reveal another —
+  `eval` resolves this to a fixed point just like the browser).
+- `--answers` accepts an inline JSON string, `@file`, or `-` for stdin (the
+  form input must then be a file path). Assert expected visibility by
+  diffing the JSON — the same way a unit test would.
+
 ### URL-parameter prefill
 
 Opening a generated form with query parameters prefills matching fields

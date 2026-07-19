@@ -2,6 +2,7 @@
 import { chmod, readFile, rename, rm, writeFile } from "node:fs/promises";
 import pkg from "../package.json";
 import { generateHtml } from "./generate/index.ts";
+import { computeVisibility, type RawAnswers } from "./runtime/visibility.ts";
 import type { FormError } from "./schema/errors.ts";
 import { type Form, parseForm } from "./schema/index.ts";
 import { runUpgrade, type UpgradeEnv } from "./upgrade.ts";
@@ -49,11 +50,16 @@ const USAGE = `yaml-form — generate a self-contained HTML form from YAML
 Usage:
   yaml-form generate <input.yaml|-> [-o <out.html>] [--json]
   yaml-form validate <input.yaml|-> [--json]
+  yaml-form eval <input.yaml|-> --answers <json|@file|->
   yaml-form upgrade [--dry-run]
 
 Commands:
   generate   Render the form to HTML (default: stdout; -o writes a file).
   validate   Parse and cross-check only; report every problem found.
+  eval       Print each item's visible_when result for the given answers,
+             evaluated by the same code the generated form runs. Answers are
+             a JSON object keyed by item id (rubric/table rows nested), e.g.
+             '{"role":"student","rubric":{"clarity":"1"}}'.
   upgrade    Self-upgrade a binary install (npm installs: use your
              package manager).
 
@@ -246,6 +252,101 @@ function reportFailure(message: string, json: boolean): void {
 	}
 }
 
+interface EvalOptions {
+	input: string;
+	answers: string; // raw source of the --answers argument
+}
+
+function parseEvalArgs(argv: string[]): EvalOptions {
+	let input: string | undefined;
+	let answers: string | undefined;
+	for (let i = 0; i < argv.length; i++) {
+		const arg = argv[i];
+		if (arg === undefined) break;
+		if (arg === "--answers") {
+			answers = argv[++i];
+			if (answers === undefined) usage("--answers requires a JSON argument");
+		} else if (arg.startsWith("-") && arg !== "-") {
+			usage(`Unknown option "${arg}"`);
+		} else if (input === undefined) {
+			input = arg;
+		} else {
+			usage(`Unexpected argument "${arg}"`);
+		}
+	}
+	if (input === undefined) usage("eval: missing input (file or '-')");
+	if (answers === undefined)
+		usage("eval: --answers <json|@file|-> is required");
+	if (input === "-" && answers === "-") {
+		usage("eval: input and --answers cannot both read stdin");
+	}
+	return { input, answers };
+}
+
+/** Resolve an --answers argument: inline JSON, `@file`, or `-` for stdin. */
+async function readAnswersSource(spec: string): Promise<string> {
+	if (spec === "-") return readStdin();
+	if (spec.startsWith("@")) {
+		const path = spec.slice(1);
+		try {
+			return await readFile(path, "utf8");
+		} catch {
+			throw new OperationError(
+				`cannot read answers file ${path}: no such file`,
+			);
+		}
+	}
+	return spec;
+}
+
+function isRawAnswers(value: unknown): value is RawAnswers {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function cmdEval(argv: string[]): Promise<ExitCode> {
+	const opts = parseEvalArgs(argv);
+
+	let answersJson: string;
+	try {
+		answersJson = await readAnswersSource(opts.answers);
+	} catch (err) {
+		if (err instanceof OperationError) {
+			console.error(`yaml-form: ${err.message}`);
+			return 1;
+		}
+		throw err;
+	}
+
+	let answers: unknown;
+	try {
+		answers = JSON.parse(answersJson);
+	} catch (err) {
+		usage(`--answers is not valid JSON: ${(err as Error).message}`);
+	}
+	if (!isRawAnswers(answers)) {
+		usage("--answers must be a JSON object of answers keyed by item id");
+	}
+
+	let form: Form;
+	try {
+		form = await loadForm(opts.input);
+	} catch (err) {
+		if (err instanceof OperationError) {
+			if (err.errors) reportErrors(err.errors, true, opts.input);
+			else reportFailure(err.message, true);
+			return 1;
+		}
+		throw err;
+	}
+
+	const visibility = computeVisibility(form, answers);
+	const visible: Record<string, boolean> = {};
+	for (const item of form.items)
+		visible[item.id] = visibility.get(item.id) ?? true;
+	process.stdout.write(`${JSON.stringify({ ok: true, visible })}\n`);
+	return 0;
+}
+
 async function cmdUpgrade(argv: string[]): Promise<ExitCode> {
 	const result = await runUpgrade(makeUpgradeEnv(), {
 		dryRun: argv.includes("--dry-run"),
@@ -256,6 +357,7 @@ async function cmdUpgrade(argv: string[]): Promise<ExitCode> {
 const COMMANDS: Record<string, (argv: string[]) => Promise<ExitCode>> = {
 	generate: cmdGenerate,
 	validate: cmdValidate,
+	eval: cmdEval,
 	upgrade: cmdUpgrade,
 };
 
