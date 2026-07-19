@@ -1,6 +1,6 @@
 # Task 0030: `post` action relative URL
 
-Status: todo (move to `tasks/archive/` when done)
+Status: done
 Depends on: 0029 (reuses the URL-policy allowlist/classifier helper)
 Parallel: no (shares `form-schema.ts` + JSON Schema regen + docs; depends on 0029's helper)
 

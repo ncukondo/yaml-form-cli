@@ -98,6 +98,30 @@ items:
 		]);
 	});
 
+	test("post accepts a relative url (decision 0018)", () => {
+		const form = parseOk(`
+title: T
+actions:
+  - type: post
+    url: "/api/submit"
+items:
+  - { title: A, id: a }
+`);
+		expect(form.actions).toEqual([{ type: "post", url: "/api/submit" }]);
+	});
+
+	test("post rejects a non-fetchable url scheme", () => {
+		const result = parseForm(`
+title: T
+actions:
+  - type: post
+    url: "javascript:alert(1)"
+items:
+  - { title: A, id: a }
+`);
+		expect(result.ok).toBe(false);
+	});
+
 	test("autosave is accepted at form level and defaults to true", () => {
 		const on = parseOk(`
 title: T

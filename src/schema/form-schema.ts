@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { MessageKey } from "../messages.ts";
-import { isAllowedUrl } from "./url.ts";
+import { isAllowedUrl, isFetchUrl } from "./url.ts";
 
 export const ITEM_TYPES = [
 	"constant",
@@ -138,7 +138,15 @@ export type Link = z.infer<typeof linkSchema>;
 
 const actionSchema = z.discriminatedUnion("type", [
 	z.strictObject({ type: z.literal("log") }),
-	z.strictObject({ type: z.literal("post"), url: z.url() }),
+	// Decision 0018: absolute http(s) URL or a relative reference (resolved
+	// against the page at submit time). mailto:/other schemes are not fetchable.
+	z.strictObject({
+		type: z.literal("post"),
+		url: z.string().min(1).refine(isFetchUrl, {
+			message:
+				"post url must be an absolute http(s) URL or a relative reference (e.g. /api/submit)",
+		}),
+	}),
 	z.strictObject({
 		type: z.literal("mailto"),
 		to: z.string().min(1),

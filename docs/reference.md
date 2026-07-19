@@ -393,7 +393,7 @@ actions:
 | Action   | Behavior |
 | -------- | -------- |
 | `log`    | Log the payload to the browser console. Always succeeds. Useful for testing |
-| `post`   | `POST` the payload as JSON (`Content-Type: application/json`) via `fetch`. Success = HTTP 2xx |
+| `post`   | `POST` the payload as JSON (`Content-Type: application/json`) via `fetch`. Success = HTTP 2xx. `url` may be an absolute `http(s)` URL or a relative reference (`/api/submit`, `./submit`), resolved against the page at submit time — so one generated form works across localhost preview and production. Under `file://` a relative URL cannot be fetched and reports a submission failure, same as an unreachable absolute URL |
 | `mailto` | Build a `mailto:` URL with the answers serialized into the body and open it; the user sends the pre-filled mail manually |
 
 `mailto` limitations:

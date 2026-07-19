@@ -49,7 +49,7 @@ Rules:
 | [0027 `eval` headless rule evaluation](archive/0027-eval-command.md) | 0024 | D | done |
 | [0028 `robots` meta output](archive/0028-robots-meta.md) (#33) | — | E | done |
 | [0029 Link policy: structured `links`, autolink, target, allowlist](archive/0029-links-and-autolink-policy.md) (#32 #34) | — | E | done |
-| [0030 `post` action relative URL](0030-post-relative-url.md) (#35) | 0029 | — | todo |
+| [0030 `post` action relative URL](archive/0030-post-relative-url.md) (#35) | 0029 | — | done |
 
 Group A tasks touch disjoint areas (runtime modules / generator modules /
 CLI entry) and can proceed in parallel worktrees once 0003 lands.

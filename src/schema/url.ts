@@ -31,3 +31,11 @@ export function isAllowedUrl(url: string): boolean {
 export function isExternalUrl(url: string): boolean {
 	return classifyUrl(url) === "absolute";
 }
+
+/** URLs valid as a `post` action fetch target (decision 0018): an absolute
+ * http(s) URL or a relative reference. `mailto:` and disallowed schemes are
+ * not fetchable. Relative targets resolve against the page at submit time. */
+export function isFetchUrl(url: string): boolean {
+	const kind = classifyUrl(url);
+	return kind === "absolute" || kind === "relative";
+}

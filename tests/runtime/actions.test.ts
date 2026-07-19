@@ -161,6 +161,37 @@ items:
 		expect(JSON.parse(init?.body ?? "")).toEqual(payload);
 	});
 
+	test("post accepts a relative url (resolved by the browser at fetch)", async () => {
+		const relForm = parseOk(`
+title: Test Form
+actions:
+  - type: post
+    url: "/api/submit"
+items:
+  - id: a
+    title: A
+`);
+		const fetchSpy = mock(
+			async (
+				_url: string,
+				_init: {
+					method: string;
+					headers: Record<string, string>;
+					body: string;
+				},
+			) => ({ ok: true, status: 200 }),
+		);
+		const env = testEnv({ fetch: fetchSpy });
+		const result = await runActions(
+			relForm.actions,
+			payloadOf(relForm),
+			relForm,
+			env,
+		);
+		expect(result.ok).toBe(true);
+		expect(fetchSpy.mock.calls[0]?.[0]).toBe("/api/submit");
+	});
+
 	test("post fails on a non-2xx response", async () => {
 		const env = testEnv({
 			fetch: mock(async () => ({ ok: false, status: 500 })),
