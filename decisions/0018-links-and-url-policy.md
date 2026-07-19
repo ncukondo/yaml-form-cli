@@ -48,17 +48,20 @@ structured field is self-documenting via `schema`/`docs`, validated per-field
 string surgery). Markdown is explicitly **rejected**: unvalidatable, overlaps
 the bare-URL autolink, and carries escaping hazards, with no real gain here.
 
-**2. Relative-aware bare-URL autolink, retained.** `renderText` keeps
-autolinking bare URLs in `description` (and message text), extended to
-recognize root/relative/`./`/`../` paths in addition to `http(s)://`. This
-stays the zero-friction path for incidental URLs in prose.
+**2. Bare-URL autolink stays absolute-only.** `renderText` keeps autolinking
+bare `http(s)://` URLs in `description` (and message text) as today. It is
+**not** extended to bare relative paths: matching `/foo`, `./x`, `../y` inside
+free prose is ambiguous (`and/or`, `24/7`, `7/20/2026`) and error-prone. Same-
+tab / relative navigation is served by structured `links` (point 1), which is
+unambiguous and validatable — the better fit for #34's "back to list" need.
 
-**3. Target policy.** Default `target` is derived from the URL:
-relative / same-document URLs → same tab (`_self`); absolute URLs → new tab
-(`target="_blank" rel="noopener noreferrer"`). A structured link may override
-with `target: self | blank`. This makes #34's "relative = same tab" the
-default without needing runtime origin detection (the serving origin is
-unknown at generate time).
+**3. Target policy (structured links).** A structured link's `target` is
+derived from its URL: relative / same-document URLs → same tab (`_self`);
+absolute (incl. protocol-relative) URLs → new tab
+(`target="_blank" rel="noopener noreferrer"`). A link may override with
+`target: self | blank`. This makes #34's "relative = same tab" the default
+without runtime origin detection (the serving origin is unknown at generate
+time). Autolinked absolute URLs in prose keep today's `_blank` behavior.
 
 **4. URL scheme allowlist (security).** Every rendered `href` — autolinked or
 structured — must be `http`, `https`, `mailto`, or a relative reference
@@ -78,9 +81,10 @@ unreachable absolute URL today.
   `post.url` validator, plus a shared URL-classification/allowlist helper
   reused by autolink, structured links, and `post.url`. JSON Schema
   (decision 0008) and docs (`top-level`, `actions`, `post_submit`) regenerate.
-- `escape.ts` `renderText` gains relative-URL matching and target derivation;
-  the success-screen renderer (`submit.ts`) and the header renderer
-  (`generate/index.ts`) render the `links` list.
+- `renderText` is unchanged; a new `renderLink` helper (target/rel by
+  classification) renders structured links. The header renderer
+  (`generate/index.ts`) and the success section render the `links` list
+  statically, so the runtime only reveals it (no runtime DOM building).
 - One coherent link model across description, success screen, and post target,
   documented once — cheaper to test and to explain to agents than three
   ad-hoc behaviors.

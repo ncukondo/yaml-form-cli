@@ -37,11 +37,18 @@ export async function generateHtml(form: Form): Promise<string> {
 `
 		: "";
 	const styles = `${baseStyles}${form.autosave ? draftStyles : ""}`;
+	// Decision 0017: emit a robots meta unless both directives are opted out.
+	const robots = [form.noindex ? "noindex" : "", form.nofollow ? "nofollow" : ""]
+		.filter(Boolean)
+		.join(", ");
+	const robotsMeta = robots
+		? `\n<meta name="robots" content="${robots}">`
+		: "";
 	return `<!doctype html>
 <html lang="${escapeAttr(form.lang)}">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">${robotsMeta}
 <title>${escapeHtml(form.title)}</title>
 <style>${styles}</style>
 </head>

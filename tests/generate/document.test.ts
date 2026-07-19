@@ -71,6 +71,35 @@ items:
 	});
 });
 
+describe("robots meta (decision 0017)", () => {
+	const base = "title: T\nitems:\n  - {title: A, id: a}\n";
+	async function robotsContent(yaml: string): Promise<string | null> {
+		const out = await generateHtml(parseOk(yaml));
+		const window = new Window();
+		window.document.write(out);
+		const doc = window.document as unknown as Document;
+		return doc.querySelector('meta[name="robots"]')?.getAttribute("content") ?? null;
+	}
+
+	test("defaults to noindex, nofollow", async () => {
+		expect(await robotsContent(base)).toBe("noindex, nofollow");
+	});
+
+	test("noindex: false yields nofollow only", async () => {
+		expect(await robotsContent(`noindex: false\n${base}`)).toBe("nofollow");
+	});
+
+	test("nofollow: false yields noindex only", async () => {
+		expect(await robotsContent(`nofollow: false\n${base}`)).toBe("noindex");
+	});
+
+	test("both false emits no robots meta", async () => {
+		expect(
+			await robotsContent(`noindex: false\nnofollow: false\n${base}`),
+		).toBeNull();
+	});
+});
+
 describe("success screen markup", () => {
 	test("success section carries a checkmark icon and a message slot", () => {
 		const success = document.querySelector("#yaml-form-success");

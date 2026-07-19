@@ -1,6 +1,6 @@
 # Task 0028: `robots` meta output (`noindex` / `nofollow`)
 
-Status: todo (move to `tasks/archive/` when done)
+Status: done
 Depends on: —
 Parallel: no (shares `form-schema.ts` + JSON Schema regen + embedded docs with 0029/0030; no logical dependency — order is free) — otherwise disjoint
 

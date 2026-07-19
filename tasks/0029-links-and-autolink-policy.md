@@ -32,11 +32,13 @@ scheme allowlist everywhere (issues #32, #34).
   target? }`) on top level and inside `post_submit`; `url` validated against
   the allowlist (disallowed scheme → generation error); `target` = `self` |
   `blank` optional.
-- `src/generate/escape.ts` — extend autolink to relative refs; derive target
-  (relative → `_self`, absolute → `_blank rel="noopener noreferrer"`).
-- `src/generate/index.ts` — render top-level `links` list in the header.
-- `src/runtime/submit.ts` — render `post_submit.links` on the success screen
-  (structured DOM nodes, not `textContent`, with the same target policy).
+- `src/generate/escape.ts` — add `renderLink({title,url,target?})` → `<a>`
+  with target/rel derived from URL classification (relative → `_self`,
+  absolute → `_blank rel="noopener noreferrer"`), override via `target`.
+  `renderText` (bare-URL autolink) stays absolute-only, unchanged.
+- `src/generate/index.ts` — render top-level `links` in the header AND
+  `post_submit.links` statically inside the success section (revealed by the
+  runtime on success, no runtime DOM building).
 - JSON Schema regen + docs.
 
 ## Out of scope
@@ -49,12 +51,11 @@ scheme allowlist everywhere (issues #32, #34).
 1. **Red** —
    - schema: valid `links` accepted; `javascript:`/`data:` `url` → generation
      error; `target` restricted to `self`/`blank`.
-   - autolink: `renderText` links `/path`, `./x`, `../y` and `http(s)`; a
-     relative link gets no `_blank`, an absolute one keeps `_blank`+`rel`.
-   - generate: top-level `links` render as `<a>` with derived/overridden
-     target; disallowed URL never reaches `href`.
-   - runtime: success screen shows `post_submit.links` as clickable links
-     (extend `tests/generate/runtime.test.ts` / submit flow tests).
+   - `renderLink`: relative URL → no `_blank`; absolute → `_blank`+`rel`;
+     `target` override wins.
+   - generate: top-level `links` render as `<a>` in the header; disallowed
+     URL never reaches `href` (generation error at schema layer).
+   - generate: `post_submit.links` render inside the success section markup.
 2. **Green** — helper, schema, renderers.
 3. **Refactor** — ensure autolink, structured links, and 0030 share one
    allowlist/classifier; no duplicated scheme logic.

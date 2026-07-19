@@ -56,6 +56,8 @@ the top of your YAML:
 | `lang`        | string             | no       | BCP 47 language tag (default `en`); sets `<html lang>` and selects the built-in UI strings (see [Language and UI strings](#language-and-ui-strings-lang-messages)) |
 | `messages`    | object             | no       | Per-string overrides of the built-in UI strings |
 | `autosave`    | boolean            | no       | Draft autosave to localStorage (default `true`; see [Draft autosave](#draft-autosave)) |
+| `noindex`     | boolean            | no       | Emit `<meta name="robots" content="noindex">` (default `true`); set `false` to allow indexing |
+| `nofollow`    | boolean            | no       | Emit `nofollow` in the robots meta (default `true`); set `false` to allow link following. When both `noindex` and `nofollow` are `false`, no robots meta is emitted |
 | `description` | string             | no       | Multi-line supported; URLs are auto-linked |
 | `actions`     | action[] \| action | no       | Actions executed on submit (see [Actions](#actions)). A single mapping is treated as a one-element array |
 | `post_submit` | object             | no       | `message`: text displayed on the success screen |

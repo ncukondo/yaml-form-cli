@@ -165,6 +165,9 @@ export const formSchema = z
 		messages: messagesSchema.optional(),
 		// Decision 0014: draft autosave to localStorage, on unless opted out.
 		autosave: z.boolean().default(true),
+		// Decision 0017: robots directives, on unless opted out per directive.
+		noindex: z.boolean().default(true),
+		nofollow: z.boolean().default(true),
 		id: z.string().min(1).optional(),
 		version: z.string().min(1).optional(),
 		description: z.string().optional(),
