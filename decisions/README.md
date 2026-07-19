@@ -27,6 +27,8 @@ instead of restating them.
 | [0012](0012-mobile-wide-tables.md) | Mobile layout for many-column choice_tables |
 | [0013](0013-url-prefill.md) | URL-parameter prefill and constant overrides |
 | [0014](0014-draft-autosave.md) | Draft autosave to localStorage |
+| [0015](0015-agent-cli-commands.md) | Agent-oriented CLI: subcommands, `--json`, exit codes, help/docs split |
+| [0016](0016-rule-semantics-feedback.md) | `visible_when` semantics: value-domain check + headless `eval` |
 
 ## Archive
 

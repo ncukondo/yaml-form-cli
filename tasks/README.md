@@ -41,8 +41,12 @@ Rules:
 | [0019 Mobile wide-table layout](archive/0019-mobile-wide-tables.md) (#15) | 0014, 0018 | — | done |
 | [0020 UI polish batch](archive/0020-ui-polish-batch.md) (#16) | 0013, 0016, 0018 | — | done |
 | [0021 i18n: noscript & clear-selection labels](archive/0021-i18n-noscript-clear-labels.md) (#28) | 0015, 0017 | — | done |
-| [0022 URL-parameter prefill, constant `from_url` / `hidden`](0022-url-prefill.md) | — | — | todo |
-| [0023 Draft autosave to localStorage](0023-draft-autosave.md) | 0022 | — | todo |
+| [0022 URL-parameter prefill, constant `from_url` / `hidden`](archive/0022-url-prefill.md) | — | — | done |
+| [0023 Draft autosave to localStorage](archive/0023-draft-autosave.md) | 0022 | — | done |
+| [0024 CLI subcommands, `validate`, `--json`, exit codes](0024-cli-subcommands.md) | — | C | todo |
+| [0025 `docs` / `schema` / `example` subcommands](0025-embedded-docs-commands.md) | 0024 | D | todo |
+| [0026 `visible_when` value-domain check](0026-rule-value-domain-check.md) | — | C | todo |
+| [0027 `eval` headless rule evaluation](0027-eval-command.md) | 0024 | D | todo |
 
 Group A tasks touch disjoint areas (runtime modules / generator modules /
 CLI entry) and can proceed in parallel worktrees once 0003 lands.
@@ -53,3 +57,10 @@ tokens — and can run in parallel worktrees. The remaining tasks share
 `styles.ts` or `form.ts` and run sequentially per their dependencies.
 0015, 0017 (schema fields), and 0019 each require a new `decisions/` entry
 before implementation. (#N = GitHub issue.)
+
+Group C (0024 / 0026) have disjoint scopes — CLI entry (`src/cli.ts`) vs
+schema layer (`src/schema/`) — and can run in parallel worktrees. Group D
+(0025 / 0027) both depend on 0024's dispatch but are disjoint — docs embed
+pipeline vs `eval` — and can then run in parallel. Decisions
+`0015-agent-cli-commands.md` and `0016-rule-semantics-feedback.md` cover this
+batch.
