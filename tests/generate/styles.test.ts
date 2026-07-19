@@ -133,6 +133,27 @@ describe("choice_table column tracking (hover)", () => {
 		);
 		expect(outside).not.toContain(":has(td.table-cell:nth-child(2):hover)");
 	});
+
+	test("the focal cell gets an accent ring so it stands out from the tints", () => {
+		const rule = baseStyles.match(
+			/\.choice-table td\.table-cell:hover,[^{]*\{[^}]*\}/,
+		)?.[0];
+		expect(rule).toBeDefined();
+		// keyboard focus is marked too, so arrowing across a row is legible
+		expect(rule).toContain(".table-cell:has(input:focus-visible)");
+		expect(rule).toContain("outline: 2px solid var(--accent);");
+		// negative offset keeps the ring inside the cell borders
+		expect(rule).toContain("outline-offset: -2px;");
+	});
+
+	test("the focal-cell ring works at every width, unlike the tints", () => {
+		// the focus branch must survive stripping the desktop-only media blocks
+		const outside = baseStyles.replace(
+			/@media \(min-width: 641px\)\s*\{[\s\S]*?\n\}/g,
+			"",
+		);
+		expect(outside).toContain(".table-cell:has(input:focus-visible)");
+	});
 });
 
 describe("choice_table scroll affordance", () => {

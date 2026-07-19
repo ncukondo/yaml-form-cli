@@ -263,6 +263,19 @@ textarea.row-comment { min-height: 3rem; }
    row/column crossing to a single, uniform 12% tint. */
 ${columnHighlightStyles}
 
+/* Focal cell: the row and column tints orient you, but the exact cell under
+   the pointer — or holding keyboard focus — shares their 12% tint and would
+   otherwise blend into the cross. An accent ring marks it unambiguously; it
+   is a different property from the tints, so it never fights their background
+   cascade. Unscoped by width on purpose: the focus branch still flags the
+   keyboard-selected choice in the stacked mobile layout, where the tints are
+   absent. */
+.choice-table td.table-cell:hover,
+.choice-table td.table-cell:has(input:focus-visible) {
+	outline: 2px solid var(--accent);
+	outline-offset: -2px;
+}
+
 /* Narrow screens: stack each table row as its own block.
    display: block would strip the implicit table/row/cell roles; the markup
    carries explicit ARIA roles (choice-table.ts) so AT still gets a table
