@@ -6,9 +6,9 @@ handles rendering, required validation, conditional visibility, and submit
 actions entirely client-side — no server needed to host the form.
 
 ```sh
-bunx @ncukondo/yaml-form form.yaml -o form.html
+bunx @ncukondo/yaml-form generate form.yaml -o form.html
 # or
-npx @ncukondo/yaml-form form.yaml -o form.html
+npx @ncukondo/yaml-form generate form.yaml -o form.html
 ```
 
 ## Install
@@ -38,18 +38,26 @@ npx @ncukondo/yaml-form form.yaml -o form.html
 ## Usage
 
 ```
-yaml-form <input.yaml> [-o <output.html>]
-
-Options:
-  -o, --output <file>   Write HTML to file (default: stdout)
-  -h, --help            Show help
-  --version             Show version
-
-Subcommands:
-  yaml-form upgrade [--dry-run]
-                        Self-upgrade a binary install to the latest release
-                        (npm installs: upgrade via your package manager)
+yaml-form generate <input.yaml|-> [-o <out.html>] [--json]
+yaml-form validate <input.yaml|-> [--json]
+yaml-form eval <input.yaml|-> --answers <json|@file|->
+yaml-form schema
+yaml-form docs [<topic>]
+yaml-form example [<name>]
+yaml-form upgrade [--dry-run]
 ```
+
+- `generate` writes the HTML form (stdout by default, `-o` to a file).
+- `validate` parses and cross-checks only, reporting every problem at once.
+- `eval` prints each item's `visible_when` result for a set of answers,
+  computed by the same code the generated form runs — a browser-free way to
+  test conditional visibility.
+- `schema` / `docs` / `example` print the format's JSON Schema, field
+  reference, and a runnable sample; they work offline so an `npx` or binary
+  install is self-documenting.
+- Input `-` reads YAML from stdin; `--json` makes a command emit a single
+  `{"ok":...}` object. Exit codes: `0` success, `1` operation failed, `2`
+  usage error. See `yaml-form --help` for the full contract.
 
 ## YAML definition
 

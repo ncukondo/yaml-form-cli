@@ -4,6 +4,7 @@ import { rm } from "node:fs/promises";
 import { $ } from "bun";
 
 await $`bun scripts/build-runtime.ts`;
+await $`bun scripts/build-embedded.ts`;
 await rm(new URL("../dist", import.meta.url).pathname, {
 	recursive: true,
 	force: true,

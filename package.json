@@ -12,8 +12,9 @@
 		"build:schema": "bun scripts/build-schema.ts",
 		"lint": "bun x biome check .",
 		"format": "bun x biome format --write .",
-		"check": "bun run build:runtime && bun run typecheck && bun run lint && bun test",
+		"check": "bun run build:runtime && bun run build:embedded && bun run typecheck && bun run lint && bun test",
 		"build:runtime": "bun scripts/build-runtime.ts",
+		"build:embedded": "bun scripts/build-embedded.ts",
 		"build:dist": "bun scripts/build-dist.ts",
 		"prepack": "bun run build:dist"
 	},

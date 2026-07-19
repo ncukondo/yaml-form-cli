@@ -1,10 +1,12 @@
 // Must stay runnable under plain Node (npx) as well as Bun: no Bun.* APIs.
 import { chmod, readFile, rename, rm, writeFile } from "node:fs/promises";
 import pkg from "../package.json";
+import { docs, docTopics, examples } from "./embedded.generated.ts";
 import { generateHtml } from "./generate/index.ts";
 import { computeVisibility, type RawAnswers } from "./runtime/visibility.ts";
 import type { FormError } from "./schema/errors.ts";
 import { type Form, parseForm } from "./schema/index.ts";
+import { renderJsonSchema } from "./schema/json-schema.ts";
 import { runUpgrade, type UpgradeEnv } from "./upgrade.ts";
 
 function makeUpgradeEnv(): UpgradeEnv {
@@ -51,6 +53,9 @@ Usage:
   yaml-form generate <input.yaml|-> [-o <out.html>] [--json]
   yaml-form validate <input.yaml|-> [--json]
   yaml-form eval <input.yaml|-> --answers <json|@file|->
+  yaml-form schema
+  yaml-form docs [<topic>]
+  yaml-form example [<name>]
   yaml-form upgrade [--dry-run]
 
 Commands:
@@ -60,6 +65,9 @@ Commands:
              evaluated by the same code the generated form runs. Answers are
              a JSON object keyed by item id (rubric/table rows nested), e.g.
              '{"role":"student","rubric":{"clarity":"1"}}'.
+  schema     Print the JSON Schema for the YAML format to stdout.
+  docs       Print the format reference; no topic lists the topics.
+  example    Print a runnable example form (default: the first one).
   upgrade    Self-upgrade a binary install (npm installs: use your
              package manager).
 
@@ -78,7 +86,8 @@ Exit codes:
   1  operation failed (validation / generation / upgrade error)
   2  usage error (unknown command or option, missing argument)
 
-Format reference: see docs/reference.md and examples/sample.yaml.
+Format knowledge (offline): "yaml-form docs" for the field reference,
+"yaml-form schema" for the JSON Schema, "yaml-form example" for a sample.
 `;
 
 /** 0 success, 1 operation failed, 2 usage error. */
@@ -347,6 +356,45 @@ async function cmdEval(argv: string[]): Promise<ExitCode> {
 	return 0;
 }
 
+async function cmdSchema(argv: string[]): Promise<ExitCode> {
+	if (argv.length > 0) usage(`schema takes no arguments (got "${argv[0]}")`);
+	process.stdout.write(renderJsonSchema());
+	return 0;
+}
+
+async function cmdDocs(argv: string[]): Promise<ExitCode> {
+	const [topic, ...extra] = argv;
+	if (extra.length > 0)
+		usage(`docs takes at most one topic (got "${extra[0]}")`);
+	if (topic === undefined) {
+		process.stdout.write(
+			`Reference topics (use: yaml-form docs <topic>):\n  ${docTopics.join("\n  ")}\n`,
+		);
+		return 0;
+	}
+	const section = docs[topic];
+	if (section === undefined) {
+		usage(`unknown docs topic "${topic}". Known: ${docTopics.join(", ")}`);
+	}
+	process.stdout.write(section);
+	return 0;
+}
+
+async function cmdExample(argv: string[]): Promise<ExitCode> {
+	const names = Object.keys(examples);
+	const [name, ...extra] = argv;
+	if (extra.length > 0) {
+		usage(`example takes at most one name (got "${extra[0]}")`);
+	}
+	// Default to the first (canonical) example when none is named.
+	const chosen = name ?? names[0];
+	if (chosen === undefined || examples[chosen] === undefined) {
+		usage(`unknown example "${chosen}". Known: ${names.join(", ")}`);
+	}
+	process.stdout.write(examples[chosen]);
+	return 0;
+}
+
 async function cmdUpgrade(argv: string[]): Promise<ExitCode> {
 	const result = await runUpgrade(makeUpgradeEnv(), {
 		dryRun: argv.includes("--dry-run"),
@@ -358,6 +406,9 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<ExitCode>> = {
 	generate: cmdGenerate,
 	validate: cmdValidate,
 	eval: cmdEval,
+	schema: cmdSchema,
+	docs: cmdDocs,
+	example: cmdExample,
 	upgrade: cmdUpgrade,
 };
 

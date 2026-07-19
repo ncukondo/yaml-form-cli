@@ -12,6 +12,7 @@
 			"scripts/**",
 			"*.json",
 			"!src/generate/runtime.generated.ts",
+			"!src/embedded.generated.ts",
 			"!.claude"
 		]
 	},
