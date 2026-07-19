@@ -95,6 +95,46 @@ describe("choice_table row tracking (zebra + hover)", () => {
 	});
 });
 
+describe("choice_table column tracking (hover)", () => {
+	function columnBlock(css: string): string {
+		// the second min-width:641px block: row tracking is first, column second
+		const blocks = css.match(/@media \(min-width: 641px\)\s*\{[\s\S]*?\n\}/g);
+		const block = blocks?.find((b) => b.includes(":has("));
+		if (!block) throw new Error("column-tracking media block not found");
+		return block;
+	}
+
+	test("hovering a cell tints its whole column via :has() + :nth-child()", () => {
+		const block = columnBlock(baseStyles);
+		expect(block).toContain(
+			".choice-table:has(td.table-cell:nth-child(2):hover, th.table-col-header:nth-child(2):hover) tbody tr > :nth-child(2)",
+		);
+		// same 12% tint as the row hover so the crossing cell stays uniform
+		expect(block).toContain("color-mix(in srgb, var(--fg) 12%, var(--bg))");
+	});
+
+	test("hovering a cell lights up its column header with the accent", () => {
+		const block = columnBlock(baseStyles);
+		expect(block).toContain(") thead th:nth-child(2)");
+		expect(block).toContain("var(--accent)");
+		expect(block).toContain("box-shadow: inset 0 -2px 0 var(--accent);");
+	});
+
+	test("hovering the column header itself also highlights the column", () => {
+		const block = columnBlock(baseStyles);
+		expect(block).toContain("th.table-col-header:nth-child(2):hover");
+	});
+
+	test("column tracking stays out of the stacked mobile layout", () => {
+		// strip both min-width:641px blocks; the :has() column rules must be gone
+		const outside = baseStyles.replace(
+			/@media \(min-width: 641px\)\s*\{[\s\S]*?\n\}/g,
+			"",
+		);
+		expect(outside).not.toContain(":has(td.table-cell:nth-child(2):hover)");
+	});
+});
+
 describe("choice_table scroll affordance", () => {
 	test("right-edge fade cue while columns are hidden to the right", () => {
 		const rule = baseStyles.match(

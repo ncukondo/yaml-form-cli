@@ -1,3 +1,50 @@
+/**
+ * choice_table / rubric column-hover cue (companion to the row hover above):
+ * hovering any cell tints its whole column and lights up the column header so
+ * the eye can trace straight up to the choice/rating label. A table has no
+ * element to hover per column, so this branches on which cell *position* is
+ * under the pointer — pure CSS via :has() + enumerated :nth-child(), no JS.
+ *
+ * Data cells and column headers sit at :nth-child(2..N+1); :nth-child(1) is the
+ * sticky row label (tbody) or corner (thead), which stays untinted. The cue is
+ * capped at COLUMN_HIGHLIGHT_MAX_COLS columns — a choice_table realistically
+ * stays well under it, and wider ones simply lose the cue past the cap rather
+ * than emitting an unbounded selector list. Desktop widths only, mirroring the
+ * row-hover rule: the stacked mobile layout renders rows as cards where a
+ * column tint would be meaningless.
+ */
+const COLUMN_HIGHLIGHT_MAX_COLS = 20;
+
+function columnHighlight(): string {
+	const cols = Array.from(
+		{ length: COLUMN_HIGHLIGHT_MAX_COLS },
+		(_, i) => i + 2,
+	);
+	// Triggering on the header too lets hovering the choice/rating label itself
+	// light up its column, not just the body cells.
+	const trigger = (k: number) =>
+		`td.table-cell:nth-child(${k}):hover, th.table-col-header:nth-child(${k}):hover`;
+	const tint = cols
+		.map(
+			(k) => `\t.choice-table:has(${trigger(k)}) tbody tr > :nth-child(${k})`,
+		)
+		.join(",\n");
+	const header = cols
+		.map((k) => `\t.choice-table:has(${trigger(k)}) thead th:nth-child(${k})`)
+		.join(",\n");
+	return `@media (min-width: 641px) {
+${tint} {
+		background: color-mix(in srgb, var(--fg) 12%, var(--bg));
+	}
+${header} {
+		background: color-mix(in srgb, var(--accent) 16%, var(--bg));
+		box-shadow: inset 0 -2px 0 var(--accent);
+	}
+}`;
+}
+
+const columnHighlightStyles = columnHighlight();
+
 export const baseStyles = `
 :root {
 	color-scheme: light dark;
@@ -210,6 +257,11 @@ textarea.row-comment { min-height: 3rem; }
 		background: color-mix(in srgb, var(--fg) 12%, var(--bg));
 	}
 }
+
+/* Column tracking (hover), desktop widths only — see columnHighlight(). Placed
+   after the row-tracking block so its higher :has() specificity resolves the
+   row/column crossing to a single, uniform 12% tint. */
+${columnHighlightStyles}
 
 /* Narrow screens: stack each table row as its own block.
    display: block would strip the implicit table/row/cell roles; the markup
