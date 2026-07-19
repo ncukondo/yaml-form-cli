@@ -11,6 +11,20 @@ export function escapeAttr(text: string): string {
 	return escapeHtml(text);
 }
 
+import type { Link } from "../schema/form-schema.ts";
+import { isExternalUrl } from "../schema/url.ts";
+
+/** Render a structured navigation link (decision 0018). Absolute URLs open in
+ * a new tab by default; `target` overrides. `url` is assumed allowlisted by
+ * the schema. */
+export function renderLink(link: Link): string {
+	const external = link.target
+		? link.target === "blank"
+		: isExternalUrl(link.url);
+	const attrs = external ? ' target="_blank" rel="noopener noreferrer"' : "";
+	return `<a href="${escapeAttr(link.url)}"${attrs}>${escapeHtml(link.title)}</a>`;
+}
+
 const URL_PATTERN = /https?:\/\/[^\s<>"']+/g;
 
 /** Escape text for HTML, turning bare http(s) URLs into links.

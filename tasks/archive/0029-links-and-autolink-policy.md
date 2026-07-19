@@ -1,6 +1,6 @@
 # Task 0029: Link policy — structured `links`, relative-aware autolink, target, scheme allowlist
 
-Status: todo (move to `tasks/archive/` when done)
+Status: done
 Depends on: —
 Parallel: no (shares `form-schema.ts` + JSON Schema regen + embedded docs with 0028/0030) — provides the URL-policy helper 0030 consumes, so land before 0030
 

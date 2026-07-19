@@ -1,7 +1,7 @@
 import pkg from "../../package.json";
 import { resolveMessages } from "../messages.ts";
-import type { Form } from "../schema/form-schema.ts";
-import { escapeAttr, escapeHtml, renderText } from "./escape.ts";
+import type { Form, Link } from "../schema/form-schema.ts";
+import { escapeAttr, escapeHtml, renderLink, renderText } from "./escape.ts";
 import { renderItem } from "./render-item.ts";
 import { getRuntimeBundle } from "./runtime-bundle.ts";
 import { baseStyles, draftStyles } from "./styles.ts";
@@ -9,6 +9,16 @@ import { baseStyles, draftStyles } from "./styles.ts";
 function embedJson(data: unknown): string {
 	// <-escape so "</script>" can never terminate the data block
 	return JSON.stringify(data).replaceAll("<", "\\u003c");
+}
+
+// Decision 0018: a structured navigation list. Empty/undefined → nothing.
+function renderLinkList(
+	links: readonly Link[] | undefined,
+	className: string,
+): string {
+	if (!links || links.length === 0) return "";
+	const items = links.map((link) => `<li>${renderLink(link)}</li>`).join("");
+	return `<nav class="${className}"><ul>${items}</ul></nav>`;
 }
 
 export async function generateHtml(form: Form): Promise<string> {
@@ -38,12 +48,13 @@ export async function generateHtml(form: Form): Promise<string> {
 		: "";
 	const styles = `${baseStyles}${form.autosave ? draftStyles : ""}`;
 	// Decision 0017: emit a robots meta unless both directives are opted out.
-	const robots = [form.noindex ? "noindex" : "", form.nofollow ? "nofollow" : ""]
+	const robots = [
+		form.noindex ? "noindex" : "",
+		form.nofollow ? "nofollow" : "",
+	]
 		.filter(Boolean)
 		.join(", ");
-	const robotsMeta = robots
-		? `\n<meta name="robots" content="${robots}">`
-		: "";
+	const robotsMeta = robots ? `\n<meta name="robots" content="${robots}">` : "";
 	return `<!doctype html>
 <html lang="${escapeAttr(form.lang)}">
 <head>
@@ -57,7 +68,7 @@ export async function generateHtml(form: Form): Promise<string> {
 ${draftNotice}<header>
 <h1>${escapeHtml(form.title)}</h1>
 ${description}
-</header>
+${renderLinkList(form.links, "form-links")}</header>
 <noscript><p class="noscript-warning">${escapeHtml(messages.noscript_warning)}</p></noscript>
 <form id="yaml-form" novalidate>
 ${requiredLegend}${items}
@@ -67,7 +78,7 @@ ${requiredLegend}${items}
 <section class="form-success" id="yaml-form-success" role="status" tabindex="-1" hidden>
 <svg class="success-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 <p class="success-message"></p>
-</section>
+${renderLinkList(form.post_submit?.links, "success-links")}</section>
 </main>
 <script type="application/json" id="yaml-form-data">${embedJson(form)}</script>
 <script type="application/json" id="yaml-form-meta">${embedJson({ generator: `yaml-form/${pkg.version}` })}</script>

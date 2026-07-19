@@ -58,9 +58,10 @@ the top of your YAML:
 | `autosave`    | boolean            | no       | Draft autosave to localStorage (default `true`; see [Draft autosave](#draft-autosave)) |
 | `noindex`     | boolean            | no       | Emit `<meta name="robots" content="noindex">` (default `true`); set `false` to allow indexing |
 | `nofollow`    | boolean            | no       | Emit `nofollow` in the robots meta (default `true`); set `false` to allow link following. When both `noindex` and `nofollow` are `false`, no robots meta is emitted |
-| `description` | string             | no       | Multi-line supported; URLs are auto-linked |
+| `description` | string             | no       | Multi-line supported; bare `http(s)` URLs are auto-linked |
+| `links`       | link[]             | no       | Navigation links shown in the header (see [Links](#links)) |
 | `actions`     | action[] \| action | no       | Actions executed on submit (see [Actions](#actions)). A single mapping is treated as a one-element array |
-| `post_submit` | object             | no       | `message`: text displayed on the success screen |
+| `post_submit` | object             | no       | `message`: text on the success screen; `links`: navigation links shown on the success screen (see [Links](#links)) |
 | `items`       | item[]             | yes      | Form items in display order |
 
 ### Common item fields
@@ -345,6 +346,34 @@ messages:
 `messages.submit_success`. See
 [`examples/sample-ja.yaml`](../examples/sample-ja.yaml) for a complete
 Japanese form.
+
+### Links
+
+`links` (top level) and `post_submit.links` render labeled navigation links —
+in the form header and on the success screen respectively. Use them for
+serial-form flows ("next record") or same-site navigation ("back to list").
+
+```yaml
+links:
+  - { title: "Back to list", url: "/index.html" }
+post_submit:
+  message: "Saved."
+  links:
+    - { title: "Next record", url: "./r002.html" }
+```
+
+Each link is `{ title, url, target? }`:
+
+| Field    | Type   | Required | Description |
+| -------- | ------ | -------- | ----------- |
+| `title`  | string | yes      | Link label |
+| `url`    | string | yes      | `http(s)://…`, `mailto:…`, or a relative reference (`/x`, `./x`, `../x`, `#x`, `?x`). Other schemes (`javascript:`, `data:`, …) are a generation error |
+| `target` | string | no       | `self` (same tab) or `blank` (new tab). Default: relative/`mailto` URLs open in the same tab, absolute URLs in a new tab (`rel="noopener noreferrer"`) |
+
+Relative URLs resolve against the page when clicked, so a form works unchanged
+across localhost preview and production. For inline URLs inside `description`
+prose, bare `http(s)` URLs are still auto-linked (always in a new tab); use
+`links` for labeled or same-tab navigation.
 
 ### Actions
 

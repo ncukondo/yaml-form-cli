@@ -8,6 +8,7 @@ export type {
 	Form,
 	FormItem,
 	ItemType,
+	Link,
 	LongTextItem,
 	RubricItem,
 	ShortTextItem,

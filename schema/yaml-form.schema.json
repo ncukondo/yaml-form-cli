@@ -94,6 +94,34 @@
 		"description": {
 			"type": "string"
 		},
+		"links": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"title": {
+						"type": "string",
+						"minLength": 1
+					},
+					"url": {
+						"type": "string",
+						"minLength": 1
+					},
+					"target": {
+						"type": "string",
+						"enum": [
+							"self",
+							"blank"
+						]
+					}
+				},
+				"required": [
+					"title",
+					"url"
+				],
+				"additionalProperties": false
+			}
+		},
 		"actions": {
 			"anyOf": [
 				{
@@ -218,6 +246,34 @@
 			"properties": {
 				"message": {
 					"type": "string"
+				},
+				"links": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"title": {
+								"type": "string",
+								"minLength": 1
+							},
+							"url": {
+								"type": "string",
+								"minLength": 1
+							},
+							"target": {
+								"type": "string",
+								"enum": [
+									"self",
+									"blank"
+								]
+							}
+						},
+						"required": [
+							"title",
+							"url"
+						],
+						"additionalProperties": false
+					}
 				}
 			},
 			"additionalProperties": false

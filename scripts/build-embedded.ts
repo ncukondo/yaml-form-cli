@@ -24,6 +24,7 @@ const TOPICS: Topic[] = [
 	{ slug: "prefill", heading: "### URL-parameter prefill" },
 	{ slug: "draft", heading: "### Draft autosave" },
 	{ slug: "i18n", heading: "### Language and UI strings (`lang`, `messages`)" },
+	{ slug: "links", heading: "### Links" },
 	{ slug: "actions", heading: "### Actions" },
 	{ slug: "payload", heading: "### Payload" },
 ];

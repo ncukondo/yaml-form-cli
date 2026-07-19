@@ -78,7 +78,9 @@ describe("robots meta (decision 0017)", () => {
 		const window = new Window();
 		window.document.write(out);
 		const doc = window.document as unknown as Document;
-		return doc.querySelector('meta[name="robots"]')?.getAttribute("content") ?? null;
+		return (
+			doc.querySelector('meta[name="robots"]')?.getAttribute("content") ?? null
+		);
 	}
 
 	test("defaults to noindex, nofollow", async () => {
@@ -97,6 +99,82 @@ describe("robots meta (decision 0017)", () => {
 		expect(
 			await robotsContent(`noindex: false\nnofollow: false\n${base}`),
 		).toBeNull();
+	});
+});
+
+describe("structured links (decision 0018)", () => {
+	async function doc(yaml: string): Promise<Document> {
+		const out = await generateHtml(parseOk(yaml));
+		const window = new Window();
+		window.document.write(out);
+		return window.document as unknown as Document;
+	}
+
+	test("top-level links render in the header with URL-derived target", async () => {
+		const d = await doc(`
+title: T
+links:
+  - { title: Back, url: /index.html }
+  - { title: Docs, url: "https://example.com/docs" }
+items:
+  - { title: A, id: a }
+`);
+		const relative = d.querySelector<HTMLAnchorElement>(
+			'header .form-links a[href="/index.html"]',
+		);
+		const absolute = d.querySelector<HTMLAnchorElement>(
+			'header .form-links a[href="https://example.com/docs"]',
+		);
+		expect(relative?.textContent).toBe("Back");
+		expect(relative?.getAttribute("target")).toBeNull();
+		expect(absolute?.getAttribute("target")).toBe("_blank");
+		expect(absolute?.getAttribute("rel")).toBe("noopener noreferrer");
+	});
+
+	test("target override wins over the URL-derived default", async () => {
+		const d = await doc(`
+title: T
+links:
+  - { title: Ext, url: "https://example.com", target: self }
+  - { title: Int, url: /a, target: blank }
+items:
+  - { title: A, id: a }
+`);
+		expect(
+			d
+				.querySelector('.form-links a[href="https://example.com"]')
+				?.getAttribute("target"),
+		).toBeNull();
+		expect(
+			d.querySelector('.form-links a[href="/a"]')?.getAttribute("target"),
+		).toBe("_blank");
+	});
+
+	test("post_submit.links render inside the success section", async () => {
+		const d = await doc(`
+title: T
+post_submit:
+  message: Saved.
+  links:
+    - { title: Next, url: ./r002.html }
+items:
+  - { title: A, id: a }
+`);
+		const link = d.querySelector<HTMLAnchorElement>(
+			'#yaml-form-success .success-links a[href="./r002.html"]',
+		);
+		expect(link?.textContent).toBe("Next");
+	});
+
+	test("disallowed URL scheme is a generation error", () => {
+		const result = parseForm(`
+title: T
+links:
+  - { title: X, url: "javascript:alert(1)" }
+items:
+  - { title: A, id: a }
+`);
+		expect(result.ok).toBe(false);
 	});
 });
 

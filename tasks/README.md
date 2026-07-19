@@ -48,7 +48,7 @@ Rules:
 | [0026 `visible_when` value-domain check](archive/0026-rule-value-domain-check.md) | — | C | done |
 | [0027 `eval` headless rule evaluation](archive/0027-eval-command.md) | 0024 | D | done |
 | [0028 `robots` meta output](archive/0028-robots-meta.md) (#33) | — | E | done |
-| [0029 Link policy: structured `links`, autolink, target, allowlist](0029-links-and-autolink-policy.md) (#32 #34) | — | E | todo |
+| [0029 Link policy: structured `links`, autolink, target, allowlist](archive/0029-links-and-autolink-policy.md) (#32 #34) | — | E | done |
 | [0030 `post` action relative URL](0030-post-relative-url.md) (#35) | 0029 | — | todo |
 
 Group A tasks touch disjoint areas (runtime modules / generator modules /

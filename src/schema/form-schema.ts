@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { MessageKey } from "../messages.ts";
+import { isAllowedUrl } from "./url.ts";
 
 export const ITEM_TYPES = [
 	"constant",
@@ -122,6 +123,19 @@ const itemSchema = z.discriminatedUnion("type", [
 	rubricItemSchema,
 ]);
 
+// Decision 0018: structured navigation links. `url` is scheme-allowlisted
+// (http(s) / mailto / relative); `target` overrides the URL-derived default.
+const linkSchema = z.strictObject({
+	title: z.string().min(1),
+	url: z.string().min(1).refine(isAllowedUrl, {
+		message:
+			"URL must be http(s), mailto, or a relative reference (no javascript:/data: schemes)",
+	}),
+	target: z.enum(["self", "blank"]).optional(),
+});
+
+export type Link = z.infer<typeof linkSchema>;
+
 const actionSchema = z.discriminatedUnion("type", [
 	z.strictObject({ type: z.literal("log") }),
 	z.strictObject({ type: z.literal("post"), url: z.url() }),
@@ -171,8 +185,14 @@ export const formSchema = z
 		id: z.string().min(1).optional(),
 		version: z.string().min(1).optional(),
 		description: z.string().optional(),
+		links: z.array(linkSchema).optional(),
 		actions: z.union([z.array(actionSchema), actionSchema]).optional(),
-		post_submit: z.strictObject({ message: z.string().optional() }).optional(),
+		post_submit: z
+			.strictObject({
+				message: z.string().optional(),
+				links: z.array(linkSchema).optional(),
+			})
+			.optional(),
 		items: z.array(itemSchema).min(1),
 	})
 	.transform((f) => ({

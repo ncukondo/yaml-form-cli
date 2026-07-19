@@ -89,6 +89,18 @@ h1 { font-size: 1.6rem; margin: 0 0 0.5rem; }
 	margin: 0 0 1.5rem;
 }
 a { color: var(--accent); }
+/* Structured navigation lists (decision 0018): header links and the
+   post-submit "next form" links. Plain inline link list, no bullets. */
+.form-links, .success-links { margin: 0 0 1.5rem; }
+.form-links ul, .success-links ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1.25rem;
+}
+.success-links { margin: 1.25rem 0 0; }
 .form-item {
 	margin: 0 0 1.5rem;
 	padding: 0;
