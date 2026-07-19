@@ -199,7 +199,15 @@ async function cmdGenerate(argv: string[]): Promise<ExitCode> {
 	if (opts.output === undefined) {
 		process.stdout.write(html);
 	} else {
-		await writeFile(opts.output, html);
+		try {
+			await writeFile(opts.output, html);
+		} catch (err) {
+			reportFailure(
+				`cannot write ${opts.output}: ${(err as Error).message}`,
+				opts.json,
+			);
+			return 1;
+		}
 	}
 	if (opts.json) {
 		const payload = {
@@ -254,7 +262,7 @@ async function cmdValidate(argv: string[]): Promise<ExitCode> {
 
 function reportFailure(message: string, json: boolean): void {
 	if (json) {
-		const errors: FormError[] = [{ code: "yaml_syntax", path: "", message }];
+		const errors: FormError[] = [{ code: "io_error", path: "", message }];
 		process.stdout.write(`${JSON.stringify({ ok: false, errors })}\n`);
 	} else {
 		console.error(`yaml-form: ${message}`);
@@ -308,8 +316,29 @@ async function readAnswersSource(spec: string): Promise<string> {
 	return spec;
 }
 
-function isRawAnswers(value: unknown): value is RawAnswers {
-	return typeof value === "object" && value !== null && !Array.isArray(value);
+/**
+ * Validate a parsed --answers payload against the RawAnswers shape, returning
+ * the offending JSON path on failure. Guards the shared visibility runtime
+ * from leaves it never receives from the DOM (a bare `null` would crash
+ * `flattenAnswers`; a number would be silently dropped).
+ */
+function checkRawAnswers(value: unknown, path = "$"): string | null {
+	if (typeof value === "string") return null;
+	if (Array.isArray(value)) {
+		return value.every((v) => typeof v === "string")
+			? null
+			: `${path} must be an array of strings`;
+	}
+	if (typeof value === "object" && value !== null) {
+		for (const [key, child] of Object.entries(value)) {
+			const err = checkRawAnswers(child, `${path}.${key}`);
+			if (err) return err;
+		}
+		return null;
+	}
+	return `${path} must be a string, array of strings, or nested object (got ${
+		value === null ? "null" : typeof value
+	})`;
 }
 
 async function cmdEval(argv: string[]): Promise<ExitCode> {
@@ -332,9 +361,15 @@ async function cmdEval(argv: string[]): Promise<ExitCode> {
 	} catch (err) {
 		usage(`--answers is not valid JSON: ${(err as Error).message}`);
 	}
-	if (!isRawAnswers(answers)) {
+	if (
+		typeof answers !== "object" ||
+		answers === null ||
+		Array.isArray(answers)
+	) {
 		usage("--answers must be a JSON object of answers keyed by item id");
 	}
+	const shapeError = checkRawAnswers(answers);
+	if (shapeError !== null) usage(`--answers: ${shapeError}`);
 
 	let form: Form;
 	try {
@@ -348,7 +383,8 @@ async function cmdEval(argv: string[]): Promise<ExitCode> {
 		throw err;
 	}
 
-	const visibility = computeVisibility(form, answers);
+	// Shape verified by the guards above.
+	const visibility = computeVisibility(form, answers as RawAnswers);
 	const visible: Record<string, boolean> = {};
 	for (const item of form.items)
 		visible[item.id] = visibility.get(item.id) ?? true;

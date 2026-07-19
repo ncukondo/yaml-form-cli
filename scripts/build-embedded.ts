@@ -32,11 +32,6 @@ const refPath = new URL("../docs/reference.md", import.meta.url).pathname;
 const reference = await Bun.file(refPath).text();
 const lines = reference.split("\n");
 
-/** A heading of level 1–3 ends the current section; level 4+ stays inside. */
-function isSectionBoundary(line: string): boolean {
-	return /^#{1,3} /.test(line);
-}
-
 function extractSection(heading: string): string {
 	const start = lines.indexOf(heading);
 	if (start === -1) {
@@ -45,8 +40,16 @@ function extractSection(heading: string): string {
 				"Update TOPICS in scripts/build-embedded.ts to match the reference.",
 		);
 	}
+	// A level 1–3 heading ends the section (level 4+ stays inside), but only
+	// outside a fenced code block — a column-0 `#` in a YAML/shell example is
+	// content, not a boundary.
 	let end = start + 1;
-	while (end < lines.length && !isSectionBoundary(lines[end] as string)) end++;
+	let inFence = false;
+	for (; end < lines.length; end++) {
+		const line = lines[end] as string;
+		if (/^```/.test(line)) inFence = !inFence;
+		else if (!inFence && /^#{1,3} /.test(line)) break;
+	}
 	return `${lines.slice(start, end).join("\n").trimEnd()}\n`;
 }
 

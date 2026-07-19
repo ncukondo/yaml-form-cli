@@ -327,4 +327,25 @@ items:
 		expect(errors).toHaveLength(1);
 		expect(errors[0]?.code).toBe("rule_value_unreachable");
 	});
+
+	test('the "" sentinel is reachable — is-answered idioms are allowed', () => {
+		// "" is what the runtime fills in for an unanswered key, so comparing a
+		// choice against "" is not constant and must not be flagged.
+		expect(
+			parseForm(`${roleForm}
+  - type: "long_text"
+    id: "detail"
+    title: "Detail"
+    visible_when: 'role <> ""'
+`).ok,
+		).toBe(true);
+		expect(
+			parseForm(`${roleForm}
+  - type: "long_text"
+    id: "detail"
+    title: "Detail"
+    visible_when: 'role = ""'
+`).ok,
+		).toBe(true);
+	});
 });

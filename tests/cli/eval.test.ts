@@ -90,6 +90,39 @@ describe("eval", () => {
 		expect(exitCode).toBe(2);
 	});
 
+	test("a null answer value is a clean usage error, not a crash", async () => {
+		const { stdout, stderr, exitCode } = await runCli([
+			"eval",
+			sampleYaml,
+			"--answers",
+			'{"has_other":null}',
+		]);
+		expect(exitCode).toBe(2);
+		expect(stderr).toContain("--answers");
+		expect(stdout).not.toContain("TypeError");
+		expect(stderr).not.toContain("TypeError");
+	});
+
+	test("a non-string leaf (number) is rejected rather than silently dropped", async () => {
+		const { exitCode } = await runCli([
+			"eval",
+			sampleYaml,
+			"--answers",
+			'{"has_other":1}',
+		]);
+		expect(exitCode).toBe(2);
+	});
+
+	test("a nested null is caught too", async () => {
+		const { exitCode } = await runCli([
+			"eval",
+			sampleYaml,
+			"--answers",
+			'{"presentation_rubric":{"clarity":null}}',
+		]);
+		expect(exitCode).toBe(2);
+	});
+
 	test("an invalid form exits 1 with validate-shaped errors", async () => {
 		const bad = join(tempDir, "bad.yaml");
 		await Bun.write(bad, "title: T\nitems:\n  - id: a\n    type: bogus\n");

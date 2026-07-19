@@ -10,7 +10,10 @@ export type FormErrorCode =
 	| "hidden_visible_when_conflict"
 	| "unknown_rule_key"
 	| "rule_value_unreachable"
-	| "rule_syntax_error";
+	| "rule_syntax_error"
+	// Not a form-content problem: an I/O failure (unreadable input, unwritable
+	// output) surfaced through the same --json error envelope.
+	| "io_error";
 
 export interface FormError {
 	code: FormErrorCode;

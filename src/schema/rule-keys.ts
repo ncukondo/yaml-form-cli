@@ -148,6 +148,10 @@ export function checkRuleKeys(form: Form): FormError[] {
 			if (domain === undefined) continue; // unknown (reported above) or free-text
 			for (const value of cmp.values) {
 				if (domain.has(value)) continue;
+				// "" is the unanswered sentinel every key can hold at runtime
+				// (`ruleView` fills absent keys with ""), so `key = ""` /
+				// `key <> ""` ("is answered") are reachable, not constant.
+				if (value === "") continue;
 				errors.push({
 					code: "rule_value_unreachable",
 					path,
