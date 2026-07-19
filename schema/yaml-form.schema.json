@@ -63,6 +63,10 @@
 				"draft_discard": {
 					"type": "string",
 					"minLength": 1
+				},
+				"draft_discarded": {
+					"type": "string",
+					"minLength": 1
 				}
 			},
 			"additionalProperties": false

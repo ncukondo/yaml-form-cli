@@ -3,6 +3,7 @@
 // unavailable or throwing (privacy mode, quota, file:// quirks): every access
 // is guarded, and any failure silently disables autosave for the session —
 // the form itself must never be affected.
+import { resolveMessages } from "../messages.ts";
 import type { Form } from "../schema/form-schema.ts";
 import {
 	applySelection,
@@ -155,12 +156,16 @@ function applyDraftAnswers(
  * Set up autosave for an initialized form: prune stale drafts, restore a
  * matching one (with the announced, discardable notice), and return the
  * store `initForm` drives on edit / pagehide / submit success. Returns null
- * when `autosave: false` or storage is unavailable.
+ * when `autosave: false` or storage is unavailable. `resetForm` puts the
+ * fields back into the pristine prefilled state; discard uses it instead of
+ * a reload, which some file:// setups silently refuse — leaving the restored
+ * values in the DOM to be re-saved by the next edit.
  */
 export function initDraft(
 	doc: Document,
 	form: Form,
 	readAnswers: () => RawAnswers,
+	resetForm?: () => void,
 ): DraftStore | null {
 	if (!form.autosave) return null;
 	const storage = getStorage(doc);
@@ -250,16 +255,16 @@ export function initDraft(
 		notice?.removeAttribute("hidden");
 		discard?.addEventListener("click", () => {
 			store.clear();
-			notice?.setAttribute("hidden", "");
-			// Reload lands on the pristine prefilled state. Where reload is
-			// refused (some file:// setups), the restored values stay visible
-			// but the draft is gone and autosave keeps working, so continued
-			// edits are still preserved.
-			try {
-				win?.location.reload();
-			} catch {
-				// keep going without a reload
-			}
+			// Back to the pristine prefilled state in place — no reload, so it
+			// works on file:// too and the restored values cannot linger in the
+			// DOM and resurrect via the next autosave.
+			resetForm?.();
+			// The notice (role="status") becomes the confirmation feedback;
+			// autosave keeps working, so continued edits are preserved again.
+			const messageEl = notice?.querySelector(".draft-notice-message");
+			if (messageEl)
+				messageEl.textContent = resolveMessages(form).draft_discarded;
+			discard.remove();
 		});
 	}
 

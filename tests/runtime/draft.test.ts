@@ -315,19 +315,40 @@ describe("restore notice", () => {
 		expect(textValue(document, "name")).toBe("");
 	});
 
-	test("discard removes the draft and hides the notice", async () => {
+	test("discard removes the draft, resets the fields, and confirms in place", async () => {
 		const key = draftKey(parseOk(basicYaml), "");
 		const { window, document } = await loadDom(basicYaml, {
 			seed: { [key]: makeDraft({ name: "Jane" }) },
 		});
+		expect(textValue(document, "name")).toBe("Jane");
 		const button = document.querySelector<HTMLElement>(".draft-discard");
 		if (!button) throw new Error("no discard button");
 		button.click();
 		expect(window.localStorage.getItem(key)).toBeNull();
-		expect(noticeHidden(document)).toBe(true);
+		// No reload (file:// may refuse it): fields reset in place, and the
+		// notice becomes the confirmation instead of vanishing silently.
+		expect(textValue(document, "name")).toBe("");
+		expect(noticeHidden(document)).toBe(false);
+		expect(document.querySelector(".draft-notice-message")?.textContent).toBe(
+			"Draft discarded.",
+		);
+		expect(document.querySelector(".draft-discard")).toBeNull();
 	});
 
-	test("autosave keeps working after a discard (reload may be unavailable)", async () => {
+	test("discard returns to the pristine URL-prefilled state", async () => {
+		const key = draftKey(parseOk(basicYaml), "?role=student");
+		const { window, document } = await loadDom(basicYaml, {
+			search: "?role=student",
+			seed: { [key]: makeDraft({ name: "Jane", role: "teacher" }) },
+		});
+		expect(checkedValues(document, "role")).toEqual(["teacher"]);
+		document.querySelector<HTMLElement>(".draft-discard")?.click();
+		expect(window.localStorage.getItem(key)).toBeNull();
+		expect(checkedValues(document, "role")).toEqual(["student"]);
+		expect(textValue(document, "name")).toBe("");
+	});
+
+	test("autosave keeps working after a discard", async () => {
 		const key = draftKey(parseOk(basicYaml), "");
 		const { window, document } = await loadDom(basicYaml, {
 			seed: { [key]: makeDraft({ name: "Jane" }) },
@@ -373,6 +394,17 @@ items:
 		await Bun.sleep(400);
 		const key = draftKey(parseOk(logYaml), "");
 		expect(window.localStorage.getItem(key)).toBeNull();
+	});
+
+	test("the restore notice is hidden on the success screen", async () => {
+		const key = draftKey(parseOk(logYaml), "");
+		const { document } = await loadDom(logYaml, {
+			seed: { [key]: makeDraft({ name: "Jane" }) },
+		});
+		expect(noticeHidden(document)).toBe(false);
+		submitForm(document);
+		await flushMicrotasks();
+		expect(noticeHidden(document)).toBe(true);
 	});
 });
 

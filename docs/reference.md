@@ -238,8 +238,10 @@ turns it off entirely (no reads, no writes).
   same recognized query parameters — restores the draft, overlaying any URL
   prefill. Restoring is announced via a `role="status"` notice with a
   **discard** button (message keys `draft_restored` / `draft_discard`);
-  discarding deletes the draft and reloads the page into the pristine
-  prefilled state.
+  discarding deletes the draft, resets the fields in place to the pristine
+  prefilled state (no page reload, so it also works where `file://` refuses
+  scripted reloads), and turns the notice into a confirmation (message key
+  `draft_discarded`).
 - A different distribution URL (different recognized parameters, decision
   0013) uses a different storage key and starts pristine — one respondent's
   draft can never leak into another's URL. Unrecognized query noise does not
@@ -289,6 +291,7 @@ unknown placeholders are left as-is.
 | `clear_selection` | —                  | `Clear selection` |
 | `draft_restored`  | —                  | `Restored your previous answers.` |
 | `draft_discard`   | —                  | `Discard draft` |
+| `draft_discarded` | —                  | `Draft discarded.` |
 
 ```yaml
 lang: ja

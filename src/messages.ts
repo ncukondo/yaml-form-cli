@@ -16,6 +16,7 @@ export const MESSAGE_KEYS = [
 	"clear_selection",
 	"draft_restored",
 	"draft_discard",
+	"draft_discarded",
 ] as const;
 
 export type MessageKey = (typeof MESSAGE_KEYS)[number];
@@ -37,6 +38,7 @@ export const BUILTIN_MESSAGES: Record<"en" | "ja", Messages> = {
 		clear_selection: "Clear selection",
 		draft_restored: "Restored your previous answers.",
 		draft_discard: "Discard draft",
+		draft_discarded: "Draft discarded.",
 	},
 	ja: {
 		required: "「{title}」は必須です。",
@@ -52,6 +54,7 @@ export const BUILTIN_MESSAGES: Record<"en" | "ja", Messages> = {
 		clear_selection: "選択を解除",
 		draft_restored: "前回の入力内容を復元しました。",
 		draft_discard: "下書きを破棄",
+		draft_discarded: "下書きを破棄しました。",
 	},
 };
 

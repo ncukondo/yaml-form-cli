@@ -409,13 +409,13 @@ button[type="submit"]:focus-visible {
 }
 button[type="submit"]:active:not(:disabled) { filter: brightness(0.8); }
 
-/* Constant items are read-only content, not disabled inputs: an info box.
+/* Constant items are read-only content, not disabled inputs: a neutral
+   box. Deliberately no accent color — that would read as a notice/alert.
    Overrides the muted color set in the base rule above. */
 .constant-value {
 	color: var(--fg);
-	background: color-mix(in srgb, var(--accent) 6%, var(--bg));
+	background: color-mix(in srgb, var(--fg) 4%, var(--bg));
 	border: 1px solid var(--border);
-	border-left: 3px solid var(--accent);
 	border-radius: 0.375rem;
 	padding: 0.5rem 0.75rem;
 	margin: 0;
@@ -431,7 +431,9 @@ export const draftStyles = `
 	justify-content: space-between;
 	gap: 0.75rem;
 	flex-wrap: wrap;
+	background: color-mix(in srgb, var(--accent) 6%, var(--bg));
 	border: 1px solid var(--border);
+	border-left: 3px solid var(--accent);
 	border-radius: 0.375rem;
 	padding: 0.6rem 0.9rem;
 	margin: 0 0 1rem;

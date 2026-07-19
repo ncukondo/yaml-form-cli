@@ -112,6 +112,9 @@ function showSuccess(doc: Document, form: Form, messages: Messages): void {
 	doc.querySelector("form#yaml-form")?.setAttribute("hidden", "");
 	// Keep the form title as context; the fill-in instructions are done with.
 	doc.querySelector(".form-description")?.setAttribute("hidden", "");
+	// The restore notice belongs to the editing session; leaving it up would
+	// offer a "discard draft" reload from the success screen.
+	doc.querySelector("#yaml-form-draft-notice")?.setAttribute("hidden", "");
 	const successEl = doc.querySelector<HTMLElement>("#yaml-form-success");
 	if (!successEl) return;
 	// Write into the message slot so the checkmark icon markup survives; fall

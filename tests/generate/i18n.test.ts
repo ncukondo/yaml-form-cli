@@ -204,11 +204,15 @@ describe("draft notice slot", () => {
 	});
 
 	test("autosave: false omits the notice markup and its styles", async () => {
-		const { html, document } = await loadDom(
+		const { document } = await loadDom(
 			`title: T\nautosave: false\n${requiredItem}`,
 		);
 		expect(document.querySelectorAll("#yaml-form-draft-notice").length).toBe(0);
-		expect(html).not.toContain(".draft-notice");
+		// The runtime bundle legitimately mentions the class; only the styles
+		// must be omitted.
+		expect(document.querySelector("style")?.textContent).not.toContain(
+			".draft-notice",
+		);
 	});
 
 	test("messages overrides apply to both keys", async () => {

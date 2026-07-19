@@ -47,12 +47,12 @@ export async function generateHtml(form: Form): Promise<string> {
 </head>
 <body>
 <main class="container">
-<header>
+${draftNotice}<header>
 <h1>${escapeHtml(form.title)}</h1>
 ${description}
 </header>
 <noscript><p class="noscript-warning">${escapeHtml(messages.noscript_warning)}</p></noscript>
-${draftNotice}<form id="yaml-form" novalidate>
+<form id="yaml-form" novalidate>
 ${requiredLegend}${items}
 <button type="submit">${escapeHtml(messages.submit)}</button>
 <p class="form-error" id="yaml-form-error" role="alert" hidden></p>

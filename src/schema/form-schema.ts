@@ -149,6 +149,7 @@ const messagesSchema = z.strictObject({
 	clear_selection: messageOverride,
 	draft_restored: messageOverride,
 	draft_discard: messageOverride,
+	draft_discarded: messageOverride,
 } satisfies Record<MessageKey, typeof messageOverride>);
 
 export const formSchema = z

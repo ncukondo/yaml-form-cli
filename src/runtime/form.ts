@@ -326,9 +326,31 @@ export function initForm(doc: Document): void {
 	const visibility = createVisibilityEvaluator(form);
 	const refreshVisibility = () =>
 		applyVisibility(doc, visibility.compute(readRawAnswers(doc, form)));
+	// Pristine prefilled state, rebuilt in place: empty every field, then
+	// re-apply the URL prefill. Discard uses this instead of a reload.
+	const resetForm = () => {
+		for (const el of Array.from(
+			formEl.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+				"input, textarea",
+			),
+		)) {
+			if (el.type === "checkbox" || el.type === "radio") {
+				(el as HTMLInputElement).checked = false;
+			} else {
+				el.value = "";
+			}
+		}
+		applyPrefill(doc, form);
+		refreshVisibility();
+	};
 	// Draft restore runs after prefill (draft overlays it) and before the
 	// first refreshVisibility() below, so rules see restored answers.
-	const draft = initDraft(doc, form, () => readRawAnswers(doc, form));
+	const draft = initDraft(
+		doc,
+		form,
+		() => readRawAnswers(doc, form),
+		resetForm,
+	);
 	const onEdit = (event: Event) => {
 		refreshVisibility();
 		draft?.save();
