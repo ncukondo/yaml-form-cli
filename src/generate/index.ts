@@ -124,7 +124,9 @@ export async function generateFragment(form: Form): Promise<string> {
 	// No standalone body/page reset: a fragment must never restyle its host, and
 	// its width/placement is the host's concern (decision 0020).
 	const styles = `${baseStyles}${form.autosave ? draftStyles : ""}`;
-	return `<div class="yaml-form-root" id="${escapeAttr(prefix)}">
+	// `lang` on the root mirrors standalone's <html lang>, so assistive tech
+	// reads the form in its own language even inside a differently-lang'd host.
+	return `<div class="yaml-form-root" id="${escapeAttr(prefix)}" lang="${escapeAttr(form.lang)}">
 <style>${styles}</style>
 ${renderRootInner(form, prefix)}
 <script>${runtime}</script>

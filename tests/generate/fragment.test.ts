@@ -26,7 +26,7 @@ describe("generate --fragment structure", () => {
 	test("emits a .yaml-form-root div, not a full document", async () => {
 		const html = await generateFragment(parseOk(withId));
 		expect(html.trimStart()).toStartWith(
-			'<div class="yaml-form-root" id="yf-survey1">',
+			'<div class="yaml-form-root" id="yf-survey1" lang="en">',
 		);
 		expect(html).not.toContain("<!doctype");
 		expect(html).not.toContain("<head>");
@@ -72,6 +72,17 @@ describe("generate --fragment structure", () => {
 		// the notice element and its style rule are absent.
 		expect(html).not.toContain('class="draft-notice"');
 		expect(html).not.toContain(".draft-notice[hidden]");
+	});
+
+	test("carries the form language on the root, mirroring standalone <html lang>", async () => {
+		const html = await generateFragment(
+			parseOk(
+				"title: T\nid: fr1\nlang: fr\nactions:\n  - type: log\nitems:\n  - { id: a, title: A }\n",
+			),
+		);
+		expect(html.trimStart()).toStartWith(
+			'<div class="yaml-form-root" id="yf-fr1" lang="fr">',
+		);
 	});
 
 	test("requires an id (fragments must keep ids unique on a shared page)", async () => {

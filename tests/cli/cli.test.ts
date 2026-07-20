@@ -112,7 +112,7 @@ describe("generate", () => {
 		expect(exitCode).toBe(0);
 		expect(stderr).toBe("");
 		expect(stdout.trimStart()).toStartWith(
-			'<div class="yaml-form-root" id="yf-survey1">',
+			'<div class="yaml-form-root" id="yf-survey1" lang="en">',
 		);
 		expect(stdout).not.toContain("<!doctype");
 	});

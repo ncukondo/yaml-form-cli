@@ -7,6 +7,13 @@ const result = await Bun.build({
 	entrypoints: [entry],
 	target: "browser",
 	minify: true,
+	// IIFE format keeps the bundle's declarations out of the page's global
+	// scope. Fragment output (decision 0019) can place several forms — each with
+	// its own inline copy of this bundle — on one page; as classic scripts they
+	// share one global scope, so top-level bindings would otherwise collide.
+	// The IIFE runs synchronously, so `document.currentScript` stays valid for
+	// the root-discovery bootstrap in main.ts.
+	format: "iife",
 });
 const output = result.outputs[0];
 if (!result.success || !output) {
@@ -14,6 +21,16 @@ if (!result.success || !output) {
 	process.exit(1);
 }
 const code = await output.text();
+// The bundle is inlined verbatim into an HTML <script> (generate/index.ts). A
+// literal "</script>" anywhere in it would close the tag early and break the
+// page, so fail the build rather than emit an unsafe bundle. Our own minified
+// code never contains it; this guards against a future runtime string literal.
+if (/<\/script/i.test(code)) {
+	console.error(
+		"build:runtime: bundle contains a literal </script> — it cannot be inlined safely",
+	);
+	process.exit(1);
+}
 const target = new URL("../src/generate/runtime.generated.ts", import.meta.url)
 	.pathname;
 const banner =

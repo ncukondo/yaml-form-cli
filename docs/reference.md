@@ -512,9 +512,12 @@ full HTML document — a single `.yaml-form-root` element carrying its own scope
 
 Composite it into a host page **at build time** (concatenate it into your
 template). The runtime finds its own root via `document.currentScript`, so more
-than one fragment can share a page. `--fragment` **requires the form to define
-an `id`**: it becomes the root element's id and the prefix (`yf-<id>-…`) that
-keeps every `id`/`for`/`aria-*` unique across fragments.
+than one fragment can share a page — as long as **each has a distinct `form.id`**.
+`--fragment` **requires the form to define an `id`**: it becomes the root
+element's id and the prefix (`yf-<id>-…`) that keeps every `id`/`for`/`aria-*`
+unique. Placing the *same* fragment (same `id`) twice on one page duplicates
+those ids and breaks the `for`/`aria-describedby` associations, so give each
+form its own id.
 
 Notes and caveats:
 

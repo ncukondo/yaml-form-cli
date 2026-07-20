@@ -82,6 +82,20 @@ describe("two fragments composited in one document", () => {
 		expect(scriptCount).toBe(2);
 	});
 
+	test("two bundle copies coexist in one global scope (IIFE isolation)", async () => {
+		// On a real page two fragment <script>s are classic scripts sharing one
+		// global scope; a top-level `let`/`const`/`class` in the bundle would make
+		// the second copy throw "Identifier already declared". The bundle is
+		// IIFE-wrapped to prevent that. Running two concatenated copies in a single
+		// shared scope must neither fail to parse nor throw. A minimal document
+		// stub with no roots makes each copy take the harmless querySelectorAll
+		// fallback (empty NodeList → no init).
+		const bundle = await getRuntimeBundle();
+		const stubDoc = { currentScript: null, querySelectorAll: () => [] };
+		const runBoth = new Function("document", "window", `${bundle}\n${bundle}`);
+		expect(() => runBoth(stubDoc, {})).not.toThrow();
+	});
+
 	test("the currentScript bootstrap initializes each root independently", async () => {
 		const { document, roots } = await composeTwoFragments();
 		// Submit alpha empty → alpha shows its required error; beta untouched.
