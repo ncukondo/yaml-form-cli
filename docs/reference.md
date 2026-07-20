@@ -492,3 +492,48 @@ format:
 Unset properties keep the defaults above (including the automatic dark-mode
 palette). Other custom properties in the stylesheet are private and may
 change between versions.
+
+## Submit events
+
+When a submit attempt settles, the form dispatches a `CustomEvent` on its root
+element (`.yaml-form-root`) so a host page can react — advance a progress bar,
+move to the next form, or log the result — without watching DOM mutations.
+Exactly one event fires per settled submit, after the success/failure UI has
+been applied:
+
+- **`yaml-form:submit-success`** — all actions succeeded (opening the mail
+  client for `mailto` counts as success). `detail`:
+
+  ```jsonc
+  {
+    "form": { "id": "test_form", "version": "2.0" }, // undefined when unset in the YAML
+    "payload": { /* the full submit payload, see "Payload" */ }
+  }
+  ```
+
+- **`yaml-form:submit-error`** — an action failed (actions stop at the first
+  failure). `detail`:
+
+  ```jsonc
+  {
+    "form": { "id": "test_form", "version": "2.0" }, // undefined when unset in the YAML
+    "message": "POST https://example.com/api responded with status 500"
+  }
+  ```
+
+Both events use `bubbles: true` and `composed: false`, so one delegated
+listener on `document` covers every form root on the page:
+
+```js
+document.addEventListener("yaml-form:submit-success", (event) => {
+  console.log("submitted", event.detail.form.id, event.detail.payload);
+});
+document.addEventListener("yaml-form:submit-error", (event) => {
+  console.warn("failed", event.detail.form.id, event.detail.message);
+});
+```
+
+For a form embedded in a same-origin `<iframe>`, attach the same listeners to
+`iframe.contentDocument` — no `postMessage` channel is needed. Blocked
+double-submits (while a request is in flight) dispatch nothing; the settled
+attempt still fires its single event.

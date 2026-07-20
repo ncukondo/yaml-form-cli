@@ -162,6 +162,39 @@ function applySubmitState(
 	}
 }
 
+// Public submit-completion events (decision 0021): dispatched on the root,
+// bubbling so a host page can delegate from document; composed stays false
+// (no Shadow DOM support).
+export interface SubmitEventFormInfo {
+	id: string | undefined;
+	version: string | undefined;
+}
+export interface SubmitSuccessDetail {
+	form: SubmitEventFormInfo;
+	payload: SubmitPayload;
+}
+export interface SubmitErrorDetail {
+	form: SubmitEventFormInfo;
+	message: string;
+}
+
+function dispatchSubmitEvent(
+	root: Element,
+	type: "yaml-form:submit-success" | "yaml-form:submit-error",
+	detail: SubmitSuccessDetail | SubmitErrorDetail,
+): void {
+	// Use the root's own window so the event class matches its document (the
+	// two differ in DOM test environments).
+	const win = root.ownerDocument?.defaultView as
+		| { CustomEvent: typeof CustomEvent }
+		| null
+		| undefined;
+	const EventCtor = win?.CustomEvent ?? CustomEvent;
+	root.dispatchEvent(
+		new EventCtor(type, { bubbles: true, composed: false, detail }),
+	);
+}
+
 // Roots with a submission in flight; blocks re-entry from a second submit
 // event (programmatic submits bypass the disabled button). Keyed per root so
 // one form's in-flight submit never blocks another on the same page.
@@ -194,6 +227,23 @@ export async function performSubmit(
 			{ kind: result.ok ? "success" : "failure" },
 			idleLabel,
 		);
+		// Fired once per settled attempt, after the UI above, so listeners see a
+		// consistent DOM (decision 0021).
+		const formInfo: SubmitEventFormInfo = {
+			id: payload.form.id,
+			version: payload.form.version,
+		};
+		if (result.ok) {
+			dispatchSubmitEvent(root, "yaml-form:submit-success", {
+				form: formInfo,
+				payload,
+			});
+		} else {
+			dispatchSubmitEvent(root, "yaml-form:submit-error", {
+				form: formInfo,
+				message: result.message,
+			});
+		}
 	} finally {
 		pendingRoots.delete(root);
 	}
