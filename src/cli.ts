@@ -2,7 +2,7 @@
 import { chmod, readFile, rename, rm, writeFile } from "node:fs/promises";
 import pkg from "../package.json";
 import { docs, docTopics, examples } from "./embedded.generated.ts";
-import { generateHtml } from "./generate/index.ts";
+import { generateFragment, generateHtml } from "./generate/index.ts";
 import { computeVisibility, type RawAnswers } from "./runtime/visibility.ts";
 import type { FormError } from "./schema/errors.ts";
 import { type Form, parseForm } from "./schema/index.ts";
@@ -50,7 +50,7 @@ function makeUpgradeEnv(): UpgradeEnv {
 const USAGE = `yaml-form — generate a self-contained HTML form from YAML
 
 Usage:
-  yaml-form generate <input.yaml|-> [-o <out.html>] [--json]
+  yaml-form generate <input.yaml|-> [-o <out.html>] [--json] [--fragment]
   yaml-form validate <input.yaml|-> [--json]
   yaml-form eval <input.yaml|-> --answers <json|@file|->
   yaml-form schema
@@ -78,6 +78,9 @@ Conventions:
 
 Options:
   -o, --output <file>   Write generated HTML to a file (default: stdout).
+  --fragment            Emit a self-contained .yaml-form-root fragment (no
+                        document envelope) to composite into a host page at
+                        build time; requires the form to define an "id".
   -h, --help            Show this help.
   --version             Show version.
 
@@ -153,12 +156,14 @@ interface GenerateOptions {
 	input: string;
 	output?: string;
 	json: boolean;
+	fragment: boolean;
 }
 
 function parseGenerateArgs(argv: string[]): GenerateOptions {
 	let input: string | undefined;
 	let output: string | undefined;
 	let json = false;
+	let fragment = false;
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i];
 		if (arg === undefined) break;
@@ -167,6 +172,8 @@ function parseGenerateArgs(argv: string[]): GenerateOptions {
 			if (output === undefined) usage(`${arg} requires a file argument`);
 		} else if (arg === "--json") {
 			json = true;
+		} else if (arg === "--fragment") {
+			fragment = true;
 		} else if (arg.startsWith("-") && arg !== "-") {
 			usage(`Unknown option "${arg}"`);
 		} else if (input === undefined) {
@@ -176,7 +183,7 @@ function parseGenerateArgs(argv: string[]): GenerateOptions {
 		}
 	}
 	if (input === undefined) usage("generate: missing input (file or '-')");
-	return { input, output, json };
+	return { input, output, json, fragment };
 }
 
 async function cmdGenerate(argv: string[]): Promise<ExitCode> {
@@ -195,7 +202,18 @@ async function cmdGenerate(argv: string[]): Promise<ExitCode> {
 		}
 		throw err;
 	}
-	const html = await generateHtml(form);
+	// Fragment output composites into a host page, possibly more than once, so
+	// ids must be unique — which needs an explicit form id (decision 0019).
+	if (opts.fragment && form.id === undefined) {
+		reportFailure(
+			"generate --fragment requires the form to define an `id` (it keeps element ids unique when fragments share a page)",
+			opts.json,
+		);
+		return 1;
+	}
+	const html = opts.fragment
+		? await generateFragment(form)
+		: await generateHtml(form);
 	if (opts.output === undefined) {
 		process.stdout.write(html);
 	} else {

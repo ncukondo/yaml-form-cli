@@ -22,13 +22,13 @@ function renderLinkList(
 	return `<nav class="${className}"><ul>${items}</ul></nav>`;
 }
 
-export async function generateHtml(form: Form): Promise<string> {
-	const runtime = await getRuntimeBundle();
+// The root element's inner markup — draft notice, header, form, success screen,
+// and the embedded data/meta scripts — shared verbatim by standalone documents
+// and fragments (decision 0019). The wrapping root element, the <style>
+// placement, the runtime <script> placement, and the document envelope are the
+// only differences and live in the two callers below.
+function renderRootInner(form: Form, prefix: string): string {
 	const messages = resolveMessages(form);
-	// Per-form id prefix; also the root element's id, so the runtime recovers it
-	// from root.id (decision 0019). Empty for an id-less standalone form.
-	const prefix = formIdPrefix(form.id);
-	const rootId = prefix ? ` id="${escapeAttr(prefix)}"` : "";
 	const description = form.description
 		? `<p class="form-description">${renderText(form.description)}</p>`
 		: "";
@@ -53,8 +53,32 @@ export async function generateHtml(form: Form): Promise<string> {
 </div>
 `
 		: "";
-	// Scoped core (+ draft styles) is shared with fragment output (task 0034);
-	// the page-level reset is a standalone-document concern (decision 0020).
+	return `${draftNotice}<header>
+<h1>${escapeHtml(form.title)}</h1>
+${description}
+${renderLinkList(form.links, "form-links")}</header>
+<noscript><p class="noscript-warning">${escapeHtml(messages.noscript_warning)}</p></noscript>
+<form novalidate>
+${requiredLegend}${items}
+<button type="submit">${escapeHtml(messages.submit)}</button>
+<p class="form-error" role="alert" hidden></p>
+</form>
+<section class="form-success" role="status" tabindex="-1" hidden>
+<svg class="success-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<p class="success-message"></p>
+${renderLinkList(form.post_submit?.links, "success-links")}</section>
+<script type="application/json" class="yaml-form-data">${embedJson(form)}</script>
+<script type="application/json" class="yaml-form-meta">${embedJson({ generator: `yaml-form/${pkg.version}` })}</script>`;
+}
+
+export async function generateHtml(form: Form): Promise<string> {
+	const runtime = await getRuntimeBundle();
+	// Per-form id prefix; also the root element's id, so the runtime recovers it
+	// from root.id (decision 0019). Empty for an id-less standalone form.
+	const prefix = formIdPrefix(form.id);
+	const rootId = prefix ? ` id="${escapeAttr(prefix)}"` : "";
+	// Scoped core (+ draft styles) is shared with fragment output; the page-level
+	// reset is a standalone-document concern (decision 0020).
 	const styles = `${baseStyles}${form.autosave ? draftStyles : ""}${standaloneStyles}`;
 	// Decision 0017: emit a robots meta unless both directives are opted out.
 	const robots = [
@@ -74,25 +98,38 @@ export async function generateHtml(form: Form): Promise<string> {
 </head>
 <body>
 <main class="container yaml-form-root"${rootId}>
-${draftNotice}<header>
-<h1>${escapeHtml(form.title)}</h1>
-${description}
-${renderLinkList(form.links, "form-links")}</header>
-<noscript><p class="noscript-warning">${escapeHtml(messages.noscript_warning)}</p></noscript>
-<form novalidate>
-${requiredLegend}${items}
-<button type="submit">${escapeHtml(messages.submit)}</button>
-<p class="form-error" role="alert" hidden></p>
-</form>
-<section class="form-success" role="status" tabindex="-1" hidden>
-<svg class="success-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-<p class="success-message"></p>
-${renderLinkList(form.post_submit?.links, "success-links")}</section>
-<script type="application/json" class="yaml-form-data">${embedJson(form)}</script>
-<script type="application/json" class="yaml-form-meta">${embedJson({ generator: `yaml-form/${pkg.version}` })}</script>
+${renderRootInner(form, prefix)}
 </main>
 <script>${runtime}</script>
 </body>
 </html>
+`;
+}
+
+/**
+ * Fragment output (decision 0019): a self-contained `.yaml-form-root` subtree
+ * with no document envelope, compositable into a host page at build time — and
+ * safely more than once, because the runtime is root-scoped. The scoped
+ * `<style>` (core + draft only, no standalone page reset) and the runtime
+ * bundle `<script>` both live inside the root; the bundle's `document.
+ * currentScript` bootstrap then initializes exactly this root. Requires
+ * `form.id` so ids stay unique across fragments sharing a page.
+ */
+export async function generateFragment(form: Form): Promise<string> {
+	if (form.id === undefined) {
+		throw new Error("generate --fragment requires the form to define an `id`");
+	}
+	const runtime = await getRuntimeBundle();
+	const prefix = formIdPrefix(form.id);
+	// No standalone body/page reset: a fragment must never restyle its host, and
+	// its width/placement is the host's concern (decision 0020).
+	const styles = `${baseStyles}${form.autosave ? draftStyles : ""}`;
+	// `lang` on the root mirrors standalone's <html lang>, so assistive tech
+	// reads the form in its own language even inside a differently-lang'd host.
+	return `<div class="yaml-form-root" id="${escapeAttr(prefix)}" lang="${escapeAttr(form.lang)}">
+<style>${styles}</style>
+${renderRootInner(form, prefix)}
+<script>${runtime}</script>
+</div>
 `;
 }
