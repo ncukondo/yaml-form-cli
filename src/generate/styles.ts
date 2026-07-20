@@ -187,11 +187,6 @@ export const baseStyles = scopeCss(`
 	}
 }
 .yaml-form-root, .yaml-form-root * { box-sizing: border-box; }
-.container {
-	max-width: 46rem;
-	margin: 0 auto;
-	padding: 1.5rem 1rem 4rem;
-}
 h1 { font-size: 1.6rem; margin: 0 0 0.5rem; }
 .form-description {
 	white-space: pre-line;
@@ -641,12 +636,18 @@ export const draftStyles = scopeCss(`
 }
 `);
 
-// Page-level reset, appended only to standalone documents (generate/index.ts)
-// — a fragment must never restyle the host page (decision 0020). Deliberately
-// left unscoped: this is where the page canvas and the font-family default
-// live; fragments inherit the host's font instead, and .yaml-form-root pins
+// Page-level reset and container layout, appended only to standalone documents
+// (generate/index.ts) — a fragment must never restyle the host page, and its
+// width/placement is the host's concern (decision 0020). Deliberately left
+// unscoped: this is where the page canvas and the font-family default live;
+// fragments inherit the host's font instead, and .yaml-form-root pins
 // color/line-height above. The --yf-* fallbacks mirror the root's tokens so
 // the canvas matches the form in both schemes.
+//
+// `.container` targets the root <main class="container yaml-form-root"> itself,
+// so it must stay OUT of the scoped baseStyles: scopeCss would rewrite it to
+// the descendant selector `.yaml-form-root .container`, which can never match
+// an element against itself and would silently drop the page layout.
 export const standaloneStyles = `
 :root { color-scheme: light dark; }
 body {
@@ -655,6 +656,11 @@ body {
 	line-height: 1.6;
 	color: var(--yf-fg, #1a1a1a);
 	background: var(--yf-bg, #ffffff);
+}
+.container {
+	max-width: 46rem;
+	margin: 0 auto;
+	padding: 1.5rem 1rem 4rem;
 }
 @media (prefers-color-scheme: dark) {
 	body {

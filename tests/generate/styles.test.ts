@@ -163,6 +163,18 @@ describe("standalone-only page reset (decision 0020)", () => {
 		expect(draftStyles).not.toContain("font-family");
 	});
 
+	test("the container layout targets the root, so it lives unscoped in standalone", () => {
+		// The root <main> carries both `container` and `yaml-form-root`. Scoping
+		// `.container` in the core would produce `.yaml-form-root .container` — a
+		// descendant selector that can never match the root against itself,
+		// silently dropping the 46rem max-width, centering, and padding.
+		expect(standaloneStyles).toMatch(
+			/\.container \{[^}]*max-width: 46rem;[^}]*margin: 0 auto;/,
+		);
+		expect(baseStyles).not.toContain(".container");
+		expect(baseStyles).not.toContain("max-width: 46rem");
+	});
+
 	test("the root pins color and line-height against host resets", () => {
 		const light = lightBlock(baseStyles);
 		expect(light).toContain("line-height: 1.6;");
