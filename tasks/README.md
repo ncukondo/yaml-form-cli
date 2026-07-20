@@ -50,6 +50,10 @@ Rules:
 | [0028 `robots` meta output](archive/0028-robots-meta.md) (#33) | — | E | done |
 | [0029 Link policy: structured `links`, autolink, target, allowlist](archive/0029-links-and-autolink-policy.md) (#32 #34) | — | E | done |
 | [0030 `post` action relative URL](archive/0030-post-relative-url.md) (#35) | 0029 | — | done |
+| [0031 Root-element-scoped runtime](0031-root-scoped-runtime.md) | — | — | done |
+| [0032 CSS scoping + `--yf-*` theme](0032-css-scoping-and-theme.md) (#37) | 0031 | F | todo |
+| [0033 Submit-completion events](0033-submit-events.md) (#38) | 0031 | F | todo |
+| [0034 `generate --fragment` output](0034-fragment-output-mode.md) (#36) | 0031, 0032, 0033 | — | todo |
 
 Group A tasks touch disjoint areas (runtime modules / generator modules /
 CLI entry) and can proceed in parallel worktrees once 0003 lands.
@@ -73,3 +77,11 @@ the JSON Schema regen, and embedded docs, so they merge sequentially rather
 than in isolated worktrees, but carry no logical dependency (order is free).
 0030 depends on 0029's shared URL-policy helper. Decisions
 `0017-robots-meta.md` and `0018-links-and-url-policy.md` cover this batch.
+
+Fragment/host-integration batch (#36–#38): 0031 is the foundation — it makes
+the runtime root-element-scoped (`initForm(root)`), the prerequisite for all
+three. Group F (0032 / 0033) then run in parallel worktrees — disjoint scopes
+(`styles.ts` vs `submit.ts`). 0034 (`--fragment`) integrates all three and
+shares `generate/index.ts` + CLI + schema, so it lands last, sequentially.
+Decisions `0019-runtime-scoping-model.md`, `0020-css-scoping-and-theme-api.md`,
+and `0021-submit-events.md` cover this batch.
