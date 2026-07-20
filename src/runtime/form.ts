@@ -1,7 +1,8 @@
 // Browser-side runtime, bundled and inlined into the generated HTML.
-// Imports from src/schema must stay type-only so the bundle carries no
-// server-side dependencies. src/generate/ids.ts is a pure string helper and
-// safe to bundle; it keeps the element-id conventions in one place.
+// Imports from src/schema must stay type-only. src/generate/ids.ts is a pure
+// string helper and safe to bundle; it keeps the element-id conventions in one
+// place. Everything is scoped to a root element (decision 0019): a document can
+// host more than one form, so nothing is looked up document-wide.
 import { errorId } from "../generate/ids.ts";
 import { formatMessage, resolveMessages } from "../messages.ts";
 import type {
@@ -44,42 +45,45 @@ function attrEscape(value: string): string {
 	return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 }
 
-function scrollBehavior(doc: Document): "auto" | "smooth" {
-	return doc.defaultView?.matchMedia?.("(prefers-reduced-motion: reduce)")
-		.matches
+function scrollBehavior(root: Element): "auto" | "smooth" {
+	return root.ownerDocument?.defaultView?.matchMedia?.(
+		"(prefers-reduced-motion: reduce)",
+	).matches
 		? "auto"
 		: "smooth";
 }
 
-export function readFormData(doc: Document): Form {
-	const el = doc.querySelector(
-		'script[type="application/json"]#yaml-form-data',
+export function readFormData(root: ParentNode): Form {
+	const el = root.querySelector(
+		'script[type="application/json"].yaml-form-data',
 	);
 	if (!el?.textContent)
 		throw new Error("yaml-form: embedded form data missing");
 	return JSON.parse(el.textContent) as Form;
 }
 
-function inputsByName(doc: Document, name: string): HTMLInputElement[] {
+function inputsByName(root: ParentNode, name: string): HTMLInputElement[] {
 	return Array.from(
-		doc.querySelectorAll<HTMLInputElement>(`input[name="${attrEscape(name)}"]`),
+		root.querySelectorAll<HTMLInputElement>(
+			`input[name="${attrEscape(name)}"]`,
+		),
 	);
 }
 
 function readItemValue(
-	doc: Document,
+	root: ParentNode,
 	item: FormItem,
 ): string | string[] | undefined {
 	switch (item.type) {
 		case "short_text":
 		case "long_text": {
-			const el = doc.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+			const el = root.querySelector<HTMLInputElement | HTMLTextAreaElement>(
 				`[name="${attrEscape(item.id)}"]`,
 			);
 			return el?.value ?? "";
 		}
 		case "choice": {
-			const selected = inputsByName(doc, item.id)
+			const selected = inputsByName(root, item.id)
 				.filter((el) => el.checked)
 				.map((el) => el.value);
 			if (item.multiple) return selected;
@@ -92,38 +96,38 @@ function readItemValue(
 }
 
 function readRowSelection(
-	doc: Document,
+	root: ParentNode,
 	item: ChoiceTableItem | RubricItem,
 	rowKey: string,
 ): string[] {
-	return inputsByName(doc, `${item.id}.${rowKey}`)
+	return inputsByName(root, `${item.id}.${rowKey}`)
 		.filter((el) => el.checked)
 		.map((el) => el.value);
 }
 
 function readRowComment(
-	doc: Document,
+	root: ParentNode,
 	item: RubricItem,
 	rowKey: string,
 ): string {
-	const el = doc.querySelector<HTMLTextAreaElement>(
+	const el = root.querySelector<HTMLTextAreaElement>(
 		`[name="${attrEscape(`${item.id}.${rowKey}.comment`)}"]`,
 	);
 	return el?.value ?? "";
 }
 
 function readTableValue(
-	doc: Document,
+	root: ParentNode,
 	item: ChoiceTableItem | RubricItem,
 ): Record<string, TableRowAnswer> {
 	const rows: Record<string, TableRowAnswer> = {};
 	for (const row of item.items) {
-		const selected = readRowSelection(doc, item, row.key);
+		const selected = readRowSelection(root, item, row.key);
 		if (item.type === "choice_table" && item.multiple) {
 			if (selected.length > 0) rows[row.key] = selected;
 		} else if (item.type === "rubric" && item.comment_per_row) {
 			const value = selected[0];
-			const comment = readRowComment(doc, item, row.key);
+			const comment = readRowComment(root, item, row.key);
 			if (value === undefined && comment.trim() === "") continue;
 			const entry: { value?: string; comment?: string } = {};
 			if (value !== undefined) entry.value = value;
@@ -144,7 +148,7 @@ function isAnswered(value: string | string[] | undefined): boolean {
 
 // Answers of every item as rules see them, regardless of visibility; the
 // visibility pass itself excludes hidden items' answers.
-function readRawAnswers(doc: Document, form: Form): RawAnswers {
+function readRawAnswers(root: ParentNode, form: Form): RawAnswers {
 	const raw: RawAnswers = {};
 	for (const item of form.items) {
 		if (item.type === "constant") {
@@ -152,10 +156,10 @@ function readRawAnswers(doc: Document, form: Form): RawAnswers {
 			continue;
 		}
 		if (item.type === "choice_table" || item.type === "rubric") {
-			raw[item.id] = readTableValue(doc, item) as RawAnswers[string];
+			raw[item.id] = readTableValue(root, item) as RawAnswers[string];
 			continue;
 		}
-		const value = readItemValue(doc, item);
+		const value = readItemValue(root, item);
 		if (value !== undefined) raw[item.id] = value;
 	}
 	return raw;
@@ -163,23 +167,23 @@ function readRawAnswers(doc: Document, form: Form): RawAnswers {
 
 // Reflects the hidden attribute maintained by the visibility pass (initForm
 // and change events); items without a rule are always visible.
-function isItemVisible(doc: Document, item: FormItem): boolean {
+function isItemVisible(root: ParentNode, item: FormItem): boolean {
 	if (item.visible_when === undefined) return true;
-	const el = doc.querySelector(`[data-item-id="${attrEscape(item.id)}"]`);
+	const el = root.querySelector(`[data-item-id="${attrEscape(item.id)}"]`);
 	return el ? !el.hasAttribute("hidden") : true;
 }
 
-export function validateRequired(doc: Document): RequiredFailure[] {
-	const form = readFormData(doc);
+export function validateRequired(root: ParentNode): RequiredFailure[] {
+	const form = readFormData(root);
 	const messages = resolveMessages(form);
 	const failures: RequiredFailure[] = [];
 	for (const item of form.items) {
 		if (!item.required || item.type === "constant") continue;
-		if (!isItemVisible(doc, item)) continue;
+		if (!isItemVisible(root, item)) continue;
 		if (item.type === "choice_table" || item.type === "rubric") {
 			// required = every row has a selection; a comment alone is not enough
 			for (const row of item.items) {
-				if (readRowSelection(doc, item, row.key).length === 0) {
+				if (readRowSelection(root, item, row.key).length === 0) {
 					failures.push({
 						itemId: item.id,
 						rowKey: row.key,
@@ -192,7 +196,7 @@ export function validateRequired(doc: Document): RequiredFailure[] {
 			}
 			continue;
 		}
-		if (!isAnswered(readItemValue(doc, item))) {
+		if (!isAnswered(readItemValue(root, item))) {
 			failures.push({
 				itemId: item.id,
 				message: formatMessage(messages.required, { title: item.title }),
@@ -202,23 +206,23 @@ export function validateRequired(doc: Document): RequiredFailure[] {
 	return failures;
 }
 
-export function collectAnswers(doc: Document): Answers {
-	const form = readFormData(doc);
+export function collectAnswers(root: ParentNode): Answers {
+	const form = readFormData(root);
 	const answers: Answers = {};
 	for (const item of form.items) {
-		if (!isItemVisible(doc, item)) continue;
+		if (!isItemVisible(root, item)) continue;
 		switch (item.type) {
 			case "constant":
 				answers[item.id] = item.value;
 				break;
 			case "short_text":
 			case "long_text": {
-				const value = readItemValue(doc, item);
+				const value = readItemValue(root, item);
 				answers[item.id] = typeof value === "string" ? value : "";
 				break;
 			}
 			case "choice": {
-				const value = readItemValue(doc, item);
+				const value = readItemValue(root, item);
 				if (isAnswered(value) && value !== undefined) {
 					answers[item.id] = value;
 				}
@@ -226,7 +230,7 @@ export function collectAnswers(doc: Document): Answers {
 			}
 			case "choice_table":
 			case "rubric": {
-				const rows = readTableValue(doc, item);
+				const rows = readTableValue(root, item);
 				if (Object.keys(rows).length > 0) {
 					answers[item.id] = rows;
 				}
@@ -240,12 +244,12 @@ export function collectAnswers(doc: Document): Answers {
 // Elements that carry aria-invalid for a failure key: the choice group
 // wrapper when the item renders one, otherwise every control named after the
 // key (text inputs/textareas, a table row's cell inputs).
-function invalidTargets(doc: Document, key: string): Element[] {
-	const group = doc.querySelector(
+function invalidTargets(root: ParentNode, key: string): Element[] {
+	const group = root.querySelector(
 		`[data-item-id="${attrEscape(key)}"] [role="group"]`,
 	);
 	if (group) return [group];
-	return Array.from(doc.querySelectorAll(`[name="${attrEscape(key)}"]`));
+	return Array.from(root.querySelectorAll(`[name="${attrEscape(key)}"]`));
 }
 
 function addDescribedBy(el: Element, id: string): void {
@@ -264,25 +268,27 @@ function removeDescribedBy(el: Element, id: string): void {
 	else el.setAttribute("aria-describedby", tokens.join(" "));
 }
 
-function setInvalidState(doc: Document, key: string, invalid: boolean): void {
-	for (const el of invalidTargets(doc, key)) {
+// The root element's id is the per-form id prefix (decision 0019): a11y ids
+// stay unique across forms on one page. "" for an id-less standalone form.
+function setInvalidState(root: Element, key: string, invalid: boolean): void {
+	for (const el of invalidTargets(root, key)) {
 		if (invalid) {
 			el.setAttribute("aria-invalid", "true");
-			addDescribedBy(el, errorId(key));
+			addDescribedBy(el, errorId(root.id, key));
 		} else {
 			el.removeAttribute("aria-invalid");
-			removeDescribedBy(el, errorId(key));
+			removeDescribedBy(el, errorId(root.id, key));
 		}
 	}
 }
 
 // Table-row slots are generated without announcement attributes; make every
 // slot an addressable live region before the first submit can populate it.
-function initErrorSlots(doc: Document): void {
-	for (const el of Array.from(doc.querySelectorAll("[data-error-for]"))) {
+function initErrorSlots(root: Element): void {
+	for (const el of Array.from(root.querySelectorAll("[data-error-for]"))) {
 		const key = el.getAttribute("data-error-for");
 		if (!key) continue;
-		if (!el.id) el.id = errorId(key);
+		if (!el.id) el.id = errorId(root.id, key);
 		if (!el.hasAttribute("role")) el.setAttribute("role", "alert");
 	}
 }
@@ -290,17 +296,17 @@ function initErrorSlots(doc: Document): void {
 // Live clearing while the user edits: the failure key doubles as the control
 // name, so the edited control names exactly the error to retract. Errors only
 // come back on the next submit — no re-validation mid-edit.
-function clearFieldError(doc: Document, key: string): void {
-	const slot = doc.querySelector(`[data-error-for="${attrEscape(key)}"]`);
+function clearFieldError(root: Element, key: string): void {
+	const slot = root.querySelector(`[data-error-for="${attrEscape(key)}"]`);
 	if (!slot || slot.hasAttribute("hidden")) return;
 	slot.textContent = "";
 	slot.setAttribute("hidden", "");
-	setInvalidState(doc, key, false);
+	setInvalidState(root, key, false);
 }
 
-function showErrors(doc: Document, failures: RequiredFailure[]): void {
+function showErrors(root: Element, failures: RequiredFailure[]): void {
 	// Covers item-level slots and the per-row slots inside tables.
-	for (const el of Array.from(doc.querySelectorAll("[data-error-for]"))) {
+	for (const el of Array.from(root.querySelectorAll("[data-error-for]"))) {
 		const key = el.getAttribute("data-error-for");
 		if (key === null) continue;
 		const failure = failures.find((f) => failureKey(f) === key);
@@ -311,21 +317,21 @@ function showErrors(doc: Document, failures: RequiredFailure[]): void {
 			el.textContent = "";
 			el.setAttribute("hidden", "");
 		}
-		setInvalidState(doc, key, failure !== undefined);
+		setInvalidState(root, key, failure !== undefined);
 	}
 }
 
-export function initForm(doc: Document): void {
-	const formEl = doc.querySelector("form#yaml-form");
+export function initForm(root: Element): void {
+	const formEl = root.querySelector("form");
 	if (!formEl) return;
-	initTableScroll(doc);
+	initTableScroll(root);
 	// Prefill runs before the evaluator is built and before the first
 	// visibility pass, so rules see prefilled answers on first render.
-	const form = applyPrefill(doc, readFormData(doc));
-	initErrorSlots(doc);
+	const form = applyPrefill(root, readFormData(root));
+	initErrorSlots(root);
 	const visibility = createVisibilityEvaluator(form);
 	const refreshVisibility = () =>
-		applyVisibility(doc, visibility.compute(readRawAnswers(doc, form)));
+		applyVisibility(root, visibility.compute(readRawAnswers(root, form)));
 	// Pristine prefilled state, rebuilt in place: empty every field, then
 	// re-apply the URL prefill. Discard uses this instead of a reload.
 	const resetForm = () => {
@@ -340,22 +346,22 @@ export function initForm(doc: Document): void {
 				el.value = "";
 			}
 		}
-		applyPrefill(doc, form);
+		applyPrefill(root, form);
 		refreshVisibility();
 	};
 	// Draft restore runs after prefill (draft overlays it) and before the
 	// first refreshVisibility() below, so rules see restored answers.
 	const draft = initDraft(
-		doc,
+		root,
 		form,
-		() => readRawAnswers(doc, form),
+		() => readRawAnswers(root, form),
 		resetForm,
 	);
 	const onEdit = (event: Event) => {
 		refreshVisibility();
 		draft?.save();
 		const name = (event.target as Element | null)?.getAttribute?.("name");
-		if (name) clearFieldError(doc, name);
+		if (name) clearFieldError(root, name);
 	};
 	formEl.addEventListener("change", onEdit);
 	// text fields fire "input" per keystroke; "change" only on commit
@@ -368,23 +374,23 @@ export function initForm(doc: Document): void {
 			?.closest("[data-item-id]")
 			?.getAttribute("data-item-id");
 		if (!itemId) return;
-		for (const input of inputsByName(doc, itemId)) input.checked = false;
+		for (const input of inputsByName(root, itemId)) input.checked = false;
 		refreshVisibility();
 		draft?.save();
 	});
 	refreshVisibility();
 	formEl.addEventListener("submit", (event) => {
 		event.preventDefault();
-		const failures = validateRequired(doc);
-		showErrors(doc, failures);
+		const failures = validateRequired(root);
+		showErrors(root, failures);
 		const first = failures[0];
 		if (first) {
-			doc
+			root
 				.querySelector(`[data-item-id="${attrEscape(first.itemId)}"]`)
-				?.scrollIntoView?.({ behavior: scrollBehavior(doc), block: "center" });
+				?.scrollIntoView?.({ behavior: scrollBehavior(root), block: "center" });
 			// Any failing control shares its failure key as the input name; a
 			// choice group's first radio/checkbox doubles as the focus target.
-			doc
+			root
 				.querySelector<HTMLElement>(`[name="${attrEscape(failureKey(first))}"]`)
 				?.focus?.({ preventScroll: true });
 			return;
@@ -395,9 +401,9 @@ export function initForm(doc: Document): void {
 			? undefined
 			: () => draft?.clear();
 		void performSubmit(
-			doc,
-			readFormData(doc),
-			collectAnswers(doc),
+			root,
+			readFormData(root),
+			collectAnswers(root),
 			undefined,
 			clearDraft,
 		);

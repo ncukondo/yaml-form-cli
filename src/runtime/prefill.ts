@@ -69,11 +69,11 @@ function warn(message: string): void {
 }
 
 export function applyTextValue(
-	doc: Document,
+	root: ParentNode,
 	name: string,
 	value: string,
 ): void {
-	const el = doc.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+	const el = root.querySelector<HTMLInputElement | HTMLTextAreaElement>(
 		`[name="${attrEscape(name)}"]`,
 	);
 	if (el) el.value = value;
@@ -86,12 +86,14 @@ export function applyTextValue(
  * callers — URL prefill here, draft restore in draft.ts.
  */
 export function applySelection(
-	doc: Document,
+	root: ParentNode,
 	name: string,
 	values: ReadonlySet<string>,
 ): void {
 	const inputs = Array.from(
-		doc.querySelectorAll<HTMLInputElement>(`input[name="${attrEscape(name)}"]`),
+		root.querySelectorAll<HTMLInputElement>(
+			`input[name="${attrEscape(name)}"]`,
+		),
 	);
 	for (const input of inputs) input.checked = values.has(input.value);
 }
@@ -128,14 +130,16 @@ function selectionFromParams(
 
 /**
  * Apply `location.search` to the form. Constant overrides rewrite the
- * embedded `#yaml-form-data` JSON once, so rules, collectAnswers, and the
+ * embedded `.yaml-form-data` JSON once, so rules, collectAnswers, and the
  * submit payload all see them; the returned form reflects the overrides.
  * Values reach the DOM via `input.value` / `checked` / `textContent` only —
  * URL data has no XSS path. Never throws error slots open and never breaks
- * rendering: unknown names and values are warn-and-ignore.
+ * rendering: unknown names and values are warn-and-ignore. The one page URL is
+ * shared by every form on it (decision 0019): a param applies to any form
+ * whose answer keys match.
  */
-export function applyPrefill(doc: Document, form: Form): Form {
-	const search = doc.defaultView?.location?.search ?? "";
+export function applyPrefill(root: Element, form: Form): Form {
+	const search = root.ownerDocument?.defaultView?.location?.search ?? "";
 	if (search === "" || search === "?") return form;
 	const params = new URLSearchParams(search);
 	const targets = enumerateTargets(form);
@@ -151,11 +155,11 @@ export function applyPrefill(doc: Document, form: Form): Form {
 		const last = values[values.length - 1];
 		switch (target.kind) {
 			case "text":
-				if (last !== undefined) applyTextValue(doc, key, last);
+				if (last !== undefined) applyTextValue(root, key, last);
 				break;
 			case "choice": {
 				const selection = selectionFromParams(target, key, values);
-				if (selection) applySelection(doc, key, selection);
+				if (selection) applySelection(root, key, selection);
 				break;
 			}
 			case "constant":
@@ -169,13 +173,13 @@ export function applyPrefill(doc: Document, form: Form): Form {
 		const value = overrides.get(item.id);
 		if (item.type !== "constant" || value === undefined) continue;
 		item.value = value;
-		const rendered = doc.querySelector(
+		const rendered = root.querySelector(
 			`[data-item-id="${attrEscape(item.id)}"] .constant-value`,
 		);
 		if (rendered) rendered.textContent = value;
 	}
-	const el = doc.querySelector(
-		'script[type="application/json"]#yaml-form-data',
+	const el = root.querySelector(
+		'script[type="application/json"].yaml-form-data',
 	);
 	// <-escape mirrors generation so "</script>" can never appear in the data
 	if (el) el.textContent = JSON.stringify(form).replaceAll("<", "\\u003c");

@@ -17,12 +17,12 @@ async function loadDom(source: string) {
 	const window = new Window();
 	window.document.write(html);
 	const document = window.document as unknown as Document;
-	initForm(document);
+	initForm(document.querySelector(".yaml-form-root") as Element);
 	return { document, window };
 }
 
 function submitForm(doc: Document) {
-	const form = doc.querySelector("form#yaml-form") as HTMLFormElement;
+	const form = doc.querySelector(".yaml-form-root form") as HTMLFormElement;
 	const EventCtor = (doc.defaultView as unknown as { Event: typeof Event })
 		.Event;
 	form.dispatchEvent(
@@ -102,7 +102,7 @@ describe("submit flow messages", () => {
 				}),
 		);
 		const button = document.querySelector(
-			'form#yaml-form button[type="submit"]',
+			'.yaml-form-root form button[type="submit"]',
 		) as HTMLButtonElement;
 		expect(button.textContent).toBe("送信");
 
@@ -113,7 +113,7 @@ describe("submit flow messages", () => {
 		rejectFetch(new Error("network down"));
 		await flush();
 		expect(button.textContent).toBe("送信");
-		expect(document.querySelector("#yaml-form-error")?.textContent).toBe(
+		expect(document.querySelector(".form-error")?.textContent).toBe(
 			"送信に失敗しました。もう一度お試しください。",
 		);
 	});
@@ -127,8 +127,7 @@ describe("submit flow messages", () => {
 		submitForm(document);
 		await flush();
 		expect(
-			document.querySelector("#yaml-form-success .success-message")
-				?.textContent,
+			document.querySelector(".form-success .success-message")?.textContent,
 		).toBe("回答を送信しました。");
 	});
 
@@ -145,8 +144,7 @@ messages:
 		submitForm(document);
 		await flush();
 		expect(
-			document.querySelector("#yaml-form-success .success-message")
-				?.textContent,
+			document.querySelector(".form-success .success-message")?.textContent,
 		).toBe("ありがとうございました。");
 	});
 });

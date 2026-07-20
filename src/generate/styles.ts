@@ -45,43 +45,148 @@ ${header} {
 
 const columnHighlightStyles = columnHighlight();
 
-export const baseStyles = `
-:root {
+const ROOT = ".yaml-form-root";
+
+/**
+ * Scope a stylesheet under ROOT by prefixing every selector (decision 0020).
+ * String prefixing instead of native CSS nesting keeps the emitted sheet
+ * working in browsers without nesting support (the sheet already ships
+ * `@supports not selector(:has())` fallbacks) and keeps the tests' exact
+ * selector-string matching viable. Selectors already anchored on ROOT — the
+ * root's own declarations — pass through untouched; grouping at-rules
+ * (@media, @supports) are descended into and their rules scoped the same way.
+ */
+function scopeCss(css: string): string {
+	let out = "";
+	let prelude = "";
+	let i = 0;
+	while (i < css.length) {
+		if (css.startsWith("/*", i)) {
+			const end = css.indexOf("*/", i) + 2;
+			prelude += css.slice(i, end);
+			i = end;
+			continue;
+		}
+		if (css[i] === "{") {
+			const end = matchingBrace(css, i);
+			const body = css.slice(i + 1, end);
+			out += isAtRule(prelude)
+				? `${prelude}{${scopeCss(body)}}`
+				: `${scopeSelectors(prelude)}{${body}}`;
+			prelude = "";
+			i = end + 1;
+		} else {
+			prelude += css[i];
+			i++;
+		}
+	}
+	// trailing whitespace/comments after the last rule
+	return out + prelude;
+}
+
+function matchingBrace(css: string, open: number): number {
+	let depth = 0;
+	for (let i = open; i < css.length; i++) {
+		if (css.startsWith("/*", i)) {
+			i = css.indexOf("*/", i) + 1;
+			continue;
+		}
+		if (css[i] === "{") depth++;
+		else if (css[i] === "}") {
+			depth--;
+			if (depth === 0) return i;
+		}
+	}
+	throw new Error("unbalanced braces in stylesheet");
+}
+
+function isAtRule(prelude: string): boolean {
+	let i = 0;
+	while (i < prelude.length) {
+		if (prelude.startsWith("/*", i)) {
+			i = prelude.indexOf("*/", i) + 2;
+			continue;
+		}
+		if (/\s/.test(prelude[i] as string)) {
+			i++;
+			continue;
+		}
+		return prelude[i] === "@";
+	}
+	return false;
+}
+
+/**
+ * Prefix each selector in a (possibly comment-led, multi-line) selector list
+ * with ROOT, splitting only on top-level commas so :is()/:has() argument
+ * lists stay intact. Formatting (newlines, indentation) is preserved.
+ */
+function scopeSelectors(prelude: string): string {
+	let out = "";
+	let depth = 0;
+	let atStart = true;
+	let i = 0;
+	while (i < prelude.length) {
+		if (prelude.startsWith("/*", i)) {
+			const end = prelude.indexOf("*/", i) + 2;
+			out += prelude.slice(i, end);
+			i = end;
+			continue;
+		}
+		const ch = prelude[i] as string;
+		if (atStart && !/\s/.test(ch)) {
+			if (!prelude.startsWith(ROOT, i)) out += `${ROOT} `;
+			atStart = false;
+		}
+		if (ch === "(") depth++;
+		else if (ch === ")") depth--;
+		else if (ch === "," && depth === 0) atStart = true;
+		out += ch;
+		i++;
+	}
+	return out;
+}
+
+/**
+ * Core stylesheet, shared by standalone documents and fragments: every rule
+ * is anchored on .yaml-form-root (via scopeCss below), so nothing leaks into
+ * a host page. Rules already written on .yaml-form-root style the root
+ * itself. font-family is deliberately never set here — host fonts inherit
+ * into the form (decision 0020); the standalone page reset lives in
+ * standaloneStyles.
+ */
+export const baseStyles = scopeCss(`
+.yaml-form-root {
 	color-scheme: light dark;
-	--fg: #1a1a1a;
-	--bg: #ffffff;
+	/* Public theme knobs (decision 0020): hosts set --yf-* on .yaml-form-root
+	   or an ancestor in their own CSS; unset knobs keep the defaults below.
+	   Unprefixed tokens are private and may change. */
+	--fg: var(--yf-fg, #1a1a1a);
+	--bg: var(--yf-bg, #ffffff);
 	--muted: #555;
 	--border: #ccc;
 	--border-input: #767676;
-	--accent: #2563eb;
-	--accent-contrast: #ffffff;
+	--accent: var(--yf-accent, #2563eb);
+	--accent-contrast: var(--yf-accent-contrast, #ffffff);
 	--error: #b91c1c;
+	/* Pinned so a host page's own values cannot render the form unreadable. */
+	font-size: var(--yf-font-size, 1rem);
+	line-height: 1.6;
+	color: var(--fg);
 }
 @media (prefers-color-scheme: dark) {
-	:root {
-		--fg: #e5e5e5;
-		--bg: #171717;
+	.yaml-form-root {
+		--fg: var(--yf-fg, #e5e5e5);
+		--bg: var(--yf-bg, #171717);
 		--muted: #a3a3a3;
 		--border: #444;
 		--border-input: #8a8a8a;
-		--accent: #60a5fa;
-		--accent-contrast: #171717;
+		--accent: var(--yf-accent, #60a5fa);
+		--accent-contrast: var(--yf-accent-contrast, #171717);
 		--error: #f87171;
 	}
 }
-* { box-sizing: border-box; }
-body {
-	margin: 0;
-	font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-	line-height: 1.6;
-	color: var(--fg);
-	background: var(--bg);
-}
-.container {
-	max-width: 46rem;
-	margin: 0 auto;
-	padding: 1.5rem 1rem 4rem;
-}
+.yaml-form-root, .yaml-form-root * { box-sizing: border-box; }
 h1 { font-size: 1.6rem; margin: 0 0 0.5rem; }
 .form-description {
 	white-space: pre-line;
@@ -497,11 +602,11 @@ button[type="submit"]:active:not(:disabled) { filter: brightness(0.8); }
 	padding: 0.5rem 0.75rem;
 	margin: 0;
 }
-`;
+`);
 
 // Appended only for autosaving forms (generate/index.ts): the restore-notice
 // slot is the sole consumer of these rules.
-export const draftStyles = `
+export const draftStyles = scopeCss(`
 /* display: flex below beats the UA's [hidden] { display: none }, so the
    pre-restore hidden state needs its own higher-specificity rule. */
 .draft-notice[hidden] {
@@ -528,5 +633,39 @@ export const draftStyles = `
 	border-radius: 0.375rem;
 	padding: 0.25rem 0.75rem;
 	cursor: pointer;
+}
+`);
+
+// Page-level reset and container layout, appended only to standalone documents
+// (generate/index.ts) — a fragment must never restyle the host page, and its
+// width/placement is the host's concern (decision 0020). Deliberately left
+// unscoped: this is where the page canvas and the font-family default live;
+// fragments inherit the host's font instead, and .yaml-form-root pins
+// color/line-height above. The --yf-* fallbacks mirror the root's tokens so
+// the canvas matches the form in both schemes.
+//
+// `.container` targets the root <main class="container yaml-form-root"> itself,
+// so it must stay OUT of the scoped baseStyles: scopeCss would rewrite it to
+// the descendant selector `.yaml-form-root .container`, which can never match
+// an element against itself and would silently drop the page layout.
+export const standaloneStyles = `
+:root { color-scheme: light dark; }
+body {
+	margin: 0;
+	font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+	line-height: 1.6;
+	color: var(--yf-fg, #1a1a1a);
+	background: var(--yf-bg, #ffffff);
+}
+.container {
+	max-width: 46rem;
+	margin: 0 auto;
+	padding: 1.5rem 1rem 4rem;
+}
+@media (prefers-color-scheme: dark) {
+	body {
+		color: var(--yf-fg, #e5e5e5);
+		background: var(--yf-bg, #171717);
+	}
 }
 `;

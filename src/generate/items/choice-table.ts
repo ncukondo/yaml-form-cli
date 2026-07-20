@@ -1,7 +1,7 @@
 import { formatMessage, type Messages } from "../../messages.ts";
 import type { ChoiceTableItem, RubricItem } from "../../schema/form-schema.ts";
 import { escapeAttr, escapeHtml } from "../escape.ts";
-import { labelId } from "../ids.ts";
+import { descriptorId, labelId } from "../ids.ts";
 
 type TableItem = ChoiceTableItem | RubricItem;
 
@@ -16,6 +16,8 @@ export interface TableOptions {
 	inputKind: "radio" | "checkbox";
 	/** Resolved UI strings (per-row comment labels). */
 	messages: Messages;
+	/** Per-form id prefix (decision 0019); "" for an id-less standalone form. */
+	prefix: string;
 	/** Per-cell descriptor texts for a row, in column order (rubric). */
 	descriptorsFor?: (rowIndex: number) => readonly string[];
 	commentPerRow?: boolean;
@@ -38,19 +40,20 @@ function renderCell(
 	choice: TableItem["choices"][number],
 	descriptor: string | undefined,
 	inputKind: "radio" | "checkbox",
+	prefix: string,
 ): string {
 	const name = `${item.id}.${row.key}`;
 	// The aria-label overrides the visible label text, so the descriptor must
 	// be linked back via aria-describedby to stay reachable to AT.
-	const descriptorId = `${name}.${choice.value}.descriptor`;
+	const cellDescriptorId = descriptorId(prefix, `${name}.${choice.value}`);
 	const descriptorHtml =
 		descriptor === undefined
 			? ""
-			: `<span class="cell-descriptor" id="${escapeAttr(descriptorId)}">${escapeHtml(descriptor)}</span>`;
+			: `<span class="cell-descriptor" id="${escapeAttr(cellDescriptorId)}">${escapeHtml(descriptor)}</span>`;
 	const describedBy =
 		descriptor === undefined
 			? ""
-			: ` aria-describedby="${escapeAttr(descriptorId)}"`;
+			: ` aria-describedby="${escapeAttr(cellDescriptorId)}"`;
 	const required = item.required ? ' aria-required="true"' : "";
 	return `<td class="table-cell" role="cell"><label class="table-cell-label"><input type="${inputKind}" name="${escapeAttr(name)}" value="${escapeAttr(choice.value)}" aria-label="${escapeAttr(cellAccessibleName(row.title, choice.title))}"${describedBy}${required}><span class="cell-choice">${escapeHtml(choice.title)}</span>${descriptorHtml}</label></td>`;
 }
@@ -65,7 +68,14 @@ function renderRow(
 	const descriptors = options.descriptorsFor?.(rowIndex);
 	const cells = item.choices
 		.map((choice, colIndex) =>
-			renderCell(item, row, choice, descriptors?.[colIndex], options.inputKind),
+			renderCell(
+				item,
+				row,
+				choice,
+				descriptors?.[colIndex],
+				options.inputKind,
+				options.prefix,
+			),
 		)
 		.join("\n");
 	const rowHtml = `<tr class="table-row" role="row" data-row-key="${escapeAttr(row.key)}">
@@ -108,7 +118,7 @@ export function renderTable(item: TableItem, options: TableOptions): string {
 	// Explicit ARIA roles mirror the implicit table semantics: the stacked
 	// mobile layout (display: block in styles.ts) would otherwise strip them.
 	return `<div class="${wrapperClass}">
-<table class="choice-table" role="table" data-table-for="${escapeAttr(item.id)}" aria-labelledby="${escapeAttr(labelId(item.id))}">
+<table class="choice-table" role="table" data-table-for="${escapeAttr(item.id)}" aria-labelledby="${escapeAttr(labelId(options.prefix, item.id))}">
 <thead role="rowgroup">
 <tr role="row"><th role="columnheader" class="table-corner"></th>${headCells}</tr>
 </thead>
@@ -122,10 +132,12 @@ ${bodyRows}
 export function renderChoiceTable(
 	item: ChoiceTableItem,
 	messages: Messages,
+	prefix: string,
 ): string {
 	return renderTable(item, {
 		inputKind: item.multiple ? "checkbox" : "radio",
 		messages,
+		prefix,
 		mobileWide: item.choices.length >= MOBILE_WIDE_TABLE_MIN_COLS,
 	});
 }

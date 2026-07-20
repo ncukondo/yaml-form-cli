@@ -24,12 +24,12 @@ async function loadDom(source: string) {
 	const window = new Window();
 	window.document.write(html);
 	const document = window.document as unknown as Document;
-	initForm(document);
+	initForm(document.querySelector(".yaml-form-root") as Element);
 	return { document, window };
 }
 
 function submitForm(doc: Document) {
-	const form = doc.querySelector("form#yaml-form") as HTMLFormElement;
+	const form = doc.querySelector(".yaml-form-root form") as HTMLFormElement;
 	const EventCtor = (doc.defaultView as unknown as { Event: typeof Event })
 		.Event;
 	form.dispatchEvent(
@@ -444,9 +444,9 @@ items:
 		submitForm(document);
 		await flush();
 		expect(
-			document.querySelector("form#yaml-form")?.hasAttribute("hidden"),
+			document.querySelector(".yaml-form-root form")?.hasAttribute("hidden"),
 		).toBe(true);
-		const success = document.querySelector("#yaml-form-success");
+		const success = document.querySelector(".form-success");
 		expect(success?.hasAttribute("hidden")).toBe(false);
 		// the message lands in the dedicated slot, next to the checkmark icon
 		expect(success?.querySelector(".success-message")?.textContent).toBe(
@@ -476,7 +476,7 @@ items:
 `);
 		submitForm(document);
 		await flush();
-		const success = document.querySelector("#yaml-form-success");
+		const success = document.querySelector(".form-success");
 		expect(success?.hasAttribute("hidden")).toBe(false);
 		expect(success?.querySelector(".success-message")?.textContent).toBe(
 			"Your response has been submitted.",
@@ -506,9 +506,9 @@ items:
 
 		// Form stays with input preserved and a visible error message.
 		expect(
-			document.querySelector("form#yaml-form")?.hasAttribute("hidden"),
+			document.querySelector(".yaml-form-root form")?.hasAttribute("hidden"),
 		).toBe(false);
-		const error = document.querySelector("#yaml-form-error");
+		const error = document.querySelector(".form-error");
 		expect(error?.hasAttribute("hidden")).toBe(false);
 		expect(error?.textContent).not.toBe("");
 		expect(
@@ -517,7 +517,7 @@ items:
 		expect(logSpy).toHaveBeenCalledTimes(1);
 		expect(failingFetch).toHaveBeenCalledTimes(1);
 		expect(
-			document.querySelector("#yaml-form-success")?.hasAttribute("hidden"),
+			document.querySelector(".form-success")?.hasAttribute("hidden"),
 		).toBe(true);
 
 		// Retry re-runs all actions from the start.
@@ -529,10 +529,10 @@ items:
 		expect(okFetch).toHaveBeenCalledTimes(1);
 		expect(error?.hasAttribute("hidden")).toBe(true);
 		expect(
-			document.querySelector("form#yaml-form")?.hasAttribute("hidden"),
+			document.querySelector(".yaml-form-root form")?.hasAttribute("hidden"),
 		).toBe(true);
 		expect(
-			document.querySelector("#yaml-form-success")?.hasAttribute("hidden"),
+			document.querySelector(".form-success")?.hasAttribute("hidden"),
 		).toBe(false);
 	});
 });

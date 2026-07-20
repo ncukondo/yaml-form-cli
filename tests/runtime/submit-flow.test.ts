@@ -18,12 +18,12 @@ async function loadDom(source: string) {
 	const window = new Window();
 	window.document.write(html);
 	const document = window.document as unknown as Document;
-	initForm(document);
+	initForm(document.querySelector(".yaml-form-root") as Element);
 	return { document, window };
 }
 
 function submitForm(doc: Document) {
-	const form = doc.querySelector("form#yaml-form") as HTMLFormElement;
+	const form = doc.querySelector(".yaml-form-root form") as HTMLFormElement;
 	const EventCtor = (doc.defaultView as unknown as { Event: typeof Event })
 		.Event;
 	form.dispatchEvent(
@@ -33,7 +33,7 @@ function submitForm(doc: Document) {
 
 function submitButton(doc: Document): HTMLButtonElement {
 	const button = doc.querySelector(
-		'form#yaml-form button[type="submit"]',
+		'.yaml-form-root form button[type="submit"]',
 	) as HTMLButtonElement | null;
 	if (!button) throw new Error("no submit button");
 	return button;
@@ -62,10 +62,10 @@ items:
 describe("a11y markup for submit outcomes", () => {
 	test("success section has role=status and is focusable; error has role=alert", async () => {
 		const { document } = await loadDom(postFormYaml);
-		const success = document.querySelector("#yaml-form-success");
+		const success = document.querySelector(".form-success");
 		expect(success?.getAttribute("role")).toBe("status");
 		expect(success?.getAttribute("tabindex")).toBe("-1");
-		const error = document.querySelector("#yaml-form-error");
+		const error = document.querySelector(".form-error");
 		expect(error?.getAttribute("role")).toBe("alert");
 	});
 });
@@ -121,12 +121,12 @@ describe("failure state", () => {
 		await flush();
 		expect(button.disabled).toBe(false);
 		expect(button.textContent).toBe(idleLabel);
-		const error = document.querySelector("#yaml-form-error");
+		const error = document.querySelector(".form-error");
 		expect(error?.hasAttribute("hidden")).toBe(false);
 		expect(error?.textContent).toBe(BUILTIN_MESSAGES.en.submit_failed);
 		// Form stays usable for a retry.
 		expect(
-			document.querySelector("form#yaml-form")?.hasAttribute("hidden"),
+			document.querySelector(".yaml-form-root form")?.hasAttribute("hidden"),
 		).toBe(false);
 	});
 
@@ -143,11 +143,11 @@ describe("failure state", () => {
 		submitForm(document);
 		await flush();
 		expect(okFetch).toHaveBeenCalledTimes(1);
+		expect(document.querySelector(".form-error")?.hasAttribute("hidden")).toBe(
+			true,
+		);
 		expect(
-			document.querySelector("#yaml-form-error")?.hasAttribute("hidden"),
-		).toBe(true);
-		expect(
-			document.querySelector("#yaml-form-success")?.hasAttribute("hidden"),
+			document.querySelector(".form-success")?.hasAttribute("hidden"),
 		).toBe(false);
 	});
 });
@@ -161,7 +161,7 @@ describe("success state", () => {
 		}));
 		submitForm(document);
 		await flush();
-		const success = document.querySelector("#yaml-form-success");
+		const success = document.querySelector(".form-success");
 		expect(success?.hasAttribute("hidden")).toBe(false);
 		expect(document.activeElement).toBe(success as Element);
 	});

@@ -15,7 +15,7 @@ async function loadDom(source: string) {
 	const window = new Window();
 	window.document.write(html);
 	const document = window.document as unknown as Document;
-	initForm(document);
+	initForm(document.querySelector(".yaml-form-root") as Element);
 	return document;
 }
 
@@ -77,7 +77,9 @@ describe("focus recovery when visible_when hides the focused item", () => {
 		doc.querySelector<HTMLInputElement>('[name="tail"]')?.focus();
 
 		selectChoice(doc, "gate", "no");
-		expect(activeDescriptor(doc)).toBe("yaml-form");
+		// The form has no id now (shell ids dropped for root-scoping, decision
+		// 0019); restoreFocus lands on the <form> element itself.
+		expect(activeDescriptor(doc)).toBe("form");
 	});
 
 	test("focus outside the hidden item is left alone", async () => {

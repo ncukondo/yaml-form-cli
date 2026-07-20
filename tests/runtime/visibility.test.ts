@@ -27,7 +27,7 @@ async function loadDom(source: string) {
 	const window = new Window();
 	window.document.write(html);
 	const document = window.document as unknown as Document;
-	initForm(document);
+	initForm(document.querySelector(".yaml-form-root") as Element);
 	return document;
 }
 

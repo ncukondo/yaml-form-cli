@@ -54,9 +54,9 @@ export function buildPayload(
 
 // The generator name/version is stamped into the page at generation time so
 // the (cacheable) runtime bundle stays version-independent.
-function readGenerator(doc: Document): string {
-	const el = doc.querySelector(
-		'script[type="application/json"]#yaml-form-meta',
+function readGenerator(root: Element): string {
+	const el = root.querySelector(
+		'script[type="application/json"].yaml-form-meta',
 	);
 	if (!el?.textContent) return "yaml-form";
 	try {
@@ -67,8 +67,8 @@ function readGenerator(doc: Document): string {
 	}
 }
 
-function defaultEnv(doc: Document): ActionEnv {
-	const win = doc.defaultView;
+function defaultEnv(root: Element): ActionEnv {
+	const win = root.ownerDocument?.defaultView ?? null;
 	return {
 		log: (...args) => {
 			win?.console.log(...args);
@@ -92,12 +92,12 @@ type SubmitState =
 	| { kind: "success" }
 	| { kind: "failure" };
 
-function submitButton(doc: Document): HTMLButtonElement | null {
-	return doc.querySelector('form#yaml-form button[type="submit"]');
+function submitButton(root: Element): HTMLButtonElement | null {
+	return root.querySelector('form button[type="submit"]');
 }
 
-function setError(doc: Document, message: string | null): void {
-	const errorEl = doc.querySelector("#yaml-form-error");
+function setError(root: Element, message: string | null): void {
+	const errorEl = root.querySelector(".form-error");
 	if (!errorEl) return;
 	if (message === null) {
 		errorEl.textContent = "";
@@ -108,14 +108,14 @@ function setError(doc: Document, message: string | null): void {
 	}
 }
 
-function showSuccess(doc: Document, form: Form, messages: Messages): void {
-	doc.querySelector("form#yaml-form")?.setAttribute("hidden", "");
+function showSuccess(root: Element, form: Form, messages: Messages): void {
+	root.querySelector("form")?.setAttribute("hidden", "");
 	// Keep the form title as context; the fill-in instructions are done with.
-	doc.querySelector(".form-description")?.setAttribute("hidden", "");
+	root.querySelector(".form-description")?.setAttribute("hidden", "");
 	// The restore notice belongs to the editing session; leaving it up would
 	// offer a "discard draft" reload from the success screen.
-	doc.querySelector("#yaml-form-draft-notice")?.setAttribute("hidden", "");
-	const successEl = doc.querySelector<HTMLElement>("#yaml-form-success");
+	root.querySelector(".draft-notice")?.setAttribute("hidden", "");
+	const successEl = root.querySelector<HTMLElement>(".form-success");
 	if (!successEl) return;
 	// Write into the message slot so the checkmark icon markup survives; fall
 	// back to the section itself for documents without the slot.
@@ -130,70 +130,121 @@ function showSuccess(doc: Document, form: Form, messages: Messages): void {
 }
 
 function applySubmitState(
-	doc: Document,
+	root: Element,
 	form: Form,
 	messages: Messages,
 	state: SubmitState,
 	idleLabel: string,
 ): void {
-	const button = submitButton(doc);
+	const button = submitButton(root);
 	switch (state.kind) {
 		case "pending":
 			if (button) {
 				button.disabled = true;
 				button.textContent = messages.submitting;
 			}
-			setError(doc, null);
+			setError(root, null);
 			break;
 		case "failure":
 			if (button) {
 				button.disabled = false;
 				button.textContent = idleLabel;
 			}
-			setError(doc, messages.submit_failed);
+			setError(root, messages.submit_failed);
 			break;
 		case "success":
 			if (button) {
 				button.disabled = false;
 				button.textContent = idleLabel;
 			}
-			showSuccess(doc, form, messages);
+			showSuccess(root, form, messages);
 			break;
 	}
 }
 
-// Documents with a submission in flight; blocks re-entry from a second
-// submit event (programmatic submits bypass the disabled button).
-const pendingDocs = new WeakSet<Document>();
+// Public submit-completion events (decision 0021): dispatched on the root,
+// bubbling so a host page can delegate from document; composed stays false
+// (no Shadow DOM support).
+export interface SubmitEventFormInfo {
+	id: string | undefined;
+	version: string | undefined;
+}
+export interface SubmitSuccessDetail {
+	form: SubmitEventFormInfo;
+	payload: SubmitPayload;
+}
+export interface SubmitErrorDetail {
+	form: SubmitEventFormInfo;
+	message: string;
+}
+
+function dispatchSubmitEvent(
+	root: Element,
+	type: "yaml-form:submit-success" | "yaml-form:submit-error",
+	detail: SubmitSuccessDetail | SubmitErrorDetail,
+): void {
+	// Use the root's own window so the event class matches its document (the
+	// two differ in DOM test environments).
+	const win = root.ownerDocument?.defaultView as
+		| { CustomEvent: typeof CustomEvent }
+		| null
+		| undefined;
+	const EventCtor = win?.CustomEvent ?? CustomEvent;
+	root.dispatchEvent(
+		new EventCtor(type, { bubbles: true, composed: false, detail }),
+	);
+}
+
+// Roots with a submission in flight; blocks re-entry from a second submit
+// event (programmatic submits bypass the disabled button). Keyed per root so
+// one form's in-flight submit never blocks another on the same page.
+const pendingRoots = new WeakSet<Element>();
 
 export async function performSubmit(
-	doc: Document,
+	root: Element,
 	form: Form,
 	answers: SubmitAnswers,
 	envOverride?: Partial<ActionEnv>,
 	/** Called once when all actions succeed (initForm clears the draft here). */
 	onSuccess?: () => void,
 ): Promise<void> {
-	if (pendingDocs.has(doc)) return;
-	pendingDocs.add(doc);
-	const env = { ...defaultEnv(doc), ...envOverride };
+	if (pendingRoots.has(root)) return;
+	pendingRoots.add(root);
+	const env = { ...defaultEnv(root), ...envOverride };
 	const messages = resolveMessages(form);
-	const idleLabel = submitButton(doc)?.textContent ?? messages.submit;
-	applySubmitState(doc, form, messages, { kind: "pending" }, idleLabel);
+	const idleLabel = submitButton(root)?.textContent ?? messages.submit;
+	applySubmitState(root, form, messages, { kind: "pending" }, idleLabel);
 	try {
 		const payload = buildPayload(form, answers, {
-			generator: readGenerator(doc),
+			generator: readGenerator(root),
 		});
 		const result = await runActions(form.actions, payload, form, env);
 		if (result.ok) onSuccess?.();
 		applySubmitState(
-			doc,
+			root,
 			form,
 			messages,
 			{ kind: result.ok ? "success" : "failure" },
 			idleLabel,
 		);
+		// Fired once per settled attempt, after the UI above, so listeners see a
+		// consistent DOM (decision 0021).
+		const formInfo: SubmitEventFormInfo = {
+			id: payload.form.id,
+			version: payload.form.version,
+		};
+		if (result.ok) {
+			dispatchSubmitEvent(root, "yaml-form:submit-success", {
+				form: formInfo,
+				payload,
+			});
+		} else {
+			dispatchSubmitEvent(root, "yaml-form:submit-error", {
+				form: formInfo,
+				message: result.message,
+			});
+		}
 	} finally {
-		pendingDocs.delete(doc);
+		pendingRoots.delete(root);
 	}
 }

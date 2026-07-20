@@ -52,7 +52,7 @@ describe("built-in ja bundle", () => {
 	test("localizes the submit button and required legend", async () => {
 		const { document } = await loadDom(`title: T\nlang: ja\n${requiredItem}`);
 		const button = document.querySelector(
-			'form#yaml-form button[type="submit"]',
+			'.yaml-form-root form button[type="submit"]',
 		);
 		expect(button?.textContent).toBe("送信");
 		const legend = document.querySelector(".required-legend");
@@ -73,7 +73,7 @@ describe("built-in ja bundle", () => {
 		);
 		expect(html).toContain('<html lang="xx">');
 		expect(
-			document.querySelector('form#yaml-form button[type="submit"]')
+			document.querySelector('.yaml-form-root form button[type="submit"]')
 				?.textContent,
 		).toBe("Submit");
 	});
@@ -140,7 +140,7 @@ messages:
   submit: 回答する
 ${requiredItem}`);
 		expect(
-			document.querySelector('form#yaml-form button[type="submit"]')
+			document.querySelector('.yaml-form-root form button[type="submit"]')
 				?.textContent,
 		).toBe("回答する");
 	});
@@ -169,7 +169,7 @@ ${requiredItem}`);
 	test("defaults stay English when nothing is configured", async () => {
 		const { document } = await loadDom(`title: T\n${requiredItem}`);
 		expect(
-			document.querySelector('form#yaml-form button[type="submit"]')
+			document.querySelector('.yaml-form-root form button[type="submit"]')
 				?.textContent,
 		).toBe("Submit");
 		expect(document.querySelector(".required-legend")?.textContent).toContain(
@@ -181,7 +181,7 @@ ${requiredItem}`);
 describe("draft notice slot", () => {
 	test("skeleton contains the hidden notice with message and discard button", async () => {
 		const { document } = await loadDom(`title: T\n${requiredItem}`);
-		const notice = document.querySelector("#yaml-form-draft-notice");
+		const notice = document.querySelector(".draft-notice");
 		expect(notice?.getAttribute("role")).toBe("status");
 		expect(notice?.hasAttribute("hidden")).toBe(true);
 		expect(notice?.querySelector(".draft-notice-message")?.textContent).toBe(
@@ -194,7 +194,7 @@ describe("draft notice slot", () => {
 
 	test("lang: ja localizes the notice and discard label", async () => {
 		const { document } = await loadDom(`title: T\nlang: ja\n${requiredItem}`);
-		const notice = document.querySelector("#yaml-form-draft-notice");
+		const notice = document.querySelector(".draft-notice");
 		expect(notice?.querySelector(".draft-notice-message")?.textContent).toBe(
 			"前回の入力内容を復元しました。",
 		);
@@ -207,7 +207,7 @@ describe("draft notice slot", () => {
 		const { document } = await loadDom(
 			`title: T\nautosave: false\n${requiredItem}`,
 		);
-		expect(document.querySelectorAll("#yaml-form-draft-notice").length).toBe(0);
+		expect(document.querySelectorAll(".draft-notice").length).toBe(0);
 		// The runtime bundle legitimately mentions the class; only the styles
 		// must be omitted.
 		expect(document.querySelector("style")?.textContent).not.toContain(
@@ -222,7 +222,7 @@ messages:
   draft_restored: Wiederhergestellt.
   draft_discard: Verwerfen
 ${requiredItem}`);
-		const notice = document.querySelector("#yaml-form-draft-notice");
+		const notice = document.querySelector(".draft-notice");
 		expect(notice?.querySelector(".draft-notice-message")?.textContent).toBe(
 			"Wiederhergestellt.",
 		);

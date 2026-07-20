@@ -31,6 +31,9 @@ instead of restating them.
 | [0016](0016-rule-semantics-feedback.md) | `visible_when` semantics: value-domain check + headless `eval` |
 | [0017](0017-robots-meta.md) | `robots` meta: `noindex, nofollow` by default, per-directive opt-out |
 | [0018](0018-links-and-url-policy.md) | Links & URL policy: structured `links`, relative autolink, `post` relative URLs |
+| [0019](0019-runtime-scoping-model.md) | Runtime scoping: root-element-scoped runtime, `--fragment` requires `id` |
+| [0020](0020-css-scoping-and-theme-api.md) | CSS scoping under `.yaml-form-root`, host-CSS `--yf-*` theme knobs |
+| [0021](0021-submit-events.md) | Submit-completion `CustomEvent`s on the root element |
 
 ## Archive
 

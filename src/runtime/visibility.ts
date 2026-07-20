@@ -98,27 +98,27 @@ export function computeVisibility(
 }
 
 export function applyVisibility(
-	doc: Document,
+	root: Element,
 	visibility: Map<string, boolean>,
 ): void {
+	const active = root.ownerDocument?.activeElement ?? null;
 	let hiddenWithFocus: Element | null = null;
 	for (const [itemId, visible] of visibility) {
-		const el = doc.querySelector(`[data-item-id="${attrEscape(itemId)}"]`);
+		const el = root.querySelector(`[data-item-id="${attrEscape(itemId)}"]`);
 		if (!el) continue;
 		if (visible) {
 			el.removeAttribute("hidden");
 		} else {
-			const active = doc.activeElement;
 			if (active && el.contains(active)) hiddenWithFocus = el;
 			el.setAttribute("hidden", "");
 		}
 	}
-	if (hiddenWithFocus) restoreFocus(doc, hiddenWithFocus);
+	if (hiddenWithFocus) restoreFocus(root, hiddenWithFocus);
 }
 
 // Hiding the focused item would drop keyboard/AT users on <body>; move focus
 // to the next visible item's first control, else to the form itself.
-function restoreFocus(doc: Document, hiddenItem: Element): void {
+function restoreFocus(root: Element, hiddenItem: Element): void {
 	for (
 		let sibling = hiddenItem.nextElementSibling;
 		sibling;
@@ -133,7 +133,7 @@ function restoreFocus(doc: Document, hiddenItem: Element): void {
 			return;
 		}
 	}
-	const formEl = doc.querySelector<HTMLElement>("form#yaml-form");
+	const formEl = root.querySelector<HTMLElement>("form");
 	if (!formEl) return;
 	if (!formEl.hasAttribute("tabindex")) formEl.setAttribute("tabindex", "-1");
 	formEl.focus?.({ preventScroll: true });

@@ -15,7 +15,7 @@ async function loadDom(source: string, search = "") {
 	const window = new Window({ url: `https://example.com/form${search}` });
 	window.document.write(html);
 	const document = window.document as unknown as Document;
-	initForm(document);
+	initForm(document.querySelector(".yaml-form-root") as Element);
 	return document;
 }
 
@@ -194,7 +194,7 @@ items:
 describe("constant override", () => {
 	test("from_url constant: embedded JSON, rendered text, and answers see the override", async () => {
 		const doc = await loadDom(constantYaml, "?role=teacher");
-		const data = doc.querySelector("#yaml-form-data")?.textContent ?? "";
+		const data = doc.querySelector(".yaml-form-data")?.textContent ?? "";
 		expect(data).toContain('"teacher"');
 		const section = doc.querySelector('[data-item-id="role"]');
 		expect(section?.querySelector(".constant-value")?.textContent).toBe(
@@ -213,7 +213,7 @@ describe("constant override", () => {
 	test("without from_url the parameter is ignored", async () => {
 		const doc = await loadDom(constantYaml, "?fixed=hacked");
 		expect(collectAnswers(doc).fixed).toBe("locked");
-		const data = doc.querySelector("#yaml-form-data")?.textContent ?? "";
+		const data = doc.querySelector(".yaml-form-data")?.textContent ?? "";
 		expect(data).not.toContain("hacked");
 		expect(warnSpy).toHaveBeenCalled();
 	});

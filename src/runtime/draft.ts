@@ -54,9 +54,9 @@ function warn(message: string): void {
 	console.warn(`yaml-form: ${message}`);
 }
 
-function getStorage(doc: Document): Storage | null {
+function getStorage(win: (Window & typeof globalThis) | null): Storage | null {
 	try {
-		return doc.defaultView?.localStorage ?? null;
+		return win?.localStorage ?? null;
 	} catch {
 		return null;
 	}
@@ -122,7 +122,7 @@ function flattenStored(answers: Record<string, unknown>): Map<string, unknown> {
  * the form, so a fully stale draft shows no "restored" notice.
  */
 function applyDraftAnswers(
-	doc: Document,
+	root: Element,
 	targets: Map<string, PrefillTarget>,
 	answers: unknown,
 ): boolean {
@@ -133,7 +133,7 @@ function applyDraftAnswers(
 		if (target.kind === "constant") continue;
 		const stored = flat.get(key);
 		if (target.kind === "text") {
-			if (typeof stored === "string") applyTextValue(doc, key, stored);
+			if (typeof stored === "string") applyTextValue(root, key, stored);
 			continue;
 		}
 		const values =
@@ -147,7 +147,7 @@ function applyDraftAnswers(
 			if (!target.values.has(v))
 				warn(`ignoring stale draft value "${v}" for "${key}"`);
 		}
-		applySelection(doc, key, new Set(valid));
+		applySelection(root, key, new Set(valid));
 	}
 	return true;
 }
@@ -162,15 +162,15 @@ function applyDraftAnswers(
  * values in the DOM to be re-saved by the next edit.
  */
 export function initDraft(
-	doc: Document,
+	root: Element,
 	form: Form,
 	readAnswers: () => RawAnswers,
 	resetForm?: () => void,
 ): DraftStore | null {
 	if (!form.autosave) return null;
-	const storage = getStorage(doc);
+	const win = root.ownerDocument?.defaultView ?? null;
+	const storage = getStorage(win);
 	if (!storage) return null;
-	const win = doc.defaultView;
 	const targets = enumerateTargets(form);
 	const constantIds = new Set(
 		form.items
@@ -190,7 +190,7 @@ export function initDraft(
 		if (raw !== null) {
 			const parsed: unknown = JSON.parse(raw);
 			if (isPlainObject(parsed)) {
-				restored = applyDraftAnswers(doc, targets, parsed.answers);
+				restored = applyDraftAnswers(root, targets, parsed.answers);
 			}
 		}
 	} catch {
@@ -250,7 +250,7 @@ export function initDraft(
 	};
 
 	if (restored) {
-		const notice = doc.querySelector("#yaml-form-draft-notice");
+		const notice = root.querySelector(".draft-notice");
 		const discard = notice?.querySelector(".draft-discard");
 		notice?.removeAttribute("hidden");
 		discard?.addEventListener("click", () => {

@@ -464,3 +464,76 @@ Presentation Rubric:
   URLs too.
 - Edits are autosaved to localStorage and restored on reopening the same URL
   (see [Draft autosave](#draft-autosave)); disable with `autosave: false`.
+
+### Theming with `--yf-*` custom properties
+
+All generated CSS is scoped under the form's root element
+(`.yaml-form-root`), so embedding a form in a larger page never restyles the
+host, and the form inherits the host page's `font-family`. To match the form
+to the surrounding page, set these custom properties on `.yaml-form-root` (or
+any ancestor) in the **host page's CSS** — they are not part of the YAML
+format:
+
+| Property | Default (light / dark) | Controls |
+| -------- | ---------------------- | -------- |
+| `--yf-accent` | `#2563eb` / `#60a5fa` | links, focus rings, radio/checkbox accent, submit button |
+| `--yf-accent-contrast` | `#ffffff` / `#171717` | text/icon color on the accent (submit button, success badge) |
+| `--yf-fg` | `#1a1a1a` / `#e5e5e5` | text color |
+| `--yf-bg` | `#ffffff` / `#171717` | surface color (table cells, cards) |
+| `--yf-font-size` | `1rem` | base font size of the form |
+
+```css
+.yaml-form-root {
+  --yf-accent: rebeccapurple;
+  --yf-font-size: 0.9375rem;
+}
+```
+
+Unset properties keep the defaults above (including the automatic dark-mode
+palette). Other custom properties in the stylesheet are private and may
+change between versions.
+
+## Submit events
+
+When a submit attempt settles, the form dispatches a `CustomEvent` on its root
+element (`.yaml-form-root`) so a host page can react — advance a progress bar,
+move to the next form, or log the result — without watching DOM mutations.
+Exactly one event fires per settled submit, after the success/failure UI has
+been applied:
+
+- **`yaml-form:submit-success`** — all actions succeeded (opening the mail
+  client for `mailto` counts as success). `detail`:
+
+  ```jsonc
+  {
+    "form": { "id": "test_form", "version": "2.0" }, // undefined when unset in the YAML
+    "payload": { /* the full submit payload, see "Payload" */ }
+  }
+  ```
+
+- **`yaml-form:submit-error`** — an action failed (actions stop at the first
+  failure). `detail`:
+
+  ```jsonc
+  {
+    "form": { "id": "test_form", "version": "2.0" }, // undefined when unset in the YAML
+    "message": "POST https://example.com/api responded with status 500"
+  }
+  ```
+
+Both events use `bubbles: true` and `composed: false`, so one delegated
+listener on `document` covers every form root on the page:
+
+```js
+document.addEventListener("yaml-form:submit-success", (event) => {
+  console.log("submitted", event.detail.form.id, event.detail.payload);
+});
+document.addEventListener("yaml-form:submit-error", (event) => {
+  console.warn("failed", event.detail.form.id, event.detail.message);
+});
+```
+
+For a form embedded in a same-origin `<iframe>`, attach the same listeners to
+`iframe.contentDocument` — no `postMessage` channel is needed. Blocked
+double-submits (while a request is in flight) dispatch nothing; the settled
+attempt still fires its single event.

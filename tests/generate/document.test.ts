@@ -161,7 +161,7 @@ items:
   - { title: A, id: a }
 `);
 		const link = d.querySelector<HTMLAnchorElement>(
-			'#yaml-form-success .success-links a[href="./r002.html"]',
+			'.form-success .success-links a[href="./r002.html"]',
 		);
 		expect(link?.textContent).toBe("Next");
 	});
@@ -180,7 +180,7 @@ items:
 
 describe("success screen markup", () => {
 	test("success section carries a checkmark icon and a message slot", () => {
-		const success = document.querySelector("#yaml-form-success");
+		const success = document.querySelector(".form-success");
 		expect(success).not.toBeNull();
 		const icon = success?.querySelector("svg.success-icon");
 		expect(icon).not.toBeNull();
@@ -249,7 +249,7 @@ describe("basic item rendering", () => {
 
 	test("embeds the form definition as JSON for the runtime", () => {
 		const data = document.querySelector(
-			'script[type="application/json"]#yaml-form-data',
+			'script[type="application/json"].yaml-form-data',
 		);
 		expect(data).not.toBeNull();
 		const parsed = JSON.parse(data?.textContent ?? "");
@@ -259,7 +259,7 @@ describe("basic item rendering", () => {
 
 	test("has a submit button inside a form element", () => {
 		expect(
-			document.querySelector('form#yaml-form button[type="submit"]'),
+			document.querySelector('.yaml-form-root form button[type="submit"]'),
 		).not.toBeNull();
 	});
 });

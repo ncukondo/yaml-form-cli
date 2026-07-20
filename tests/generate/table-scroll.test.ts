@@ -62,7 +62,7 @@ describe("table scroll affordance runtime", () => {
 		const doc = await loadDom();
 		const el = scroller(doc);
 		stubMetrics(el, { scrollWidth: 900, clientWidth: 400 });
-		initTableScroll(doc);
+		initTableScroll(doc.querySelector(".yaml-form-root") as Element);
 		expect(el.hasAttribute("data-scroll-start")).toBe(false);
 		expect(el.hasAttribute("data-scroll-end")).toBe(true);
 	});
@@ -71,7 +71,7 @@ describe("table scroll affordance runtime", () => {
 		const doc = await loadDom();
 		const el = scroller(doc);
 		stubMetrics(el, { scrollWidth: 900, clientWidth: 400 });
-		initTableScroll(doc);
+		initTableScroll(doc.querySelector(".yaml-form-root") as Element);
 		el.scrollLeft = 250;
 		dispatch(doc, el, "scroll");
 		expect(el.hasAttribute("data-scroll-start")).toBe(true);
@@ -86,7 +86,7 @@ describe("table scroll affordance runtime", () => {
 		const doc = await loadDom();
 		const el = scroller(doc);
 		stubMetrics(el, { scrollWidth: 400, clientWidth: 400 });
-		initTableScroll(doc);
+		initTableScroll(doc.querySelector(".yaml-form-root") as Element);
 		expect(el.hasAttribute("data-scroll-start")).toBe(false);
 		expect(el.hasAttribute("data-scroll-end")).toBe(false);
 	});
@@ -96,7 +96,7 @@ describe("table scroll affordance runtime", () => {
 		const el = scroller(doc);
 		const metrics = { scrollWidth: 400, clientWidth: 400 };
 		stubMetrics(el, metrics);
-		initTableScroll(doc);
+		initTableScroll(doc.querySelector(".yaml-form-root") as Element);
 		expect(el.hasAttribute("data-scroll-end")).toBe(false);
 		metrics.clientWidth = 200;
 		const win = doc.defaultView;
@@ -108,7 +108,7 @@ describe("table scroll affordance runtime", () => {
 	test("initForm wires the scroll cue updates", async () => {
 		const doc = await loadDom();
 		const el = scroller(doc);
-		initForm(doc);
+		initForm(doc.querySelector(".yaml-form-root") as Element);
 		stubMetrics(el, { scrollWidth: 900, clientWidth: 400, scrollLeft: 250 });
 		dispatch(doc, el, "scroll");
 		expect(el.hasAttribute("data-scroll-start")).toBe(true);
