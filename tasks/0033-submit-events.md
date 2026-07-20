@@ -1,6 +1,6 @@
 # Task 0033: Submit-completion `CustomEvent`s (#38)
 
-Status: todo
+Status: done
 Depends on: 0031 (fires on the root element from the root-scoped `performSubmit`)
 Parallel: yes — disjoint from task 0032 (submit.ts vs styles.ts); both land after 0031
 
