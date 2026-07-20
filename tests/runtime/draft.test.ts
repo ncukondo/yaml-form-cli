@@ -28,7 +28,7 @@ async function loadDom(source: string, options: LoadOptions = {}) {
 	window.document.write(html);
 	options.beforeInit?.(window);
 	const document = window.document as unknown as Document;
-	initForm(document);
+	initForm(document.querySelector(".yaml-form-root") as Element);
 	return { window, document };
 }
 
@@ -88,7 +88,7 @@ function firePagehide(window: Window) {
 }
 
 function noticeHidden(doc: Document): boolean {
-	const el = doc.querySelector("#yaml-form-draft-notice");
+	const el = doc.querySelector(".draft-notice");
 	if (!el) throw new Error("no draft notice slot");
 	return el.hasAttribute("hidden");
 }
@@ -230,7 +230,7 @@ describe("restoring", () => {
 		});
 		expect(textValue(document, "name")).toBe("kept");
 		expect(checkedValues(document, "role")).toEqual([]);
-		const data = document.querySelector("#yaml-form-data")?.textContent ?? "";
+		const data = document.querySelector(".yaml-form-data")?.textContent ?? "";
 		expect(data).toContain('"fixed"');
 		expect(data).not.toContain("hacked");
 	});
@@ -298,9 +298,9 @@ describe("restore notice", () => {
 			seed: { [key]: makeDraft({ name: "Jane" }) },
 		});
 		expect(noticeHidden(document)).toBe(false);
-		expect(
-			document.querySelector("#yaml-form-draft-notice")?.getAttribute("role"),
-		).toBe("status");
+		expect(document.querySelector(".draft-notice")?.getAttribute("role")).toBe(
+			"status",
+		);
 
 		const pristine = await loadDom(basicYaml);
 		expect(noticeHidden(pristine.document)).toBe(true);
@@ -448,7 +448,7 @@ items:
 		});
 		expect(textValue(document, "name")).toBe(""); // not restored
 		// the notice slot is not even generated for autosave: false
-		expect(document.querySelectorAll("#yaml-form-draft-notice").length).toBe(0);
+		expect(document.querySelectorAll(".draft-notice").length).toBe(0);
 		setText(document, "name", "typed");
 		firePagehide(window);
 		await Bun.sleep(400);
@@ -458,7 +458,7 @@ items:
 });
 
 function submitForm(doc: Document) {
-	const form = doc.querySelector("form#yaml-form") as HTMLFormElement;
+	const form = doc.querySelector(".yaml-form-root form") as HTMLFormElement;
 	const EventCtor = (doc.defaultView as unknown as { Event: typeof Event })
 		.Event;
 	form.dispatchEvent(

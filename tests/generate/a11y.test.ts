@@ -183,7 +183,9 @@ describe("error slot announcement attributes", () => {
 
 describe("required legend", () => {
 	test("form shows a required legend when any item is required", () => {
-		const legend = document.querySelector("form#yaml-form .required-legend");
+		const legend = document.querySelector(
+			".yaml-form-root form .required-legend",
+		);
 		expect(legend).not.toBeNull();
 		expect(legend?.textContent).toContain("*");
 		expect(legend?.textContent).toContain("indicates required");

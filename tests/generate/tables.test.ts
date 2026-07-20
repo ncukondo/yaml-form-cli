@@ -23,12 +23,12 @@ async function loadDom(source: string) {
 	const window = new Window();
 	window.document.write(html);
 	const document = window.document as unknown as Document;
-	initForm(document);
+	initForm(document.querySelector(".yaml-form-root") as Element);
 	return document;
 }
 
 function submitForm(doc: Document) {
-	const form = doc.querySelector("form#yaml-form") as HTMLFormElement;
+	const form = doc.querySelector(".yaml-form-root form") as HTMLFormElement;
 	const EventCtor = (doc.defaultView as unknown as { Event: typeof Event })
 		.Event;
 	form.dispatchEvent(

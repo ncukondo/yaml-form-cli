@@ -101,7 +101,7 @@ beforeAll(async () => {
 	const window = new Window();
 	window.document.write(html);
 	doc = window.document as unknown as Document;
-	initForm(doc);
+	initForm(doc.querySelector(".yaml-form-root") as Element);
 	// Fill in exactly the answers shown in the docs example
 	set("id_sample", "free text");
 	check("single_choice", "option2");

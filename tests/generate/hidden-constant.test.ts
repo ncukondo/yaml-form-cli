@@ -36,7 +36,7 @@ describe("hidden constant rendering", () => {
 	});
 
 	test("hidden constant still lands in the embedded form data", () => {
-		const data = document.querySelector("#yaml-form-data")?.textContent;
+		const data = document.querySelector(".yaml-form-data")?.textContent;
 		expect(data).toContain('"respondent"');
 	});
 });

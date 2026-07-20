@@ -13,9 +13,9 @@ function updateScrollCues(el: HTMLElement): void {
 	);
 }
 
-export function initTableScroll(doc: Document): void {
+export function initTableScroll(root: Element): void {
 	const scrollers = Array.from(
-		doc.querySelectorAll<HTMLElement>(".table-scroll"),
+		root.querySelectorAll<HTMLElement>(".table-scroll"),
 	);
 	if (scrollers.length === 0) return;
 	for (const el of scrollers) {
@@ -24,7 +24,8 @@ export function initTableScroll(doc: Document): void {
 		});
 		updateScrollCues(el);
 	}
-	doc.defaultView?.addEventListener("resize", () => {
+	// One resize listener per root; each refreshes only its own scrollers.
+	root.ownerDocument?.defaultView?.addEventListener("resize", () => {
 		for (const el of scrollers) updateScrollCues(el);
 	});
 }
