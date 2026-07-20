@@ -5,7 +5,7 @@ import { escapeAttr, escapeHtml, renderLink, renderText } from "./escape.ts";
 import { formIdPrefix } from "./ids.ts";
 import { renderItem } from "./render-item.ts";
 import { getRuntimeBundle } from "./runtime-bundle.ts";
-import { baseStyles, draftStyles } from "./styles.ts";
+import { baseStyles, draftStyles, standaloneStyles } from "./styles.ts";
 
 function embedJson(data: unknown): string {
 	// <-escape so "</script>" can never terminate the data block
@@ -53,7 +53,9 @@ export async function generateHtml(form: Form): Promise<string> {
 </div>
 `
 		: "";
-	const styles = `${baseStyles}${form.autosave ? draftStyles : ""}`;
+	// Scoped core (+ draft styles) is shared with fragment output (task 0034);
+	// the page-level reset is a standalone-document concern (decision 0020).
+	const styles = `${baseStyles}${form.autosave ? draftStyles : ""}${standaloneStyles}`;
 	// Decision 0017: emit a robots meta unless both directives are opted out.
 	const robots = [
 		form.noindex ? "noindex" : "",

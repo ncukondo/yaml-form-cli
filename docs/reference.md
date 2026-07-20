@@ -464,3 +464,31 @@ Presentation Rubric:
   URLs too.
 - Edits are autosaved to localStorage and restored on reopening the same URL
   (see [Draft autosave](#draft-autosave)); disable with `autosave: false`.
+
+### Theming with `--yf-*` custom properties
+
+All generated CSS is scoped under the form's root element
+(`.yaml-form-root`), so embedding a form in a larger page never restyles the
+host, and the form inherits the host page's `font-family`. To match the form
+to the surrounding page, set these custom properties on `.yaml-form-root` (or
+any ancestor) in the **host page's CSS** — they are not part of the YAML
+format:
+
+| Property | Default (light / dark) | Controls |
+| -------- | ---------------------- | -------- |
+| `--yf-accent` | `#2563eb` / `#60a5fa` | links, focus rings, radio/checkbox accent, submit button |
+| `--yf-accent-contrast` | `#ffffff` / `#171717` | text/icon color on the accent (submit button, success badge) |
+| `--yf-fg` | `#1a1a1a` / `#e5e5e5` | text color |
+| `--yf-bg` | `#ffffff` / `#171717` | surface color (table cells, cards) |
+| `--yf-font-size` | `1rem` | base font size of the form |
+
+```css
+.yaml-form-root {
+  --yf-accent: rebeccapurple;
+  --yf-font-size: 0.9375rem;
+}
+```
+
+Unset properties keep the defaults above (including the automatic dark-mode
+palette). Other custom properties in the stylesheet are private and may
+change between versions.

@@ -1,6 +1,6 @@
 # Task 0032: CSS scoping under `.yaml-form-root` + `--yf-*` theme knobs
 
-Status: todo
+Status: done
 Depends on: 0031 (needs the `.yaml-form-root` wrapper)
 Parallel: yes — disjoint from task 0033 (styles.ts vs submit.ts); both land after 0031
 
@@ -81,15 +81,15 @@ Standalone output looks identical to today.
 
 ## Acceptance criteria
 
-- [ ] Every generated CSS rule is scoped under `.yaml-form-root`
-- [ ] Standalone output is visually unchanged (variables, dark mode, print all
+- [x] Every generated CSS rule is scoped under `.yaml-form-root`
+- [x] Standalone output is visually unchanged (variables, dark mode, print all
       still apply); the `body`/page reset is present only in standalone
-- [ ] `--yf-accent` / `--yf-accent-contrast` / `--yf-fg` / `--yf-bg` /
+- [x] `--yf-accent` / `--yf-accent-contrast` / `--yf-fg` / `--yf-bg` /
       `--yf-font-size` override the form when set on `.yaml-form-root` in host
       CSS; unset knobs keep today's look
-- [ ] Host fonts inherit into the form (no `font-family` hard reset in root)
-- [ ] `bun run check` passes
-- [ ] `docs/reference.md` documents the `--yf-*` theming knobs
+- [x] Host fonts inherit into the form (no `font-family` hard reset in root)
+- [x] `bun run check` passes
+- [x] `docs/reference.md` documents the `--yf-*` theming knobs
 
 ## Verification
 
