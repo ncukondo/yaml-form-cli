@@ -101,6 +101,33 @@ describe("generate", () => {
 		const { exitCode } = await runCli(["generate", sampleYaml, "--json"]);
 		expect(exitCode).toBe(2);
 	});
+
+	test("--fragment emits a fragment for a form with an id", async () => {
+		const yaml =
+			"title: T\nid: survey1\nactions:\n  - type: log\nitems:\n  - { id: a, title: A }\n";
+		const { stdout, stderr, exitCode } = await runCli(
+			["generate", "--fragment", "-"],
+			yaml,
+		);
+		expect(exitCode).toBe(0);
+		expect(stderr).toBe("");
+		expect(stdout.trimStart()).toStartWith(
+			'<div class="yaml-form-root" id="yf-survey1">',
+		);
+		expect(stdout).not.toContain("<!doctype");
+	});
+
+	test("--fragment without an id fails with a clear message (exit 1)", async () => {
+		const yaml =
+			"title: T\nactions:\n  - type: log\nitems:\n  - { id: a, title: A }\n";
+		const { stderr, exitCode } = await runCli(
+			["generate", "--fragment", "-"],
+			yaml,
+		);
+		expect(exitCode).toBe(1);
+		expect(stderr).toContain("--fragment");
+		expect(stderr.toLowerCase()).toContain("id");
+	});
 });
 
 describe("validate", () => {

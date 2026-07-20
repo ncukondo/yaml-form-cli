@@ -50,10 +50,10 @@ Rules:
 | [0028 `robots` meta output](archive/0028-robots-meta.md) (#33) | — | E | done |
 | [0029 Link policy: structured `links`, autolink, target, allowlist](archive/0029-links-and-autolink-policy.md) (#32 #34) | — | E | done |
 | [0030 `post` action relative URL](archive/0030-post-relative-url.md) (#35) | 0029 | — | done |
-| [0031 Root-element-scoped runtime](0031-root-scoped-runtime.md) | — | — | done |
+| [0031 Root-element-scoped runtime](archive/0031-root-scoped-runtime.md) | — | — | done |
 | [0032 CSS scoping + `--yf-*` theme](archive/0032-css-scoping-and-theme.md) (#37) | 0031 | F | done |
 | [0033 Submit-completion events](archive/0033-submit-events.md) (#38) | 0031 | F | done |
-| [0034 `generate --fragment` output](0034-fragment-output-mode.md) (#36) | 0031, 0032, 0033 | — | todo |
+| [0034 `generate --fragment` output](archive/0034-fragment-output-mode.md) (#36) | 0031, 0032, 0033 | — | done |
 
 Group A tasks touch disjoint areas (runtime modules / generator modules /
 CLI entry) and can proceed in parallel worktrees once 0003 lands.

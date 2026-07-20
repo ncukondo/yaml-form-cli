@@ -11,7 +11,7 @@ a Japanese form is at [`examples/sample-ja.yaml`](../examples/sample-ja.yaml).
 ## CLI
 
 ```
-yaml-form generate <input.yaml|-> [-o <out.html>] [--json]
+yaml-form generate <input.yaml|-> [-o <out.html>] [--json] [--fragment]
 yaml-form validate <input.yaml|-> [--json]
 yaml-form eval <input.yaml|-> --answers <json|@file|->
 yaml-form schema
@@ -20,7 +20,9 @@ yaml-form example [<name>]
 yaml-form upgrade [--dry-run]
 ```
 
-- `generate` writes the HTML form (stdout by default, `-o` to a file).
+- `generate` writes the HTML form (stdout by default, `-o` to a file);
+  `--fragment` emits a self-contained fragment to composite into a host page
+  instead of a full document (see [Fragment output](#fragment-output)).
 - `validate` parses and cross-checks only, reporting every problem at once.
 - `eval` prints each item's `visible_when` result for a set of answers,
   computed by the same code the generated form runs (see
@@ -492,6 +494,47 @@ format:
 Unset properties keep the defaults above (including the automatic dark-mode
 palette). Other custom properties in the stylesheet are private and may
 change between versions.
+
+## Fragment output
+
+`yaml-form generate --fragment` emits a self-contained fragment instead of a
+full HTML document — a single `.yaml-form-root` element carrying its own scoped
+`<style>`, the form markup, the embedded data, and the runtime `<script>`:
+
+```html
+<div class="yaml-form-root" id="yf-<form.id>">
+  <style>/* scoped under .yaml-form-root */</style>
+  <form>…</form>
+  …
+  <script>/* runtime; self-initializes this root */</script>
+</div>
+```
+
+Composite it into a host page **at build time** (concatenate it into your
+template). The runtime finds its own root via `document.currentScript`, so more
+than one fragment can share a page. `--fragment` **requires the form to define
+an `id`**: it becomes the root element's id and the prefix (`yf-<id>-…`) that
+keeps every `id`/`for`/`aria-*` unique across fragments.
+
+Notes and caveats:
+
+- **Build-time composition only.** The `<script>` runs when the browser parses
+  the composited markup. Inserting a fragment dynamically with `fetch` +
+  `innerHTML` does **not** execute it (browsers never run scripts added that
+  way); a compile-and-mount API is future work.
+- **Scoped styles, host-owned layout.** All CSS is scoped under
+  `.yaml-form-root` so a fragment never restyles the host; the standalone page
+  reset and the `.container` width/centering are **not** emitted — the host
+  controls the fragment's width and placement. Theme with `--yf-*` (see
+  [Theming](#theming-with-yf-custom-properties)).
+- **Submit events** fire the same way as standalone; delegate from `document`
+  to handle every fragment with one listener (see [Submit events](#submit-events)).
+- **One page, one URL.** URL-parameter prefill and draft autosave read the
+  single host-page URL, so a query parameter prefills *every* fragment whose
+  answer keys match it; drafts stay separated by `form.id` + `version`.
+- **Relative URLs** in `post`/`links` resolve against the **host page's** URL,
+  not the form's own origin.
+- The runtime and CSS are duplicated (bytes only) per fragment on a page.
 
 ## Submit events
 

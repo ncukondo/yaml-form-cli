@@ -1,6 +1,6 @@
 # Task 0034: `generate --fragment` output mode (#36)
 
-Status: todo
+Status: done
 Depends on: 0031 (root-scoped runtime + prefixed ids), 0032 (scoped CSS), 0033 (submit events)
 Parallel: no — integrates 0031–0033 and shares `generate/index.ts` + CLI + schema
 
@@ -73,15 +73,18 @@ document. `form.id` is required in this mode (issue #36).
 
 ## Acceptance criteria
 
-- [ ] `generate --fragment` emits a self-contained `.yaml-form-root` fragment
+- [x] `generate --fragment` emits a self-contained `.yaml-form-root` fragment
       (scoped style, form, data/meta, shared runtime bundle inside the root)
-      with no document envelope
-- [ ] `--fragment` without `form.id` is a generation error (exit 1) with a clear
-      message; standalone stays `id`-optional and unchanged
-- [ ] Two fragments composited into one page initialize and operate
-      independently (ids, submit, validation, events)
-- [ ] Docs cover the composition model, `id` requirement, and all caveats
-- [ ] `bun run check` passes; runtime bundle + embedded docs rebuilt
+      with no document envelope — `generateFragment` + `tests/generate/fragment.test.ts`
+- [x] `--fragment` without `form.id` is a generation error (exit 1) with a clear
+      message; standalone stays `id`-optional and unchanged — `tests/cli/cli.test.ts`
+- [x] Two fragments composited into one page initialize and operate
+      independently (ids, submit, validation, events) —
+      `tests/runtime/fragment-compose.test.ts` runs the real bundle bootstrap
+      with `document.currentScript` shimmed per fragment
+- [x] Docs cover the composition model, `id` requirement, and all caveats
+      (`docs/reference.md` → "Fragment output")
+- [x] `bun run check` passes; runtime bundle + embedded docs rebuilt
 
 ## Verification
 
